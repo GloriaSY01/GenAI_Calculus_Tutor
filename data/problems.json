@@ -1,0 +1,192 @@
+[
+  {
+    "id": "lim_001",
+    "topic": "Limits",
+    "difficulty": "easy",
+    "tags": ["limit", "direct substitution", "continuity"],
+    "statement": "Evaluate $\\lim_{x \\to 2}\\left(3x^2 - 5x + 1\\right)$.",
+    "final_answer": "3",
+    "key_idea": "Polynomials are continuous everywhere, so the limit equals the value at the point (direct substitution).",
+    "solution_steps": [
+      "Recognize that the expression is a polynomial, which is continuous for all real numbers.",
+      "Because it is continuous at x = 2, the limit equals the function value there.",
+      "Substitute x = 2: 3(2)^2 - 5(2) + 1.",
+      "Compute: 12 - 10 + 1 = 3."
+    ]
+  },
+  {
+    "id": "lim_002",
+    "topic": "Limits",
+    "difficulty": "medium",
+    "tags": ["limit", "indeterminate form", "factoring", "0/0"],
+    "statement": "Evaluate $\\lim_{x \\to 3}\\dfrac{x^2 - 9}{x - 3}$.",
+    "final_answer": "6",
+    "key_idea": "Direct substitution gives 0/0; factor the numerator and cancel the common factor before substituting.",
+    "solution_steps": [
+      "Try direct substitution: it gives 0/0, an indeterminate form, so more work is needed.",
+      "Factor the numerator: x^2 - 9 = (x - 3)(x + 3).",
+      "Cancel the common factor (x - 3) (valid since x approaches 3 but is not equal to 3).",
+      "The limit becomes lim (x + 3) as x -> 3.",
+      "Substitute x = 3: 3 + 3 = 6."
+    ]
+  },
+  {
+    "id": "lim_003",
+    "topic": "Limits",
+    "difficulty": "medium",
+    "tags": ["limit", "rationalizing", "conjugate", "0/0"],
+    "statement": "Evaluate $\\lim_{x \\to 0}\\dfrac{\\sqrt{x+4} - 2}{x}$.",
+    "final_answer": "1/4",
+    "key_idea": "Direct substitution gives 0/0; multiply by the conjugate to remove the square root.",
+    "solution_steps": [
+      "Direct substitution gives 0/0, an indeterminate form.",
+      "Multiply numerator and denominator by the conjugate (sqrt(x+4) + 2).",
+      "The numerator becomes (x + 4) - 4 = x.",
+      "Cancel x with the denominator, leaving 1 / (sqrt(x+4) + 2).",
+      "Substitute x = 0: 1 / (2 + 2) = 1/4."
+    ]
+  },
+  {
+    "id": "der_001",
+    "topic": "Derivatives",
+    "difficulty": "easy",
+    "tags": ["derivative", "power rule"],
+    "statement": "Find $\\dfrac{d}{dx}\\left(4x^3 - 2x^2 + 7x - 5\\right)$.",
+    "final_answer": "12x^2 - 4x + 7",
+    "key_idea": "Apply the power rule term by term: d/dx(x^n) = n x^(n-1).",
+    "solution_steps": [
+      "Differentiate each term separately using the power rule.",
+      "d/dx(4x^3) = 12x^2.",
+      "d/dx(-2x^2) = -4x.",
+      "d/dx(7x) = 7, and d/dx(-5) = 0.",
+      "Combine: 12x^2 - 4x + 7."
+    ]
+  },
+  {
+    "id": "der_002",
+    "topic": "Derivatives",
+    "difficulty": "medium",
+    "tags": ["derivative", "product rule"],
+    "statement": "Differentiate $f(x) = x^2 \\sin x$.",
+    "final_answer": "2x sin x + x^2 cos x",
+    "key_idea": "Use the product rule: (uv)' = u'v + uv'.",
+    "solution_steps": [
+      "Identify the two factors: u = x^2 and v = sin x.",
+      "Compute u' = 2x and v' = cos x.",
+      "Apply the product rule: u'v + uv'.",
+      "Result: 2x sin x + x^2 cos x."
+    ]
+  },
+  {
+    "id": "der_003",
+    "topic": "Derivatives",
+    "difficulty": "medium",
+    "tags": ["derivative", "chain rule"],
+    "statement": "Differentiate $f(x) = (3x^2 + 1)^5$.",
+    "final_answer": "30x(3x^2 + 1)^4",
+    "key_idea": "Use the chain rule: differentiate the outer power, then multiply by the derivative of the inside.",
+    "solution_steps": [
+      "Identify the outer function (something)^5 and the inner function 3x^2 + 1.",
+      "Differentiate the outer: 5(3x^2 + 1)^4.",
+      "Differentiate the inner: d/dx(3x^2 + 1) = 6x.",
+      "Multiply (chain rule): 5(3x^2 + 1)^4 * 6x.",
+      "Simplify: 30x(3x^2 + 1)^4."
+    ]
+  },
+  {
+    "id": "der_004",
+    "topic": "Derivatives",
+    "difficulty": "hard",
+    "tags": ["derivative", "quotient rule", "chain rule"],
+    "statement": "Differentiate $f(x) = \\dfrac{\\sin x}{x^2 + 1}$.",
+    "final_answer": "((x^2 + 1)cos x - 2x sin x) / (x^2 + 1)^2",
+    "key_idea": "Use the quotient rule: (u/v)' = (u'v - uv') / v^2.",
+    "solution_steps": [
+      "Identify u = sin x and v = x^2 + 1.",
+      "Compute u' = cos x and v' = 2x.",
+      "Apply the quotient rule: (u'v - uv') / v^2.",
+      "Numerator: (cos x)(x^2 + 1) - (sin x)(2x).",
+      "Result: ((x^2 + 1)cos x - 2x sin x) / (x^2 + 1)^2."
+    ]
+  },
+  {
+    "id": "der_005",
+    "topic": "Derivatives",
+    "difficulty": "medium",
+    "tags": ["derivative", "critical points", "applications"],
+    "statement": "Find the critical points of $f(x) = x^3 - 3x^2 + 2$.",
+    "final_answer": "x = 0 and x = 2",
+    "key_idea": "Critical points occur where f'(x) = 0 (or is undefined); set the derivative to zero and solve.",
+    "solution_steps": [
+      "Compute the derivative: f'(x) = 3x^2 - 6x.",
+      "Set f'(x) = 0: 3x^2 - 6x = 0.",
+      "Factor: 3x(x - 2) = 0.",
+      "Solve: x = 0 or x = 2.",
+      "These are the critical points."
+    ]
+  },
+  {
+    "id": "int_001",
+    "topic": "Integrals",
+    "difficulty": "easy",
+    "tags": ["integral", "power rule", "indefinite"],
+    "statement": "Evaluate $\\displaystyle\\int \\left(6x^2 - 4x + 3\\right)\\,dx$.",
+    "final_answer": "2x^3 - 2x^2 + 3x + C",
+    "key_idea": "Use the reverse power rule term by term and add the constant of integration C.",
+    "solution_steps": [
+      "Integrate each term using the reverse power rule: integral of x^n is x^(n+1)/(n+1).",
+      "Integral of 6x^2 = 2x^3.",
+      "Integral of -4x = -2x^2.",
+      "Integral of 3 = 3x.",
+      "Add the constant of integration: 2x^3 - 2x^2 + 3x + C."
+    ]
+  },
+  {
+    "id": "int_002",
+    "topic": "Integrals",
+    "difficulty": "medium",
+    "tags": ["integral", "u-substitution"],
+    "statement": "Evaluate $\\displaystyle\\int 2x\\,(x^2 + 1)^3\\,dx$.",
+    "final_answer": "(x^2 + 1)^4 / 4 + C",
+    "key_idea": "Use u-substitution with u = x^2 + 1, since its derivative 2x appears in the integrand.",
+    "solution_steps": [
+      "Notice the inner function x^2 + 1 and that 2x (its derivative) is present.",
+      "Let u = x^2 + 1, so du = 2x dx.",
+      "Rewrite the integral as integral of u^3 du.",
+      "Integrate: u^4 / 4 + C.",
+      "Substitute back: (x^2 + 1)^4 / 4 + C."
+    ]
+  },
+  {
+    "id": "int_003",
+    "topic": "Integrals",
+    "difficulty": "medium",
+    "tags": ["integral", "definite", "fundamental theorem"],
+    "statement": "Evaluate $\\displaystyle\\int_{1}^{3} (2x + 1)\\,dx$.",
+    "final_answer": "10",
+    "key_idea": "Find an antiderivative, then apply the Fundamental Theorem of Calculus: F(b) - F(a).",
+    "solution_steps": [
+      "Find an antiderivative of 2x + 1: F(x) = x^2 + x.",
+      "Apply the Fundamental Theorem of Calculus: F(3) - F(1).",
+      "F(3) = 9 + 3 = 12.",
+      "F(1) = 1 + 1 = 2.",
+      "Result: 12 - 2 = 10."
+    ]
+  },
+  {
+    "id": "int_004",
+    "topic": "Integrals",
+    "difficulty": "hard",
+    "tags": ["integral", "u-substitution", "definite"],
+    "statement": "Evaluate $\\displaystyle\\int_{0}^{1} x\\,e^{x^2}\\,dx$.",
+    "final_answer": "(e - 1)/2",
+    "key_idea": "Use u-substitution with u = x^2; remember to change the limits of integration.",
+    "solution_steps": [
+      "Let u = x^2, so du = 2x dx, which means x dx = du/2.",
+      "Change the limits: when x = 0, u = 0; when x = 1, u = 1.",
+      "The integral becomes (1/2) * integral from 0 to 1 of e^u du.",
+      "Integrate: (1/2)(e^u) evaluated from 0 to 1.",
+      "Result: (1/2)(e^1 - e^0) = (e - 1)/2."
+    ]
+  }
+]
