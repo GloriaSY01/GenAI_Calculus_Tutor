@@ -1,0 +1,65 @@
+[
+  {
+    "order": 1,
+    "topic": "Limits",
+    "title": "Limits",
+    "summary": "How a function behaves as x approaches a value. The foundation for everything else in calculus.",
+    "prerequisites": [],
+    "starter_type": "single_choice",
+    "starter_difficulty": "easy"
+  },
+  {
+    "order": 2,
+    "topic": "Continuity",
+    "title": "Continuity",
+    "summary": "When a function has no breaks or jumps. Builds directly on limits.",
+    "prerequisites": ["Limits"],
+    "starter_type": "single_choice",
+    "starter_difficulty": "easy"
+  },
+  {
+    "order": 3,
+    "topic": "Derivatives",
+    "title": "Derivatives",
+    "summary": "The instantaneous rate of change. Defined using limits.",
+    "prerequisites": ["Limits", "Continuity"],
+    "starter_type": "single_choice",
+    "starter_difficulty": "easy"
+  },
+  {
+    "order": 4,
+    "topic": "Chain Rule",
+    "title": "Chain Rule",
+    "summary": "How to differentiate composite functions. A core derivative technique.",
+    "prerequisites": ["Derivatives"],
+    "starter_type": "single_choice",
+    "starter_difficulty": "medium"
+  },
+  {
+    "order": 5,
+    "topic": "Applications of Derivatives",
+    "title": "Applications of Derivatives",
+    "summary": "Using derivatives to find slopes, critical points, maxima and minima.",
+    "prerequisites": ["Derivatives"],
+    "starter_type": "single_choice",
+    "starter_difficulty": "medium"
+  },
+  {
+    "order": 6,
+    "topic": "Related Rates",
+    "title": "Related Rates",
+    "summary": "Real-world problems where multiple quantities change together over time.",
+    "prerequisites": ["Derivatives", "Chain Rule"],
+    "starter_type": "single_choice",
+    "starter_difficulty": "medium"
+  },
+  {
+    "order": 7,
+    "topic": "Integrals",
+    "title": "Integrals",
+    "summary": "The reverse of differentiation; accumulation and area under a curve.",
+    "prerequisites": ["Derivatives"],
+    "starter_type": "single_choice",
+    "starter_difficulty": "easy"
+  }
+]

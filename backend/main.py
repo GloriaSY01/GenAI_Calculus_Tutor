@@ -12,12 +12,27 @@ import time
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import config, generator, problems, socratic, store
+from . import (
+    analytics,
+    assignments,
+    config,
+    generator,
+    learning_path,
+    problems,
+    socratic,
+    store,
+)
 from .schemas import (
+    AnalyticsAnswer,
+    AnalyticsQuery,
+    Assignment,
+    AssignmentCreate,
+    ClassAnalytics,
     GenerateRequest,
     GeneratedQuestionPublic,
     GradeRequest,
     GradeResponse,
+    LearningStep,
     MessageRequest,
     ProblemPublic,
     SessionState,
@@ -52,6 +67,48 @@ def get_problems():
 @app.get("/topics", response_model=list[str])
 def get_topics():
     return TOPICS
+
+
+@app.get("/learning-path", response_model=list[LearningStep])
+def get_learning_path():
+    """Recommended Calculus 1 topic order for first-time learners."""
+    return learning_path.load_path()
+
+
+# --------------------------------------------------------------------------- #
+# Teacher analytics (class-level)
+# --------------------------------------------------------------------------- #
+@app.get("/analytics/class", response_model=ClassAnalytics)
+def get_class_analytics():
+    return analytics.compute()
+
+
+@app.post("/analytics/ask", response_model=AnalyticsAnswer)
+def ask_analytics(req: AnalyticsQuery):
+    data = analytics.compute()
+    answer = analytics.answer_question(req.question, data)
+    return AnalyticsAnswer(answer=answer, grounded_on=data)
+
+
+# --------------------------------------------------------------------------- #
+# Assignments (teacher -> class)
+# --------------------------------------------------------------------------- #
+@app.get("/assignments", response_model=list[Assignment])
+def get_assignments():
+    return assignments.list_assignments()
+
+
+@app.post("/assignments", response_model=Assignment)
+def create_assignment(req: AssignmentCreate):
+    return assignments.create_assignment(req)
+
+
+@app.delete("/assignments/{assignment_id}")
+def delete_assignment(assignment_id: str):
+    ok = assignments.delete_assignment(assignment_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Unknown assignment_id")
+    return {"deleted": assignment_id}
 
 
 @app.post("/generate", response_model=GeneratedQuestionPublic)

@@ -101,3 +101,77 @@ class GradeResponse(BaseModel):
     correct: bool
     feedback: str
     correct_answer: str
+
+
+# --------------------------------------------------------------------------- #
+# Learning path (student onboarding / guided order)
+# --------------------------------------------------------------------------- #
+class LearningStep(BaseModel):
+    """One node in the recommended Calculus 1 learning order."""
+    order: int
+    topic: str
+    title: str
+    summary: str
+    prerequisites: List[str] = []
+    starter_type: QuestionType = "single_choice"
+    starter_difficulty: str = "easy"
+
+
+# --------------------------------------------------------------------------- #
+# Teacher analytics (class-level, never per-identified-student by default)
+# --------------------------------------------------------------------------- #
+class TopicStat(BaseModel):
+    topic: str
+    attempts: int
+    avg_reasoning: float          # 0-4 scale
+    solve_rate: float             # 0-1
+    avg_final_mastery: float      # 0-100
+    gaming_rate: float            # 0-1 (share of sessions with gaming signals)
+
+
+class AnalyticsInsight(BaseModel):
+    kind: Literal["weak_topic", "gaming", "engagement", "coverage", "positive"]
+    severity: Literal["info", "warning", "critical"]
+    title: str
+    detail: str
+
+
+class ClassAnalytics(BaseModel):
+    n_sessions: int
+    n_students: int
+    n_turns: int
+    solve_rate: float
+    avg_reasoning: float
+    avg_final_mastery: float
+    avg_turns_per_session: float
+    gaming_rate: float
+    guardrail_rate: float
+    by_topic: List[TopicStat]
+    reasoning_distribution: dict           # level -> share
+    insights: List[AnalyticsInsight]
+
+
+class AnalyticsQuery(BaseModel):
+    question: str
+
+
+class AnalyticsAnswer(BaseModel):
+    answer: str
+    grounded_on: ClassAnalytics
+
+
+# --------------------------------------------------------------------------- #
+# Assignments (teacher assigns practice to the class)
+# --------------------------------------------------------------------------- #
+class AssignmentCreate(BaseModel):
+    title: str
+    topic: str
+    qtype: QuestionType
+    difficulty: str = "medium"
+    n_questions: int = 5
+    note: str = ""
+
+
+class Assignment(AssignmentCreate):
+    id: str
+    created_at: float

@@ -9,6 +9,8 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
 LOG_DIR = DATA_DIR / "logs"
 PROBLEMS_FILE = DATA_DIR / "problems.json"
+LEARNING_PATH_FILE = DATA_DIR / "learning_path.json"
+ASSIGNMENTS_FILE = DATA_DIR / "assignments.json"
 
 load_dotenv(ROOT_DIR / ".env")
 
