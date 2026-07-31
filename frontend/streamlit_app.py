@@ -1,14 +1,8 @@
-"""Streamlit frontend for the GenAI Calculus Tutor.
+"""Streamlit frontend — focus-mode learning path with on-demand tutor.
 
-Two blocks:
-  Block A - Practice (2.1): AI generates calculus questions (single choice,
-            multiple choice, fill-in-the-blank, drag-and-drop ordering); the
-            student answers and gets auto-graded feedback.
-  Block B - Tutor (2.2): a Socratic AI agent that guides the student on the
-            current question without giving the answer away.
-
-Student-facing by default. Add ?instructor=1 to the URL to reveal experiment
-controls and live metrics.
+Layout:
+  Sidebar — name + topic catalog
+  Main    — stepper + single stage (concept | practice | tutor) + bottom CTAs
 
 Run the backend first (uvicorn), then:
     streamlit run frontend/streamlit_app.py
@@ -20,7 +14,13 @@ import re
 import requests
 import streamlit as st
 from dotenv import load_dotenv
-from streamlit_sortables import sort_items
+
+import presets
+from catalog import fetch_catalog, render_topic_catalog
+from concept import render_concept_panel
+from practice import render_practice_panel
+from stepper import STAGE_CONCEPT, STAGE_PRACTICE, STAGE_TUTOR, render_stepper
+from tutor import render_tutor_panel
 
 load_dotenv()
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
@@ -49,9 +49,11 @@ def fetch_topics():
 
 
 def generate_question(qtype, topic, difficulty):
-    r = requests.post(f"{BACKEND_URL}/generate",
-                      json={"type": qtype, "topic": topic, "difficulty": difficulty},
-                      timeout=60)
+    r = requests.post(
+        f"{BACKEND_URL}/generate",
+        json={"type": qtype, "topic": topic, "difficulty": difficulty},
+        timeout=60,
+    )
     r.raise_for_status()
     return r.json()
 
@@ -63,50 +65,157 @@ def grade_answer(payload):
 
 
 def start_session(problem_id, condition, student_id):
-    r = requests.post(f"{BACKEND_URL}/session/start",
-                      json={"problem_id": problem_id, "condition": condition,
-                            "student_id": student_id}, timeout=30)
+    r = requests.post(
+        f"{BACKEND_URL}/session/start",
+        json={
+            "problem_id": problem_id,
+            "condition": condition,
+            "student_id": student_id,
+        },
+        timeout=30,
+    )
     r.raise_for_status()
     return r.json()
 
 
 def send_message(session_id, text):
-    r = requests.post(f"{BACKEND_URL}/session/{session_id}/message",
-                      json={"text": text}, timeout=60)
+    r = requests.post(
+        f"{BACKEND_URL}/session/{session_id}/message",
+        json={"text": text},
+        timeout=60,
+    )
     r.raise_for_status()
     return r.json()
 
 
 def clean_label(text: str) -> str:
-    """Strip $ delimiters so simple math reads cleanly in widget labels."""
     return re.sub(r"\$", "", text).strip()
-
-
-def start_tutor(problem_id, student_id):
-    """Start a tutor session. problem_id=None => free chat (no fixed problem)."""
-    condition = random.choice(["explain", "control"])
-    data = start_session(problem_id, condition, student_id.strip() or "anon")
-    ss.session_id = data["session_id"]
-    ss.problem = data.get("problem")          # None in free chat
-    ss.condition = data["condition"]
-    ss.messages = [{"role": "assistant", "content": data["opening_message"]}]
-    ss.last_turn = None
-    ss.linked_question_id = problem_id
 
 
 # --------------------------------------------------------------------------- #
 # Session state
 # --------------------------------------------------------------------------- #
 ss = st.session_state
-ss.setdefault("question", None)       # active generated question (public)
-ss.setdefault("grade", None)          # last grade result
-ss.setdefault("linked_question_id", None)  # question linked to the tutor (or None)
-ss.setdefault("session_id", None)     # tutor session
+ss.setdefault("question", None)
+ss.setdefault("grade", None)
+ss.setdefault("linked_question_id", None)
+ss.setdefault("session_id", None)
 ss.setdefault("messages", [])
 ss.setdefault("problem", None)
 ss.setdefault("condition", None)
 ss.setdefault("last_turn", None)
+ss.setdefault("difficulty", "medium")
+ss.setdefault("qtype", "single_choice")
+ss.setdefault("current_topic", None)
+ss.setdefault("learning_stage", STAGE_CONCEPT)
+ss.setdefault("tutor_entry", None)
+ss.setdefault("pending_topic", None)
 
+
+def clear_practice():
+    ss.question = None
+    ss.grade = None
+
+
+def start_tutor(problem_id, student_id):
+    condition = random.choice(["explain", "control"])
+    data = start_session(problem_id, condition, student_id.strip() or "anon")
+    ss.session_id = data["session_id"]
+    ss.problem = data.get("problem")
+    ss.condition = data["condition"]
+    ss.messages = [{"role": "assistant", "content": data["opening_message"]}]
+    ss.last_turn = None
+    ss.linked_question_id = problem_id
+
+
+def go_to_concept(*, clear_question: bool = False):
+    ss.learning_stage = STAGE_CONCEPT
+    ss.tutor_entry = None
+    if clear_question:
+        clear_practice()
+
+
+def go_to_practice(student_id: str):
+    ss.learning_stage = STAGE_PRACTICE
+    ss.tutor_entry = None
+    qtype = ss.get("qtype", "single_choice")
+    difficulty = ss.get("difficulty", "medium")
+    ss.question = generate_question(qtype, ss.current_topic, difficulty)
+    ss.grade = None
+
+
+def go_to_tutor(
+    student_id: str,
+    *,
+    from_stage: str,
+    problem_id=None,
+    preset_text: str | None = None,
+):
+    ss.learning_stage = STAGE_TUTOR
+    ss.tutor_entry = from_stage
+
+    need_restart = (
+        ss.session_id is None
+        or (problem_id is not None and ss.linked_question_id != problem_id)
+        or (problem_id is None and ss.linked_question_id is not None)
+    )
+    if need_restart:
+        start_tutor(problem_id, student_id)
+
+    if preset_text:
+        turn = send_message(ss.session_id, preset_text)
+        ss.messages.append({"role": "user", "content": preset_text})
+        ss.messages.append({"role": "assistant", "content": turn["tutor_message"]})
+        ss.last_turn = turn
+
+
+def select_topic(topic: str):
+    if topic == ss.current_topic:
+        return
+    if ss.learning_stage in (STAGE_PRACTICE, STAGE_TUTOR):
+        ss.pending_topic = topic
+    else:
+        ss.current_topic = topic
+        st.toast(f"Switched to {topic}")
+        st.rerun()
+
+
+def confirm_topic_switch():
+    ss.current_topic = ss.pending_topic
+    ss.pending_topic = None
+    go_to_concept(clear_question=True)
+    st.rerun()
+
+
+def cancel_topic_switch():
+    ss.pending_topic = None
+    st.rerun()
+
+
+def regenerate_question():
+    qtype = ss.get("qtype", "single_choice")
+    difficulty = ss.get("difficulty", "medium")
+    ss.question = generate_question(qtype, ss.current_topic, difficulty)
+    ss.grade = None
+
+
+def next_question():
+    regenerate_question()
+    st.rerun()
+
+
+# --------------------------------------------------------------------------- #
+# Data load
+# --------------------------------------------------------------------------- #
+try:
+    topics = fetch_topics()
+    catalog = fetch_catalog(BACKEND_URL, fetch_topics)
+except Exception as exc:  # noqa: BLE001
+    st.error(f"Cannot reach the backend ({BACKEND_URL}):\n\n{exc}")
+    st.stop()
+
+if ss.current_topic is None or ss.current_topic not in topics:
+    ss.current_topic = topics[0]
 
 # --------------------------------------------------------------------------- #
 # Sidebar
@@ -114,180 +223,185 @@ ss.setdefault("last_turn", None)
 with st.sidebar:
     st.header("∫ Calculus Tutor")
     student_id = st.text_input("Your name (optional)", value="")
-    st.caption("**Block A** generates practice questions. "
-               "**Block B** is your AI tutor for the current question.")
+    st.divider()
+    render_topic_catalog(
+        catalog,
+        ss.current_topic,
+        on_select=select_topic,
+    )
     if INSTRUCTOR:
         st.divider()
-        st.caption("Instructor mode is ON (metrics & condition control visible).")
+        st.caption("Instructor mode is ON.")
 
-try:
-    topics = fetch_topics()
-except Exception as exc:  # noqa: BLE001
-    st.error(f"Can't reach the tutor service at {BACKEND_URL}.\n\n{exc}")
+# --------------------------------------------------------------------------- #
+# Main layout
+# --------------------------------------------------------------------------- #
+st.title("Calculus Tutor")
+
+if ss.pending_topic:
+    st.warning(
+        f"Switching to **{ss.pending_topic}** will return you to the concept step "
+        "and clear your current practice progress."
+    )
+    c1, c2 = st.columns(2)
+    if c1.button("Confirm", type="primary", key="confirm_topic"):
+        confirm_topic_switch()
+    if c2.button("Cancel", key="cancel_topic"):
+        cancel_topic_switch()
     st.stop()
 
+render_stepper(ss.learning_stage)
+st.divider()
 
-# --------------------------------------------------------------------------- #
-# Layout: two blocks
-# --------------------------------------------------------------------------- #
-col_practice, col_tutor = st.columns(2, gap="large")
+stage = ss.learning_stage
+practice_payload = None
 
+if stage == STAGE_CONCEPT:
+    render_concept_panel(ss.current_topic)
 
-# =========================== BLOCK A: PRACTICE ============================== #
-with col_practice:
-    st.subheader("Practice  ·  generate & answer")
-    c1, c2 = st.columns(2)
-    topic = c1.selectbox("Topic", topics)
-    difficulty = c2.selectbox("Difficulty", ["easy", "medium", "hard"], index=1)
-    qtype = st.selectbox(
-        "Type",
-        ["single_choice", "multiple_choice", "fill_blank", "drag_order"],
-        format_func=lambda t: {
-            "single_choice": "Single choice",
-            "multiple_choice": "Multiple choice",
-            "fill_blank": "Fill in the blank",
-            "drag_order": "Drag to order steps",
-        }[t],
+elif stage == STAGE_PRACTICE:
+    practice_payload = render_practice_panel(
+        ss,
+        current_topic=ss.current_topic,
+        clean_label=clean_label,
+        on_difficulty_change=regenerate_question,
     )
-    if st.button("Generate", type="primary", use_container_width=True):
-        with st.spinner("Generating a question..."):
-            try:
-                ss.question = generate_question(qtype, topic, difficulty)
-                ss.grade = None
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"Generation failed: {exc}")
 
+elif stage == STAGE_TUTOR:
+    render_tutor_panel(
+        ss,
+        ss.current_topic,
+        tutor_entry=ss.tutor_entry,
+        instructor=INSTRUCTOR,
+        send_message=send_message,
+    )
+
+# --------------------------------------------------------------------------- #
+# Bottom CTAs (unified per stage)
+# --------------------------------------------------------------------------- #
+st.divider()
+
+if stage == STAGE_CONCEPT:
+    cta_left, cta_right = st.columns([1, 1])
+    if cta_left.button("Ask the tutor", use_container_width=True, key="cta_ask_tutor"):
+        try:
+            go_to_tutor(
+                student_id,
+                from_stage=STAGE_CONCEPT,
+                preset_text=presets.explain_concept(ss.current_topic),
+            )
+            st.rerun()
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Could not reach the tutor: {exc}")
+    if cta_right.button(
+        "Start practice", type="primary", use_container_width=True, key="cta_practice"
+    ):
+        try:
+            with st.spinner("Generating a question..."):
+                go_to_practice(student_id)
+            st.rerun()
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Question generation failed: {exc}")
+
+elif stage == STAGE_PRACTICE:
     q = ss.question
+    answered_correct = ss.grade is not None and ss.grade.get("correct")
+
     if q is None:
-        st.info("Pick a topic and type, then click **Generate**.")
-    else:
-        st.divider()
-        st.markdown(f"**{q['topic']} · {q['difficulty']} · "
-                    f"{q['type'].replace('_', ' ')}**")
-        st.markdown(q["stem"])
-        if q.get("instructions"):
-            st.caption(q["instructions"])
-
-        payload = {"question_id": q["id"]}
-
-        if q["type"] == "single_choice":
-            choice = st.radio("Your answer", q["options"],
-                              index=None, format_func=clean_label,
-                              key=f"single_{q['id']}")
-            if choice is not None:
-                payload["single"] = q["options"].index(choice)
-
-        elif q["type"] == "multiple_choice":
-            picked = []
-            st.write("Select all that apply:")
-            for i, opt in enumerate(q["options"]):
-                if st.checkbox(clean_label(opt), key=f"mc_{q['id']}_{i}"):
-                    picked.append(i)
-            payload["multiple"] = picked
-
-        elif q["type"] == "fill_blank":
-            blanks = []
-            for i in range(q.get("n_blanks", 1)):
-                blanks.append(st.text_input(f"Blank {i + 1}",
-                                            key=f"fb_{q['id']}_{i}"))
-            payload["blanks"] = blanks
-
-        elif q["type"] == "drag_order":
-            st.write("Drag the steps into the correct order:")
-            ordered = sort_items(q["steps"], direction="vertical",
-                                 key=f"drag_{q['id']}")
-            payload["order"] = ordered
-
-        st.write("")
-        if st.button("Submit answer", key=f"submit_{q['id']}"):
+        cta_left, cta_right = st.columns([1, 1])
+        if cta_left.button("← Back to concept", use_container_width=True, key="cta_back_concept"):
+            go_to_concept(clear_question=True)
+            st.rerun()
+        if cta_right.button("Generate again", type="primary", use_container_width=True, key="cta_regen"):
             try:
-                ss.grade = grade_answer(payload)
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"Grading failed: {exc}")
-
-        if ss.grade is not None:
-            if ss.grade["correct"]:
-                st.success(ss.grade["feedback"])
-            else:
-                st.error(ss.grade["feedback"])
-                st.caption(f"Correct answer: {ss.grade['correct_answer']}")
-
-        st.divider()
-        already_linked = ss.linked_question_id == q["id"]
-        if st.button("🔗 Link this question to the tutor",
-                     use_container_width=True, disabled=already_linked):
-            start_tutor(q["id"], student_id)
-            st.rerun()
-        if already_linked:
-            st.caption("This question is linked to the tutor on the right.")
-        else:
-            st.caption("Optional — the tutor on the right also works as free chat.")
-
-
-# ============================ BLOCK B: TUTOR ================================ #
-with col_tutor:
-    st.subheader("Tutor  ·  guided help")
-
-    # The tutor always works: start a free-chat session by default.
-    if ss.session_id is None:
-        try:
-            start_tutor(None, student_id)
-        except Exception as exc:  # noqa: BLE001
-            st.error(f"Could not start the tutor: {exc}")
-            st.stop()
-
-    linked = ss.problem is not None
-    head_l, head_r = st.columns([3, 1])
-    if linked:
-        head_l.caption(f"Linked to your current question "
-                       f"({ss.problem['topic']} · {ss.problem['difficulty']}).")
-        if head_r.button("Free chat", use_container_width=True):
-            start_tutor(None, student_id)
-            st.rerun()
-        st.markdown(ss.problem["statement"])
-    else:
-        head_l.caption("Free chat — ask me anything about Calculus 1.")
-        if ss.question is not None:
-            if head_r.button("Link question", use_container_width=True):
-                start_tutor(ss.question["id"], student_id)
+                go_to_practice(student_id)
                 st.rerun()
-
-    if INSTRUCTOR:
-        cols = st.columns(4)
-        cols[0].metric("Condition", ss.condition)
-        if ss.last_turn:
-            cols[1].metric("Mastery", ss.last_turn["mastery"])
-            cols[2].metric("Hint level", ss.last_turn["hint_level"])
-            cols[3].metric("Reasoning",
-                           ss.last_turn["reasoning_assessment"].title())
-        st.caption(f"session_id: {ss.session_id}")
-    else:
-        mastery = ss.last_turn["mastery"] if ss.last_turn else 0
-        st.progress(min(mastery, 100) / 100,
-                    text=f"Your progress: {min(mastery, 100)}%")
-
-    if ss.last_turn and ss.last_turn["is_solved"]:
-        st.success("Nicely done — you reached the answer yourself!")
-    elif ss.last_turn and ss.last_turn["action"] == "blocked":
-        st.info("Let's work it out together rather than jumping to the answer.")
-
-    st.divider()
-    for msg in ss.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-
-    with st.form("tutor_input", clear_on_submit=True):
-        text = st.text_area("Your reasoning or next step", height=80,
-                            label_visibility="collapsed",
-                            placeholder="Type your reasoning or next step...")
-        sent = st.form_submit_button("Send", type="primary")
-    if sent and text.strip():
-        try:
-            turn = send_message(ss.session_id, text)
-            ss.messages.append({"role": "user", "content": text})
-            ss.messages.append({"role": "assistant",
-                                "content": turn["tutor_message"]})
-            ss.last_turn = turn
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"Question generation failed: {exc}")
+    elif answered_correct:
+        c1, c2, c3 = st.columns(3)
+        if c1.button("← Back to concept", use_container_width=True, key="cta_back_concept_ok"):
+            go_to_concept(clear_question=True)
             st.rerun()
-        except Exception as exc:  # noqa: BLE001
-            st.error(f"Something went wrong: {exc}")
+        if c2.button("Correct, but explain why", use_container_width=True, key="cta_explain_ok"):
+            try:
+                go_to_tutor(
+                    student_id,
+                    from_stage=STAGE_PRACTICE,
+                    problem_id=q["id"],
+                    preset_text=presets.explain_after_correct(),
+                )
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"Could not reach the tutor: {exc}")
+        if c3.button("Next question", type="primary", use_container_width=True, key="cta_next"):
+            try:
+                next_question()
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"Question generation failed: {exc}")
+    else:
+        cta_left, cta_right = st.columns([1, 1])
+        if cta_left.button("← Back to concept", use_container_width=True, key="cta_back_concept"):
+            go_to_concept(clear_question=True)
+            st.rerun()
+        sub_col, guide_col = cta_right.columns(2)
+        if sub_col.button("Submit answer", type="primary", use_container_width=True, key="cta_submit"):
+            if practice_payload:
+                try:
+                    ss.grade = grade_answer(practice_payload)
+                    st.rerun()
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"Grading failed: {exc}")
+        if guide_col.button("I'm stuck — guide me", use_container_width=True, key="cta_guide"):
+            try:
+                go_to_tutor(
+                    student_id,
+                    from_stage=STAGE_PRACTICE,
+                    problem_id=q["id"],
+                    preset_text=presets.need_guidance(),
+                )
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"Could not reach the tutor: {exc}")
+
+    if ss.grade is not None and not ss.grade.get("correct") and q is not None:
+        hint_l, hint_r, retry = st.columns(3)
+        if retry.button("Try again", key="cta_retry"):
+            ss.grade = None
+            st.rerun()
+        if hint_l.button("Get a hint", key="cta_hint"):
+            try:
+                go_to_tutor(
+                    student_id,
+                    from_stage=STAGE_PRACTICE,
+                    problem_id=q["id"],
+                    preset_text=presets.small_hint(),
+                )
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"Could not reach the tutor: {exc}")
+        if hint_r.button("Walk me through step 1", key="cta_step"):
+            try:
+                go_to_tutor(
+                    student_id,
+                    from_stage=STAGE_PRACTICE,
+                    problem_id=q["id"],
+                    preset_text=presets.tutor_first_step(),
+                )
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"Could not reach the tutor: {exc}")
+
+elif stage == STAGE_TUTOR:
+    cta_left, cta_right = st.columns([1, 1])
+    if ss.tutor_entry == STAGE_PRACTICE:
+        if cta_left.button("← Back to practice", use_container_width=True, key="cta_back_practice"):
+            ss.learning_stage = STAGE_PRACTICE
+            st.rerun()
+        if cta_right.button("← Back to concept", use_container_width=True, key="cta_back_concept_from_tutor"):
+            go_to_concept(clear_question=True)
+            st.rerun()
+    else:
+        if cta_right.button("← Back to concept", type="primary", use_container_width=True, key="cta_back_concept_tutor"):
+            go_to_concept()
+            st.rerun()
