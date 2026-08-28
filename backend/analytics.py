@@ -15,11 +15,14 @@ Design notes (following the review feedback):
 Reads data/logs/*.jsonl, which store.py appends to per session.
 """
 import json
+import logging
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from . import config
 from .schemas import AnalyticsInsight, ClassAnalytics, TopicStat
+
+log = logging.getLogger(__name__)
 
 ASSESSMENT_SCORE = {"none": 0, "weak": 1, "partial": 2, "adequate": 3, "strong": 4}
 _ASSESSMENT_LEVELS = ["none", "weak", "partial", "adequate", "strong"]
@@ -266,11 +269,13 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
     return insights
 
 
-def answer_question(question: str, a: ClassAnalytics) -> str:
-    """Optional LLM-backed Q&A grounded on the aggregate stats.
+def answer_question(question: str, a: ClassAnalytics) -> Tuple[str, bool]:
+    """LLM-backed Q&A grounded on the aggregate stats.
 
-    Falls back to a rule-based summary if the LLM is unavailable, so the teacher
-    view never hard-fails.
+    Returns (answer, llm_available). When the model can't be reached we still
+    answer with a rule-based summary, but we say so via the flag instead of
+    passing a canned line off as a real answer -- teachers were seeing the same
+    reply to every question with no hint that the model was down.
     """
     facts = _facts_block(a)
     try:
@@ -284,13 +289,17 @@ def answer_question(question: str, a: ClassAnalytics) -> str:
             f"CLASS FACTS:\n{facts}\n\n"
             f"TEACHER QUESTION: {question}\n\nAnswer:"
         )
-        return llm.chat(
+        answer = llm.chat(
             [{"role": "system", "content": "You are concise and data-grounded."},
              {"role": "user", "content": prompt}],
             temperature=0.3, max_tokens=250, retries=1,
-        ).strip() or _fallback_answer(a)
-    except Exception:  # noqa: BLE001
-        return _fallback_answer(a)
+        ).strip()
+        if answer:
+            return answer, True
+        log.warning("Analytics assistant: model returned an empty answer.")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Analytics assistant falling back to rules: %s", exc)
+    return _fallback_answer(a), False
 
 
 def _facts_block(a: ClassAnalytics) -> str:

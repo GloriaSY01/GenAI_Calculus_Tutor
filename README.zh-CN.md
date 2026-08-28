@@ -72,7 +72,7 @@ pip install -r requirements.txt
 2. 配置凭据：把 `.env.example` 复制为 `.env`，填入你的 key：
 
 ```
-LLM_BASE_URL=https://yunwu.ai/v1
+LLM_BASE_URL=https://api.openlux.ai/v1
 LLM_API_KEY=你的-api-key
 LLM_MODEL=gpt-4o-mini
 BACKEND_URL=http://localhost:8000

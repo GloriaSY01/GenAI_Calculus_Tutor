@@ -86,8 +86,9 @@ def get_class_analytics():
 @app.post("/analytics/ask", response_model=AnalyticsAnswer)
 def ask_analytics(req: AnalyticsQuery):
     data = analytics.compute()
-    answer = analytics.answer_question(req.question, data)
-    return AnalyticsAnswer(answer=answer, grounded_on=data)
+    answer, llm_available = analytics.answer_question(req.question, data)
+    return AnalyticsAnswer(answer=answer, grounded_on=data,
+                           llm_available=llm_available)
 
 
 # --------------------------------------------------------------------------- #

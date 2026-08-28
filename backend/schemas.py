@@ -158,18 +158,31 @@ class AnalyticsQuery(BaseModel):
 class AnalyticsAnswer(BaseModel):
     answer: str
     grounded_on: ClassAnalytics
+    # False => the model was unreachable and `answer` is a rule-based summary,
+    # so the UI can say so rather than presenting it as a real reply.
+    llm_available: bool = True
 
 
 # --------------------------------------------------------------------------- #
 # Assignments (teacher assigns practice to the class)
 # --------------------------------------------------------------------------- #
-class AssignmentCreate(BaseModel):
-    title: str
+class AssignmentItem(BaseModel):
+    """One block of questions inside an assignment.
+
+    An assignment is a LIST of these, so a single task can mix topics,
+    question types and difficulties (e.g. 4 easy single-choice to warm up,
+    then 3 medium fill-in-the-blank, then 2 hard ordering exercises).
+    """
     topic: str
     qtype: QuestionType
     difficulty: str = "medium"
-    n_questions: int = 5
+    count: int = 1
+
+
+class AssignmentCreate(BaseModel):
+    title: str
     note: str = ""
+    items: List[AssignmentItem]
 
 
 class Assignment(AssignmentCreate):

@@ -58,10 +58,27 @@ def send_message(session_id, text):
 # --------------------------------------------------------------------------- #
 # Teacher analytics + assignments
 # --------------------------------------------------------------------------- #
-def fetch_class_analytics():
-    r = requests.get(f"{BACKEND_URL}/analytics/class", timeout=30)
+def fetch_class_analytics(class_id=None):
+    """Class-level aggregate. `class_id` is forwarded once the backend supports
+    multi-class filtering; today the backend ignores it."""
+    params = {"class_id": class_id} if class_id else None
+    r = requests.get(f"{BACKEND_URL}/analytics/class", params=params, timeout=30)
     r.raise_for_status()
     return r.json()
+
+
+@st.cache_data(ttl=300)
+def fetch_classes():
+    """Teacher's class list. Returns None until the backend exposes GET
+    /classes (class roster), which tells the UI to show a single-class
+    placeholder instead of a fake working selector."""
+    try:
+        r = requests.get(f"{BACKEND_URL}/classes", timeout=5)
+        r.raise_for_status()
+        classes = r.json()
+        return classes or None
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def ask_analytics(question):

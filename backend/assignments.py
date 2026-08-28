@@ -30,10 +30,29 @@ def _write_all(items: List[dict]) -> None:
         json.dump(items, f, ensure_ascii=False, indent=2)
 
 
+def _upgrade(record: dict) -> dict:
+    """Convert a legacy single-block record (topic/qtype/n_questions at the top
+    level) into the current multi-block `items` shape."""
+    if "items" not in record and "qtype" in record:
+        record = {
+            "id": record.get("id", ""),
+            "created_at": record.get("created_at", 0),
+            "title": record.get("title", ""),
+            "note": record.get("note", ""),
+            "items": [{
+                "topic": record.get("topic", ""),
+                "qtype": record.get("qtype", "single_choice"),
+                "difficulty": record.get("difficulty", "medium"),
+                "count": record.get("n_questions", 1),
+            }],
+        }
+    return record
+
+
 def list_assignments() -> List[Assignment]:
     items = _read_all()
     items.sort(key=lambda a: a.get("created_at", 0), reverse=True)
-    return [Assignment(**a) for a in items]
+    return [Assignment(**_upgrade(a)) for a in items]
 
 
 def create_assignment(req: AssignmentCreate) -> Assignment:
