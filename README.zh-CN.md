@@ -86,7 +86,7 @@ python -m scripts.ingest_mit --chapters 1 2 3 4 5 6 7 8
 3. 配置凭据：把 `.env.example` 复制为 `.env`，填入你的 key：
 
 ```
-LLM_BASE_URL=https://yunwu.ai/v1
+LLM_BASE_URL=https://api.openlux.ai/v1
 LLM_API_KEY=你的-api-key
 LLM_MODEL=gpt-4o-mini
 BACKEND_URL=http://localhost:8000

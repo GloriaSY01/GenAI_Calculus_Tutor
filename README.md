@@ -92,7 +92,7 @@ location.
 3. Configure credentials. Copy `.env.example` to `.env` and fill in your key:
 
 ```
-LLM_BASE_URL=https://yunwu.ai/v1
+LLM_BASE_URL=https://api.openlux.ai/v1
 LLM_API_KEY=your-api-key-here
 LLM_MODEL=gpt-4o-mini
 BACKEND_URL=http://localhost:8000

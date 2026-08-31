@@ -6,11 +6,14 @@ student has given a reasoning explanation of acceptable quality. The "control"
 condition gives progressive hints without requiring an explanation. Comparing
 the two is the planned experiment.
 """
+import logging
 import re
 from typing import Dict, List, Optional, Tuple
 
 from . import guardrail, llm, rag, textbook
 from .schemas import Condition, Language, Problem, TutorTurn
+
+log = logging.getLogger(__name__)
 
 _ASSESSMENT_ORDER = ["none", "weak", "partial", "adequate", "strong"]
 _VALID_ACTIONS = {"probe", "hint", "correct", "affirm", "advance", "complete", "blocked"}
@@ -250,7 +253,10 @@ def process_turn(
     try:
         raw = llm.chat(messages, retries=2)
         fields, message = _parse_response(raw)
-    except Exception:  # noqa: BLE001 - surface a safe fallback
+    except Exception as exc:  # noqa: BLE001 - surface a safe fallback
+        # Logged because this turn still gets recorded like a normal one; a
+        # silent stream of these quietly skews the analytics.
+        log.warning("Tutor turn fell back after LLM failure: %s", exc)
         return TutorTurn(
             tutor_message=(
                 "抱歉，我刚才没能组织好回复。请再描述一下你目前对这一步的想法。"

@@ -1,0 +1,12 @@
+# Shared theme for both Streamlit apps (student 8501 / teacher 8502).
+# Keeps native widgets (radios, sliders, form submit buttons) on the learning
+# blue instead of Streamlit's default red. Design tokens mirror frontend/ui.py.
+[theme]
+primaryColor = "#2563EB"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F8FAFF"
+textColor = "#0F172A"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"
