@@ -57,7 +57,7 @@ with st.sidebar:
     # selector switches classes and the chosen id rides along to analytics.
     classes = api.fetch_classes()
     if classes:
-        names = {c["id"]: c["name"] for c in classes}
+        names = {c["id"]: c["label"] for c in classes}
         ss.class_id = st.selectbox(t("teacher.class_label"), list(names),
                                    format_func=names.get, key="class_select")
     else:
