@@ -15,14 +15,17 @@ streamlit run frontend/streamlit_app.py
 
 | 区域 | 作用 |
 |------|------|
-| **Sidebar** | 学生姓名、主题目录（`GET /topics`） |
+| **Sidebar** | 学生姓名、预置班级、收藏入口、主题目录 |
 | **Stepper** | 顶部状态条，只显示当前阶段，不做假勾选 |
 | **主内容区** | 根据 `learning_stage` 渲染对应面板 |
 | **底部 CTA** | 各阶段统一的下一步操作按钮 |
 
+收藏夹是独立的 `app_view`，不属于学习阶段。打开收藏夹时隐藏 Stepper，返回学习后
+保留原来的 Concept / Practice / Tutor 阶段、主题和题目。
+
 ### 三个阶段
 
-1. **Concept（学概念）** — 阅读当前主题的概念卡片（内容目前为 RAG 占位）
+1. **Concept（学概念）** — 阅读从 MIT/Chroma 按小节加载的概念、例题、图片与引用
 2. **Practice（做练习）** — 选难度、题型，答题提交；可返回概念或进 Tutor
 3. **Tutor（问导师）** — 苏格拉底式对话；可从概念或练习进入
 
@@ -148,6 +151,9 @@ streamlit run frontend/streamlit_app.py
 | `current_topic` | 侧边栏选中的主题 |
 | `last_turn` | 上一轮 Tutor API 返回（含 `mastery`、`hint_level`、`is_solved`、`action` 等） |
 | `problem` / `question` | 练习/Tutor 绑定的题目 |
+| `app_view` | 主内容视图：`learning` / `favorites` |
+| `student_id` / `class_id` | 侧栏选择的学生标识和班级 |
+| `favorite_records` | 当前学生的收藏题目快照 |
 
 ---
 

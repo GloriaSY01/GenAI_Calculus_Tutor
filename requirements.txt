@@ -6,3 +6,12 @@ openai>=2.26.0
 python-dotenv==1.0.1
 pydantic==2.10.4
 requests==2.32.3
+sentence-transformers>=3.4.0
+chromadb>=1.5.9
+modelscope>=1.39.1
+protobuf>=5.29.6,<6
+googleapis-common-protos<1.75
+pytest>=8.3.0
+httpx>=0.28.0
+pandas>=2.2.0
+matplotlib>=3.9.0

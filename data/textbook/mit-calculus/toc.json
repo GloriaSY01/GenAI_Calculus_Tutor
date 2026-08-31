@@ -1,0 +1,517 @@
+[
+  {
+    "id": "mit-ch1",
+    "number": "1",
+    "title": "Introduction to Calculus",
+    "sections": [
+      {
+        "id": "mit-1-1-velocity-and-distance",
+        "label": "1.1",
+        "title": "Velocity and Distance",
+        "pdf_page_start": 1,
+        "pdf_page_end": 8,
+        "printed_page_start": 51,
+        "printed_page_end": 58
+      },
+      {
+        "id": "mit-1-2-calculus-without-limits",
+        "label": "1.2",
+        "title": "Calculus Without Limits",
+        "pdf_page_start": 9,
+        "pdf_page_end": 16,
+        "printed_page_start": 59,
+        "printed_page_end": 66
+      },
+      {
+        "id": "mit-1-3-the-velocity-at-an-instant",
+        "label": "1.3",
+        "title": "The Velocity at an Instant",
+        "pdf_page_start": 17,
+        "pdf_page_end": 22,
+        "printed_page_start": 67,
+        "printed_page_end": 72
+      },
+      {
+        "id": "mit-1-4-circular-motion",
+        "label": "1.4",
+        "title": "Circular Motion",
+        "pdf_page_start": 23,
+        "pdf_page_end": 29,
+        "printed_page_start": 73,
+        "printed_page_end": 79
+      },
+      {
+        "id": "mit-1-5-a-review-of-trigonometry",
+        "label": "1.5",
+        "title": "A Review of Trigonometry",
+        "pdf_page_start": 30,
+        "pdf_page_end": 34,
+        "printed_page_start": 80,
+        "printed_page_end": 84
+      },
+      {
+        "id": "mit-1-6-a-thousand-points-of-light",
+        "label": "1.6",
+        "title": "A Thousand Points of Light",
+        "pdf_page_start": 35,
+        "pdf_page_end": 38,
+        "printed_page_start": 85,
+        "printed_page_end": 88
+      }
+    ]
+  },
+  {
+    "id": "mit-ch2",
+    "number": "2",
+    "title": "Derivatives",
+    "sections": [
+      {
+        "id": "mit-2-1-the-derivative-of-a-function",
+        "label": "2.1",
+        "title": "The Derivative of a Function",
+        "pdf_page_start": 1,
+        "pdf_page_end": 7,
+        "printed_page_start": 87,
+        "printed_page_end": 93
+      },
+      {
+        "id": "mit-2-2-powers-and-polynomials",
+        "label": "2.2",
+        "title": "Powers and Polynomials",
+        "pdf_page_start": 8,
+        "pdf_page_end": 15,
+        "printed_page_start": 94,
+        "printed_page_end": 101
+      },
+      {
+        "id": "mit-2-3-the-slope-and-the-tangent-line",
+        "label": "2.3",
+        "title": "The Slope and the Tangent Line",
+        "pdf_page_start": 16,
+        "pdf_page_end": 22,
+        "printed_page_start": 102,
+        "printed_page_end": 108
+      },
+      {
+        "id": "mit-2-4-the-derivative-of-the-sine-and-cosine",
+        "label": "2.4",
+        "title": "The Derivative of the Sine and Cosine",
+        "pdf_page_start": 23,
+        "pdf_page_end": 29,
+        "printed_page_start": 109,
+        "printed_page_end": 115
+      },
+      {
+        "id": "mit-2-5-the-product-and-quotient-and-power-rules",
+        "label": "2.5",
+        "title": "The Product and Quotient and Power Rules",
+        "pdf_page_start": 30,
+        "pdf_page_end": 36,
+        "printed_page_start": 116,
+        "printed_page_end": 122
+      },
+      {
+        "id": "mit-2-6-limits",
+        "label": "2.6",
+        "title": "Limits",
+        "pdf_page_start": 37,
+        "pdf_page_end": 44,
+        "printed_page_start": 123,
+        "printed_page_end": 130
+      },
+      {
+        "id": "mit-2-7-continuous-functions",
+        "label": "2.7",
+        "title": "Continuous Functions",
+        "pdf_page_start": 45,
+        "pdf_page_end": 52,
+        "printed_page_start": 131,
+        "printed_page_end": 138
+      }
+    ]
+  },
+  {
+    "id": "mit-ch3",
+    "number": "3",
+    "title": "Applications of the Derivative",
+    "sections": [
+      {
+        "id": "mit-3-1-linear-approximation",
+        "label": "3.1",
+        "title": "Linear Approximation",
+        "pdf_page_start": 2,
+        "pdf_page_end": 6,
+        "printed_page_start": 138,
+        "printed_page_end": 142
+      },
+      {
+        "id": "mit-3-2-maximum-and-minimum-problems",
+        "label": "3.2",
+        "title": "Maximum and Minimum Problems",
+        "pdf_page_start": 7,
+        "pdf_page_end": 16,
+        "printed_page_start": 143,
+        "printed_page_end": 152
+      },
+      {
+        "id": "mit-3-3-second-derivatives-bending-and-acceleration",
+        "label": "3.3",
+        "title": "Second Derivatives: Bending and Acceleration",
+        "pdf_page_start": 17,
+        "pdf_page_end": 23,
+        "printed_page_start": 153,
+        "printed_page_end": 159
+      },
+      {
+        "id": "mit-3-4-graphs",
+        "label": "3.4",
+        "title": "Graphs",
+        "pdf_page_start": 24,
+        "pdf_page_end": 33,
+        "printed_page_start": 160,
+        "printed_page_end": 169
+      },
+      {
+        "id": "mit-3-5-parabolas-ellipses-and-hyperbolas",
+        "label": "3.5",
+        "title": "Parabolas, Ellipses, and Hyperbolas",
+        "pdf_page_start": 34,
+        "pdf_page_end": 42,
+        "printed_page_start": 170,
+        "printed_page_end": 178
+      },
+      {
+        "id": "mit-3-6-iterations-x-n-1-f-x-n",
+        "label": "3.6",
+        "title": "Iterations x(n+1) = F(x(n))",
+        "pdf_page_start": 43,
+        "pdf_page_end": 50,
+        "printed_page_start": 179,
+        "printed_page_end": 186
+      },
+      {
+        "id": "mit-3-7-newtons-method-and-chaos",
+        "label": "3.7",
+        "title": "Newton’s Method (and Chaos)",
+        "pdf_page_start": 51,
+        "pdf_page_end": 60,
+        "printed_page_start": 187,
+        "printed_page_end": 196
+      },
+      {
+        "id": "mit-3-8-the-mean-value-theorem-and-lhopitals-rule",
+        "label": "3.8",
+        "title": "The Mean Value Theorem and l’Hôpital’s Rule",
+        "pdf_page_start": 61,
+        "pdf_page_end": 69,
+        "printed_page_start": 197,
+        "printed_page_end": 205
+      }
+    ]
+  },
+  {
+    "id": "mit-ch4",
+    "number": "4",
+    "title": "Derivatives by the Chain Rule",
+    "sections": [
+      {
+        "id": "mit-4-1-the-chain-rule",
+        "label": "4.1",
+        "title": "The Chain Rule",
+        "pdf_page_start": 1,
+        "pdf_page_end": 7,
+        "printed_page_start": 204,
+        "printed_page_end": 210
+      },
+      {
+        "id": "mit-4-2-implicit-differentiation-and-related-rates",
+        "label": "4.2",
+        "title": "Implicit Differentiation and Related Rates",
+        "pdf_page_start": 8,
+        "pdf_page_end": 12,
+        "printed_page_start": 211,
+        "printed_page_end": 215
+      },
+      {
+        "id": "mit-4-3-inverse-functions-and-their-derivatives",
+        "label": "4.3",
+        "title": "Inverse Functions and Their Derivatives",
+        "pdf_page_start": 13,
+        "pdf_page_end": 19,
+        "printed_page_start": 216,
+        "printed_page_end": 222
+      },
+      {
+        "id": "mit-4-4-inverses-of-trigonometric-functions",
+        "label": "4.4",
+        "title": "Inverses of Trigonometric Functions",
+        "pdf_page_start": 20,
+        "pdf_page_end": 27,
+        "printed_page_start": 223,
+        "printed_page_end": 230
+      }
+    ]
+  },
+  {
+    "id": "mit-ch5",
+    "number": "5",
+    "title": "Integrals",
+    "sections": [
+      {
+        "id": "mit-5-1-the-idea-of-the-integral",
+        "label": "5.1",
+        "title": "The Idea of the Integral",
+        "pdf_page_start": 1,
+        "pdf_page_end": 5,
+        "printed_page_start": 229,
+        "printed_page_end": 233
+      },
+      {
+        "id": "mit-5-2-antiderivatives",
+        "label": "5.2",
+        "title": "Antiderivatives",
+        "pdf_page_start": 6,
+        "pdf_page_end": 11,
+        "printed_page_start": 234,
+        "printed_page_end": 239
+      },
+      {
+        "id": "mit-5-3-summation-versus-integration",
+        "label": "5.3",
+        "title": "Summation versus Integration",
+        "pdf_page_start": 12,
+        "pdf_page_end": 20,
+        "printed_page_start": 240,
+        "printed_page_end": 248
+      },
+      {
+        "id": "mit-5-4-indefinite-integrals-and-substitutions",
+        "label": "5.4",
+        "title": "Indefinite Integrals and Substitutions",
+        "pdf_page_start": 21,
+        "pdf_page_end": 25,
+        "printed_page_start": 249,
+        "printed_page_end": 253
+      },
+      {
+        "id": "mit-5-5-the-definite-integral",
+        "label": "5.5",
+        "title": "The Definite Integral",
+        "pdf_page_start": 26,
+        "pdf_page_end": 31,
+        "printed_page_start": 254,
+        "printed_page_end": 259
+      },
+      {
+        "id": "mit-5-6-properties-of-the-integral-and-average-value",
+        "label": "5.6",
+        "title": "Properties of the Integral and Average Value",
+        "pdf_page_start": 32,
+        "pdf_page_end": 38,
+        "printed_page_start": 260,
+        "printed_page_end": 266
+      },
+      {
+        "id": "mit-5-7-the-fundamental-theorem-and-its-applications",
+        "label": "5.7",
+        "title": "The Fundamental Theorem and Its Applications",
+        "pdf_page_start": 39,
+        "pdf_page_end": 46,
+        "printed_page_start": 267,
+        "printed_page_end": 274
+      },
+      {
+        "id": "mit-5-8-numerical-integration",
+        "label": "5.8",
+        "title": "Numerical Integration",
+        "pdf_page_start": 47,
+        "pdf_page_end": 56,
+        "printed_page_start": 275,
+        "printed_page_end": 284
+      }
+    ]
+  },
+  {
+    "id": "mit-ch6",
+    "number": "6",
+    "title": "Exponentials and Logarithms",
+    "sections": [
+      {
+        "id": "mit-6-1-an-overview",
+        "label": "6.1",
+        "title": "An Overview",
+        "pdf_page_start": 2,
+        "pdf_page_end": 9,
+        "printed_page_start": 284,
+        "printed_page_end": 291
+      },
+      {
+        "id": "mit-6-2-the-exponential-e-x",
+        "label": "6.2",
+        "title": "The Exponential e^x",
+        "pdf_page_start": 10,
+        "pdf_page_end": 16,
+        "printed_page_start": 292,
+        "printed_page_end": 298
+      },
+      {
+        "id": "mit-6-3-growth-and-decay-in-science-and-economics",
+        "label": "6.3",
+        "title": "Growth and Decay in Science and Economics",
+        "pdf_page_start": 17,
+        "pdf_page_end": 27,
+        "printed_page_start": 299,
+        "printed_page_end": 309
+      },
+      {
+        "id": "mit-6-4-logarithms",
+        "label": "6.4",
+        "title": "Logarithms",
+        "pdf_page_start": 28,
+        "pdf_page_end": 34,
+        "printed_page_start": 310,
+        "printed_page_end": 316
+      },
+      {
+        "id": "mit-6-5-separable-equations-including-the-logistic-equation",
+        "label": "6.5",
+        "title": "Separable Equations Including the Logistic Equation",
+        "pdf_page_start": 35,
+        "pdf_page_end": 43,
+        "printed_page_start": 317,
+        "printed_page_end": 325
+      },
+      {
+        "id": "mit-6-6-powers-instead-of-exponentials",
+        "label": "6.6",
+        "title": "Powers Instead of Exponentials",
+        "pdf_page_start": 44,
+        "pdf_page_end": 53,
+        "printed_page_start": 326,
+        "printed_page_end": 335
+      },
+      {
+        "id": "mit-6-7-hyperbolic-functions",
+        "label": "6.7",
+        "title": "Hyperbolic Functions",
+        "pdf_page_start": 54,
+        "pdf_page_end": 60,
+        "printed_page_start": 336,
+        "printed_page_end": 342
+      }
+    ]
+  },
+  {
+    "id": "mit-ch7",
+    "number": "7",
+    "title": "Techniques of Integration",
+    "sections": [
+      {
+        "id": "mit-7-1-integration-by-parts",
+        "label": "7.1",
+        "title": "Integration by Parts",
+        "pdf_page_start": 2,
+        "pdf_page_end": 7,
+        "printed_page_start": 342,
+        "printed_page_end": 347
+      },
+      {
+        "id": "mit-7-2-trigonometric-integrals",
+        "label": "7.2",
+        "title": "Trigonometric Integrals",
+        "pdf_page_start": 8,
+        "pdf_page_end": 14,
+        "printed_page_start": 348,
+        "printed_page_end": 354
+      },
+      {
+        "id": "mit-7-3-trigonometric-substitutions",
+        "label": "7.3",
+        "title": "Trigonometric Substitutions",
+        "pdf_page_start": 15,
+        "pdf_page_end": 21,
+        "printed_page_start": 355,
+        "printed_page_end": 361
+      },
+      {
+        "id": "mit-7-4-partial-fractions",
+        "label": "7.4",
+        "title": "Partial Fractions",
+        "pdf_page_start": 22,
+        "pdf_page_end": 26,
+        "printed_page_start": 362,
+        "printed_page_end": 366
+      },
+      {
+        "id": "mit-7-5-improper-integrals",
+        "label": "7.5",
+        "title": "Improper Integrals",
+        "pdf_page_start": 27,
+        "pdf_page_end": 33,
+        "printed_page_start": 367,
+        "printed_page_end": 373
+      }
+    ]
+  },
+  {
+    "id": "mit-ch8",
+    "number": "8",
+    "title": "Applications of the Integral",
+    "sections": [
+      {
+        "id": "mit-8-1-areas-and-volumes-by-slices",
+        "label": "8.1",
+        "title": "Areas and Volumes by Slices",
+        "pdf_page_start": 2,
+        "pdf_page_end": 11,
+        "printed_page_start": 373,
+        "printed_page_end": 382
+      },
+      {
+        "id": "mit-8-2-length-of-a-plane-curve",
+        "label": "8.2",
+        "title": "Length of a Plane Curve",
+        "pdf_page_start": 12,
+        "pdf_page_end": 16,
+        "printed_page_start": 383,
+        "printed_page_end": 387
+      },
+      {
+        "id": "mit-8-3-area-of-a-surface-of-revolution",
+        "label": "8.3",
+        "title": "Area of a Surface of Revolution",
+        "pdf_page_start": 17,
+        "pdf_page_end": 19,
+        "printed_page_start": 388,
+        "printed_page_end": 390
+      },
+      {
+        "id": "mit-8-4-probability-and-calculus",
+        "label": "8.4",
+        "title": "Probability and Calculus",
+        "pdf_page_start": 20,
+        "pdf_page_end": 27,
+        "printed_page_start": 391,
+        "printed_page_end": 398
+      },
+      {
+        "id": "mit-8-5-masses-and-moments",
+        "label": "8.5",
+        "title": "Masses and Moments",
+        "pdf_page_start": 28,
+        "pdf_page_end": 34,
+        "printed_page_start": 399,
+        "printed_page_end": 405
+      },
+      {
+        "id": "mit-8-6-force-work-and-energy",
+        "label": "8.6",
+        "title": "Force, Work, and Energy",
+        "pdf_page_start": 35,
+        "pdf_page_end": 42,
+        "printed_page_start": 406,
+        "printed_page_end": 413
+      }
+    ]
+  }
+]

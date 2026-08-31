@@ -5,12 +5,20 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+.pytest_cache/
 .venv/
 venv/
 env/
 
 # Logs / runtime data
 data/logs/*.jsonl
+data/favorites.json
+data/favorites.json.tmp
+data/chroma/
+data/models/
+data/rag/
+data/textbook/openstax-calculus-volume-1/
+data/textbook/mit-calculus/parsed/
 
 # Generated analysis artifacts
 reports/
@@ -19,6 +27,7 @@ reports/
 .DS_Store
 .idea/
 .vscode/
+.cursor/plans/
 
 # Reference working files
 reference/_extracted.txt

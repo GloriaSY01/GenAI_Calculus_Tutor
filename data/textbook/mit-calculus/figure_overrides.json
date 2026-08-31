@@ -1,0 +1,22 @@
+{
+  "asset-1-e670251d267eb84b": {
+    "figure_number": "Figure 1.7a",
+    "caption": "Linear increase in velocity: v = 1, 3, 5, 7."
+  },
+  "asset-1-643ae86111324a7f": {
+    "figure_number": "Figure 1.7b",
+    "caption": "The corresponding distances are the squares f = 0, 1, 4, 9, 16."
+  },
+  "asset-1-4f94530280127401": {
+    "figure_number": "Figure 1.8a",
+    "caption": "Piecewise constant velocity growing as powers of 2."
+  },
+  "asset-1-89fadba1f518e7fc": {
+    "figure_number": "Figure 1.8b",
+    "caption": "The corresponding distance grows exponentially as powers of 2."
+  },
+  "asset-1-6cb854b4b0e26a50": {
+    "figure_number": "Figure 1.10",
+    "caption": "Bursts of speed with equal areas produce equal distances and approach a step function."
+  }
+}
