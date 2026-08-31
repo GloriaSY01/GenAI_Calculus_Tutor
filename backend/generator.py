@@ -11,14 +11,16 @@ server-side and handed to the Socratic tutor (2.2) by id. Answers are never
 sent to the client; grading happens here.
 """
 import random
+import time
 import uuid
 from typing import Any, Dict, List, Tuple
 
-from . import llm
+from . import config, llm, rag, textbook
 from .schemas import (
     GeneratedQuestionPublic,
     GradeRequest,
     GradeResponse,
+    Language,
     Problem,
     QuestionType,
 )
@@ -96,60 +98,109 @@ _SPECS: Dict[QuestionType, str] = {
 }
 
 
-def generate_question(qtype: QuestionType, topic: str,
-                      difficulty: str = "medium") -> GeneratedQuestionPublic:
-    prompt = _BASE.format(difficulty=difficulty, topic=topic) + _SPECS[qtype]
-    data = llm.chat_to_json([
-        {"role": "system", "content": "You output only valid JSON."},
-        {"role": "user", "content": prompt},
-    ])
+def _resolve_section(topic: str) -> dict[str, Any]:
+    section = textbook.get_section(topic)
+    if section:
+        return section
+    needle = topic.strip().lower()
+    for _, candidate in textbook.iter_sections():
+        info = textbook.get_section(candidate["id"])
+        if info and needle in {
+            info["title"].lower(),
+            info["display_title"].lower(),
+        }:
+            return info
+    raise KeyError(topic)
 
-    qid = "gen_" + uuid.uuid4().hex[:10]
+
+def _citation(section: dict[str, Any], pdf_page: int | None = None) -> dict[str, Any]:
+    manifest = textbook.load_manifest()
+    page = pdf_page or int(section["pdf_page_start"])
+    return {
+        "number": 1,
+        "source": f"{manifest['book']} — {manifest['author']}",
+        "title": section["display_title"],
+        "section": section["display_title"],
+        "url": f"{manifest['source_url'].split('#', 1)[0]}#page={page}",
+        "page": page,
+    }
+
+
+def _build_record(
+    *,
+    qid: str,
+    qtype: QuestionType,
+    topic: str,
+    section_id: str,
+    difficulty: str,
+    data: dict[str, Any],
+    source: str,
+    citations: list[dict[str, Any]],
+    language: Language = "en",
+) -> Dict[str, Any]:
     record: Dict[str, Any] = {
-        "id": qid, "type": qtype, "topic": topic, "difficulty": difficulty,
+        "id": qid,
+        "type": qtype,
+        "topic": topic,
+        "section_id": section_id,
+        "difficulty": difficulty,
         "stem": data.get("stem", "").strip(),
         "explanation": data.get("explanation", "").strip(),
         "key_idea": data.get("key_idea", "").strip(),
         "solution_steps": data.get("solution_steps", []) or [],
+        "source": source,
+        "citations": citations,
+        "language": language,
+        "created_at": time.time(),
+        "attempts": 0,
     }
 
     if qtype == "single_choice":
-        record["options"] = data["options"]
-        record["correct_indices"] = [int(data["correct_index"])]
-        record["final_answer"] = data["options"][int(data["correct_index"])]
-        instructions = "Select the one correct answer."
-        public = GeneratedQuestionPublic(
-            id=qid, type=qtype, topic=topic, difficulty=difficulty,
-            stem=record["stem"], options=record["options"], instructions=instructions,
+        record["options"] = list(data["options"])
+        indices = data.get("correct_indices")
+        record["correct_indices"] = (
+            [int(index) for index in indices]
+            if indices is not None
+            else [int(data["correct_index"])]
         )
-
+        record["final_answer"] = data.get(
+            "final_answer", record["options"][record["correct_indices"][0]]
+        )
+        record["instructions"] = (
+            "请选择唯一正确答案。" if language == "zh"
+            else "Select the one correct answer."
+        )
     elif qtype == "multiple_choice":
-        record["options"] = data["options"]
+        record["options"] = list(data["options"])
         record["correct_indices"] = [int(i) for i in data["correct_indices"]]
-        record["final_answer"] = ", ".join(
-            record["options"][i] for i in record["correct_indices"]
+        record["final_answer"] = data.get(
+            "final_answer",
+            ", ".join(record["options"][i] for i in record["correct_indices"]),
         )
-        instructions = "Select ALL correct answers (more than one may apply)."
-        public = GeneratedQuestionPublic(
-            id=qid, type=qtype, topic=topic, difficulty=difficulty,
-            stem=record["stem"], options=record["options"], instructions=instructions,
+        record["instructions"] = (
+            "请选择所有正确答案（可能不止一个）。" if language == "zh"
+            else "Select ALL correct answers (more than one may apply)."
         )
-
     elif qtype == "fill_blank":
-        blanks = data["blanks"]
-        record["blank_answers"] = [
-            [b.get("answer", "")] + list(b.get("alternatives", []) or [])
-            for b in blanks
-        ]
-        record["final_answer"] = "; ".join(b.get("answer", "") for b in blanks)
-        instructions = "Fill in each blank."
-        public = GeneratedQuestionPublic(
-            id=qid, type=qtype, topic=topic, difficulty=difficulty,
-            stem=record["stem"], n_blanks=len(blanks), instructions=instructions,
+        if "blank_answers" in data:
+            record["blank_answers"] = [list(values) for values in data["blank_answers"]]
+        else:
+            blanks = data["blanks"]
+            record["blank_answers"] = [
+                [blank.get("answer", "")]
+                + list(blank.get("alternatives", []) or [])
+                for blank in blanks
+            ]
+        record["final_answer"] = data.get(
+            "final_answer",
+            "; ".join(values[0] for values in record["blank_answers"]),
         )
-
+        record["instructions"] = (
+            "请填写每个空格。" if language == "zh" else "Fill in each blank."
+        )
     else:  # drag_order
-        steps = [s.strip() for s in data["steps"] if s.strip()]
+        raw_steps = data.get("steps_correct") or data["steps"]
+        steps = [step.strip() for step in raw_steps if step.strip()]
         record["steps_correct"] = steps
         record["final_answer"] = data.get("final_answer", "").strip()
         shuffled = steps[:]
@@ -157,14 +208,124 @@ def generate_question(qtype: QuestionType, topic: str,
             while shuffled == steps:
                 random.shuffle(shuffled)
         record["steps_shuffled"] = shuffled
-        instructions = "Put the steps in the correct order."
-        public = GeneratedQuestionPublic(
-            id=qid, type=qtype, topic=topic, difficulty=difficulty,
-            stem=record["stem"], steps=shuffled, instructions=instructions,
+        record["instructions"] = (
+            "请将步骤按正确顺序排列。" if language == "zh"
+            else "Put the steps in the correct order."
         )
+    return record
 
+
+def _public(record: Dict[str, Any]) -> GeneratedQuestionPublic:
+    kwargs: dict[str, Any] = {
+        "id": record["id"],
+        "type": record["type"],
+        "topic": record["topic"],
+        "section_id": record["section_id"],
+        "difficulty": record["difficulty"],
+        "stem": record["stem"],
+        "instructions": record["instructions"],
+        "source": record["source"],
+        "citations": record["citations"],
+    }
+    if record["type"] in {"single_choice", "multiple_choice"}:
+        kwargs["options"] = record["options"]
+    elif record["type"] == "fill_blank":
+        kwargs["n_blanks"] = len(record["blank_answers"])
+    else:
+        kwargs["steps"] = record["steps_shuffled"]
+    return GeneratedQuestionPublic(**kwargs)
+
+
+def _maybe_curated(
+    qtype: QuestionType,
+    section: dict[str, Any],
+    difficulty: str,
+    language: Language = "en",
+) -> GeneratedQuestionPublic | None:
+    candidates = textbook.exercises_for(section["id"], qtype, difficulty)
+    if not candidates or random.random() >= config.TEXTBOOK_EXERCISE_RATIO:
+        return None
+    item = random.choice(candidates)
+    pdf_page = (
+        int(section["pdf_page_start"])
+        + int(item["printed_page"])
+        - int(section["printed_page_start"])
+    )
+    qid = f"tb_{item['id']}_{uuid.uuid4().hex[:6]}"
+    record = _build_record(
+        qid=qid,
+        qtype=qtype,
+        topic=section["display_title"],
+        section_id=section["id"],
+        difficulty=item["difficulty"],
+        data=item,
+        source="textbook",
+        citations=[_citation(section, pdf_page)],
+        language=language,
+    )
     _REGISTRY[qid] = record
-    return public
+    return _public(record)
+
+
+def generate_question(
+    qtype: QuestionType,
+    topic: str,
+    difficulty: str = "medium",
+    *,
+    language: Language = "en",
+) -> GeneratedQuestionPublic:
+    section = _resolve_section(topic)
+    curated = _maybe_curated(qtype, section, difficulty, language)
+    if curated:
+        return curated
+
+    retrieved: list[dict[str, Any]] = []
+    try:
+        retrieved = rag.retrieve(
+            f"Create a {difficulty} {qtype} practice question.",
+            topic=section["display_title"],
+            section_id=section["id"],
+            content_types=("concept", "example"),
+            include_figure_dependent=False,
+        )
+    except (rag.RAGUnavailable, OSError, ValueError):
+        pass
+    context = rag.format_context(retrieved)
+    prompt = _BASE.format(
+        difficulty=difficulty,
+        topic=section["display_title"],
+    )
+    prompt += (
+        "Write every student-facing JSON string in Simplified Chinese. "
+        "Keep mathematical notation unchanged.\n\n"
+        if language == "zh"
+        else "Write every student-facing JSON string in English.\n\n"
+    )
+    if context:
+        prompt += (
+            "Ground the question in the textbook context below. Do not copy a "
+            "textbook exercise verbatim and do not mention the context in the question.\n\n"
+            f"{context}\n\n"
+        )
+    prompt += _SPECS[qtype]
+    data = llm.chat_to_json([
+        {"role": "system", "content": "You output only valid JSON."},
+        {"role": "user", "content": prompt},
+    ])
+    qid = "gen_" + uuid.uuid4().hex[:10]
+    record = _build_record(
+        qid=qid,
+        qtype=qtype,
+        topic=section["display_title"],
+        section_id=section["id"],
+        difficulty=difficulty,
+        data=data,
+        source="generated",
+        citations=rag.citations(retrieved),
+        language=language,
+    )
+    _REGISTRY[qid] = record
+    return _public(record)
 
 
 def get(qid: str) -> Dict[str, Any] | None:
@@ -185,6 +346,7 @@ def grade(req: GradeRequest) -> GradeResponse:
 
     qtype = q["type"]
     correct = False
+    q["attempts"] = int(q.get("attempts", 0)) + 1
 
     if qtype == "single_choice":
         correct = req.single is not None and req.single in q["correct_indices"]
@@ -202,11 +364,24 @@ def grade(req: GradeRequest) -> GradeResponse:
         order = req.order or []
         correct = [_norm(s) for s in order] == [_norm(s) for s in q["steps_correct"]]
 
-    prefix = "Correct! " if correct else "Not quite. "
-    feedback = prefix + (q.get("explanation") or "")
+    if correct:
+        prefix = "回答正确！" if q.get("language") == "zh" else "Correct!"
+        feedback = f"{prefix} {q.get('explanation') or ''}"
+    else:
+        feedback = (
+            "还不完全正确。请重新检查第一个不确定步骤所使用的规则，"
+            "或者打开 Tutor 获取引导提示。"
+            if q.get("language") == "zh"
+            else (
+                "Not quite. Recheck the rule used in your first uncertain step, "
+                "or open the tutor for a guided hint."
+            )
+        )
     return GradeResponse(
         correct=correct, feedback=feedback.strip(),
-        correct_answer=q.get("final_answer", ""),
+        correct_answer=q.get("final_answer") if correct else None,
+        attempts=q["attempts"],
+        answer_revealed=correct,
     )
 
 
@@ -222,18 +397,23 @@ def to_problem(qid: str) -> Problem | None:
     if q.get("options"):
         letters = "ABCDEFGH"
         opts = "\n".join(f"- {letters[i]}. {o}" for i, o in enumerate(q["options"]))
-        statement = f"{statement}\n\nOptions:\n{opts}"
+        label = "选项" if q.get("language") == "zh" else "Options"
+        statement = f"{statement}\n\n{label}:\n{opts}"
     elif q.get("steps_shuffled"):
         steps = "\n".join(f"- {s}" for s in q["steps_shuffled"])
-        statement = f"{statement}\n\nSteps to order:\n{steps}"
+        label = "待排序步骤" if q.get("language") == "zh" else "Steps to order"
+        statement = f"{statement}\n\n{label}:\n{steps}"
 
     solution_steps = q.get("solution_steps") or q.get("steps_correct") or []
     return Problem(
         id=qid,
         topic=q["topic"],
+        section_id=q.get("section_id"),
         difficulty=q["difficulty"],
         tags=[q["type"]],
         statement=statement,
+        source=q.get("source", "generated"),
+        citations=q.get("citations", []),
         final_answer=q.get("final_answer", ""),
         key_idea=q.get("key_idea", ""),
         solution_steps=solution_steps,

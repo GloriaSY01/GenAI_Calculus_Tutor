@@ -1,0 +1,21 @@
+{
+  "source_id": "mit_calculus_f17",
+  "book": "Calculus",
+  "author": "Gilbert Strang",
+  "term": "Fall 2017",
+  "publisher_source": "MIT OpenCourseWare",
+  "source_url": "https://ocw.mit.edu/courses/res-18-001-calculus-fall-2023/pages/open-textbook/",
+  "license": "CC BY-NC-SA 4.0",
+  "attribution": "Calculus by Gilbert Strang, provided by MIT OpenCourseWare under CC BY-NC-SA 4.0.",
+  "pdf_files": [
+    "pdfs/chapter_01.pdf",
+    "pdfs/chapter_02.pdf",
+    "pdfs/chapter_03.pdf",
+    "pdfs/chapter_04.pdf",
+    "pdfs/chapter_05.pdf",
+    "pdfs/chapter_06.pdf",
+    "pdfs/chapter_07.pdf",
+    "pdfs/chapter_08.pdf"
+  ],
+  "default_section_id": "mit-1-1-velocity-and-distance"
+}

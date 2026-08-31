@@ -2,15 +2,14 @@
 
 *[English](README.md) | 中文*
 
-一个面向 **微积分 1（Calculus 1）** 的 GenAI 系统原型。页面**左右并排**分为两块：
+一个面向 **微积分 1（Calculus 1）** 的可溯源 GenAI 学习原型，采用聚焦式三阶段路径：
 
-- **块 A（左）— 练习（内容生成，2.1）**：由 LLM 自动生成四种题型——**单选、多选、填空、
-  拖拽排序（过程题）**——学生作答并**自动判分**。
-- **块 B（右）— 助教（AI Agent，2.2）**：一个**苏格拉底式 AI 助教**，绝不直接给答案、要求
-  学生**解释推理**、一步步引导。**默认即为自由对话**（可问任何问题），并可选择**关联**到
-  左侧当前题目。
+1. **Concept 概念**：检索 MIT Calculus 教材并生成带章节出处的知识卡；
+2. **Practice 练习**：使用已验证教材题或生成四类题型，并在服务端判分；
+3. **Tutor 助教**：通过 Chroma RAG 增强的苏格拉底 Agent，引导学生解释而非直接给答案。
 
-两块相互独立：助教本身就能单独使用，关联只是一次点击的操作。
+系统同时实现输入/输出双向护栏、服务端 Explain-to-unlock 门控、轻量学习真实性检查和
+可复现评测集。
 
 技术栈为 **FastAPI（后端）+ Streamlit（前端）**。这是毕业设计课题「大学数学中的解释驱动
 学习（explanation-driven learning）」的演示 Demo，架构上预留了之后接入 Learnvia 的空间。
@@ -45,14 +44,18 @@ GenAI_Calculus_Tutor/
 │   ├── socratic.py    # 苏格拉底式 Agent + explain-to-unlock 策略（2.2）
 │   ├── llm.py         # OpenAI 兼容客户端（重试 + 稳健 JSON）
 │   ├── guardrail.py   # 拦截"直接给我答案" / prompt injection
+│   ├── rag.py         # Chroma 检索、引用与概念卡
 │   ├── problems.py    # 加载静态题库
 │   ├── store.py       # 内存会话 + JSONL 事件日志
 │   ├── schemas.py     # pydantic 模型
 │   └── config.py      # 环境变量 / 路径
 ├── frontend/
-│   └── streamlit_app.py   # 两块：练习 + 助教
+│   └── streamlit_app.py   # 概念 → 练习 → 助教聚焦流程
 ├── data/
 │   ├── problems.json  # 12 道种子 Calc 1 题（助教也会用）
+│   ├── eval/          # 安全与评测固定样例
+│   ├── textbook/      # MIT 元数据、PDF、人工校验内容与解析资源
+│   ├── chroma/        # 本地生成的向量索引（不提交）
 │   └── logs/          # 每会话 JSONL 日志（已 gitignore）
 ├── scripts/           # 冒烟/API/生成 测试 + 分析
 ├── requirements.txt
@@ -69,7 +72,18 @@ GenAI_Calculus_Tutor/
 pip install -r requirements.txt
 ```
 
-2. 配置凭据：把 `.env.example` 复制为 `.env`，填入你的 key：
+2. 解析 MIT Fall 2017 章节 PDF，并建立 Chroma 索引：
+
+```bash
+mineru -p data/textbook/mit-calculus/pdfs -o data/textbook/mit-calculus/parsed -b pipeline -m txt -f false -t true
+python -m scripts.build_mit_toc --write
+python -m scripts.ingest_mit --chapters 1 2 3 4 5 6 7 8
+```
+
+仓库已包含八章 PDF 和人工校验后的元数据。MinerU 解析结果与 Chroma 索引属于本地运行
+产物；如果 embedding 模型不在默认位置，请配置 `RAG_EMBEDDING_MODEL_DIR`。
+
+3. 配置凭据：把 `.env.example` 复制为 `.env`，填入你的 key：
 
 ```
 LLM_BASE_URL=https://api.openlux.ai/v1
@@ -98,12 +112,8 @@ uvicorn backend.main:app --host 127.0.0.1 --port 8000
 streamlit run frontend/streamlit_app.py
 ```
 
-然后打开 Streamlit 地址（默认 http://localhost:8501）。页面左右分栏：
-
-- **左（Practice 练习）**：选主题/题型，点 **Generate** 生成题目，作答后点 **Submit** 自动判分。
-- **右（Tutor 助教）**：打开即可**自由提问**。若想针对生成的题目获得引导，点左侧
-  **🔗 Link this question to the tutor**（关联当前题目）或右侧 **Link question**；点 **Free chat**
-  可解除关联、回到自由问答。
+打开 http://localhost:8501，按照 **Concept → Practice → Tutor** 学习。概念卡和 Tutor
+会展示用于回答的 MIT 教材章节；练习答错时答案保持隐藏，可重试或进入引导。
 
 ### 学生视图 vs 老师视图
 
@@ -124,6 +134,8 @@ http://localhost:8501/?instructor=1
 |---|---|---|
 | `GET` | `/health` | 存活检查 + 模型信息 |
 | `GET` | `/topics` | 微积分主题列表 |
+| `GET` | `/concept` | 带引用的 RAG 概念卡 |
+| `GET` | `/retrieve` | 检索结果调试/老师接口 |
 | `POST` | `/generate` | 生成题目（类型/主题/难度） |
 | `POST` | `/grade` | 自动判分 |
 | `GET` | `/problems` | 公开种子题列表（不含答案） |
@@ -135,9 +147,16 @@ http://localhost:8501/?instructor=1
 
 ---
 
-## 测试
+## 测试与评测
 
-后端运行时：
+无需真实 LLM 的确定性检查：
+
+```bash
+python -m pytest -q
+python -m scripts.evaluate_agent
+```
+
+可选的在线检查（需启动后端）：
 
 ```bash
 python -m scripts.smoke_test       # LLM + Agent 行为
@@ -164,9 +183,26 @@ python -m scripts.analyze_logs    # 生成 reports/ 表格与图
 
 ## 范围与路线图
 
-**本 Demo（v0.2）：** 四种题型的 AI 内容生成 + 自动判分（2.1）、带 explain-to-unlock 的
-苏格拉底 Agent（2.2）、学生双块界面（练习 + 助教）、基础 guardrail、LaTeX 公式渲染、
-逐轮日志、A/B 条件随机分配、学生/老师双视图。
+**已实现（v0.4）：** MIT Calculus 第 1–8 章单一 Chroma collection、按 metadata 检索
+concept/example、已验证教材题与四类 RAG 出题、带引用的苏格拉底 Tutor、答错不泄露答案的
+服务端判分、Explain-to-unlock、中英文护栏、JSONL 事件日志、确定性测试与评测脚本。
 
-**后续工作（已推迟）：** 自动生题、多模态输入（手写 / 图片 / 语音）、BKT/DKT 学生建模、
-老师仪表盘、自适应难度、更强的越狱检测、以及 Learnvia 集成（LTI / 嵌入）。
+**路线图（尚未实现）：** 生成数学内容的符号验算、持久化会话、经过验证的 BKT/DKT 学生
+模型、多模态输入、聚合教师面板、自适应推荐和 LTI 集成。
+
+## 教材授权与署名
+
+知识片段来自 Gilbert Strang 编写、MIT OpenCourseWare 提供的 *Calculus*，采用
+CC BY-NC-SA 4.0 许可。本项目使用 Fall 2017 的第 1–8 章 PDF 资源；每个索引片段保留
+章节、小节、页码、图片、来源和署名信息。解析资源和生成索引不提交到仓库。
+
+## 演示与简历表述
+
+推荐演示路径：选择 **Chain Rule** → 查看带出处概念卡 → 生成练习 → 直接索答被拦截 →
+给出理由后解锁下一步提示 → 在老师视图查看推理质量、安全事件与掌握度。
+
+可用于简历的客观表述：
+
+> 构建面向微积分学习的 RAG 增强苏格拉底式 Agent，基于 Chroma 对 MIT Calculus 八章内容
+> 实现 metadata 过滤、语义检索与引用溯源；设计服务端 Explain-to-Unlock 策略及双向防剧透，并通过
+> Golden Set 评测检索命中率、引用覆盖率、策略遵循率和答案泄漏率。

@@ -530,8 +530,16 @@ STRINGS = {
 }
 
 
+def tr(language: str, english: str, chinese: str, **values) -> str:
+    """Translate inline copy used by the modular student interface."""
+    template = chinese if language == "zh" else english
+    return template.format(**values)
+
+
 def current_lang() -> str:
-    return st.session_state.get("lang", "en")
+    return st.session_state.get(
+        "language", st.session_state.get("lang", "en")
+    )
 
 
 def t(key: str) -> str:
