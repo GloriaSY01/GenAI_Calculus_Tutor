@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GenAI 微积分导师 · 作品集</title>
+<style>
+  :root {
+    --primary: #6d5efc;
+    --primary-deep: #574be0;
+    --accent: #06b6d4;
+    --ink: #1f2d3d;
+    --ink-2: #4b5563;
+    --muted: #7a8699;
+    --line: #eef1f6;
+    --bg: #f6f8fc;
+    --card: #ffffff;
+    --radius: 16px;
+    --shadow: 0 10px 30px rgba(31, 45, 61, 0.08);
+    --shadow-lg: 0 20px 50px rgba(31, 45, 61, 0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Top Nav ===== */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .brand .logo {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg, #8b7bff, #6d5efc);
+    color: #fff; display: grid; place-items: center; font-size: 17px; font-weight: 800;
+  }
+  .nav-links { display: flex; gap: 22px; font-size: 14px; color: var(--ink-2); align-items: center; }
+  .nav-links a:hover { color: var(--primary); }
+  .nav-live {
+    padding: 6px 14px; border-radius: 999px; background: var(--primary); color: #fff !important;
+    font-weight: 600; box-shadow: 0 6px 16px rgba(109,94,252,.32); transition: .2s;
+  }
+  .nav-live:hover { background: var(--primary-deep); color: #fff !important; transform: translateY(-1px); }
+  @media (max-width: 760px) { .nav-links a:not(.nav-live) { display: none; } .nav-links { gap: 0; } }
+
+  /* ===== Hero ===== */
+  .hero {
+    position: relative; overflow: hidden;
+    background: radial-gradient(1200px 500px at 15% -10%, #ecebff 0%, rgba(236,235,255,0) 60%),
+                radial-gradient(1000px 460px at 100% 0%, #e6f9ff 0%, rgba(230,249,255,0) 55%);
+    padding: 88px 0 72px;
+  }
+  .hero h1 { font-size: 44px; line-height: 1.25; letter-spacing: -0.5px; }
+  .hero h1 .grad {
+    background: linear-gradient(120deg, #6d5efc, #06b6d4);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.lead { margin-top: 18px; font-size: 18px; color: var(--ink-2); max-width: 720px; }
+  .hero .tags { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    padding: 6px 14px; border-radius: 999px; font-size: 13px;
+    background: #fff; border: 1px solid var(--line); color: var(--ink-2); box-shadow: var(--shadow);
+  }
+  .chip.solid { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .hero .cta { margin-top: 32px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    padding: 12px 22px; border-radius: 12px; font-size: 15px; font-weight: 600;
+    border: 1px solid transparent; cursor: pointer; transition: .2s;
+  }
+  .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 8px 20px rgba(109,94,252,.35); }
+  .btn-primary:hover { background: var(--primary-deep); transform: translateY(-1px); }
+  .btn-ghost { background: #fff; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+  .live-link {
+    margin-top: 18px; font-size: 14px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .live-link a {
+    color: var(--primary-deep); font-weight: 600; word-break: break-all;
+    border-bottom: 1px dashed var(--primary); padding-bottom: 1px;
+  }
+  .live-link a:hover { color: var(--primary); }
+
+  /* privacy / mock-data note */
+  .privacy-note {
+    margin-top: 22px; max-width: 720px;
+    padding: 14px 18px; border-radius: 12px;
+    background: #fff8ec; border: 1px dashed #f0c36d; color: #92600a;
+    font-size: 13.5px; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .privacy-note b { color: #7a4e04; }
+
+  /* ===== Section ===== */
+  section { padding: 74px 0; }
+  .section-tag {
+    display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 1px;
+    color: var(--primary); text-transform: uppercase; margin-bottom: 12px;
+  }
+  .section-title { font-size: 30px; letter-spacing: -0.3px; }
+  .section-desc { margin-top: 12px; color: var(--ink-2); max-width: 760px; font-size: 16px; }
+
+  /* ===== Flow strip ===== */
+  .flow-wrap { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .flow { margin-top: 30px; display: flex; align-items: stretch; gap: 14px; flex-wrap: wrap; }
+  .flow-step {
+    flex: 1; min-width: 180px; background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); position: relative;
+  }
+  .flow-step .fi { font-size: 24px; }
+  .flow-step h4 { margin: 10px 0 6px; font-size: 16px; }
+  .flow-step p { color: var(--ink-2); font-size: 13.5px; }
+  .flow-step .num { position: absolute; top: 14px; right: 16px; font-weight: 800; color: #e7e5ff; font-size: 26px; }
+
+  /* ===== Pain points ===== */
+  .pain-grid { margin-top: 34px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 900px) { .pain-grid { grid-template-columns: 1fr; } }
+  .pain-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px; box-shadow: var(--shadow); transition: .25s;
+  }
+  .pain-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  .pain-card .ic { font-size: 26px; }
+  .pain-card h3 { margin: 12px 0 8px; font-size: 18px; }
+  .pain-card p { color: var(--ink-2); font-size: 14.5px; }
+  .pain-card .fix {
+    margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line);
+    font-size: 13.5px; color: var(--primary-deep);
+  }
+  .pain-card .fix b { color: var(--primary); }
+
+  /* ===== Modules ===== */
+  .module {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+    padding: 46px 0; border-bottom: 1px solid var(--line);
+  }
+  .module:last-child { border-bottom: none; }
+  .module.reverse .m-text { order: 2; }
+  .module.reverse .m-shot { order: 1; }
+  @media (max-width: 900px) {
+    .module, .module.reverse { grid-template-columns: 1fr; gap: 24px; }
+    .module.reverse .m-text, .module.reverse .m-shot { order: initial; }
+  }
+  .m-role {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .5px;
+    padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
+  }
+  .m-role.teacher { background: #eef4ff; color: #2f6bdb; }
+  .m-role.student { background: #eafaf1; color: #16a34a; }
+  .m-index {
+    display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px;
+    background: #eeebff; color: var(--primary); font-weight: 800; font-size: 16px; margin-bottom: 14px;
+  }
+  .m-text h3 { font-size: 24px; letter-spacing: -0.2px; }
+  .m-text .m-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .m-text p.m-desc { margin-top: 14px; color: var(--ink-2); font-size: 15.5px; }
+  .m-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .m-list li { list-style: none; display: flex; gap: 10px; font-size: 14.5px; color: var(--ink-2); }
+  .m-list li::before {
+    content: "✓"; flex: 0 0 20px; height: 20px; margin-top: 2px;
+    display: grid; place-items: center; border-radius: 6px;
+    background: #eafaf1; color: #16a34a; font-size: 12px; font-weight: 800;
+  }
+  .m-shot {
+    border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line);
+    box-shadow: var(--shadow-lg); background: #fff; position: relative;
+  }
+  .m-shot .bar {
+    height: 34px; background: #f4f6fa; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 7px; padding: 0 14px;
+  }
+  .m-shot .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .m-shot .dot.r { background: #ff6159; } .m-shot .dot.y { background: #ffbd2e; } .m-shot .dot.g { background: #29c941; }
+  .m-shot img { width: 100%; display: block; }
+  .shot-frame { max-height: 460px; overflow: hidden; }
+
+  /* ===== Tech stack ===== */
+  .tech-wrap { background: #0f1b2d; color: #fff; }
+  .tech-wrap .section-tag { color: #a89bff; }
+  .tech-wrap .section-title { color: #fff; }
+  .tech-wrap .section-desc { color: #a9b6ca; }
+  .tech-grid { margin-top: 36px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  @media (max-width: 900px) { .tech-grid { grid-template-columns: repeat(2, 1fr); } }
+  .tech-card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 22px; transition: .25s;
+  }
+  .tech-card:hover { background: rgba(255,255,255,0.09); transform: translateY(-3px); }
+  .tech-card .t-cat { font-size: 12px; letter-spacing: 1px; color: #a89bff; text-transform: uppercase; }
+  .tech-card .t-name { font-size: 18px; font-weight: 700; margin: 8px 0 6px; }
+  .tech-card .t-desc { font-size: 13.5px; color: #a9b6ca; }
+
+  /* ===== Footer ===== */
+  footer { padding: 40px 0; text-align: center; color: var(--muted); font-size: 14px; }
+  footer a { color: var(--primary); }
+</style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <div class="nav">
+    <div class="container nav-inner">
+      <div class="brand"><span class="logo">∫</span><span>GenAI 微积分导师</span></div>
+      <div class="nav-links">
+        <a href="#background">项目背景</a>
+        <a href="#flow">学习闭环</a>
+        <a href="#modules">功能模块</a>
+        <a href="#tech">技术栈</a>
+        <a class="nav-live" href="https://frontend-web-sooty.vercel.app/" target="_blank" rel="noopener">在线访问 ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="container">
+      <div class="tags">
+        <span class="chip solid">GenAI · 教育</span>
+        <span class="chip">RAG 检索增强</span>
+        <span class="chip">React + Vite</span>
+        <span class="chip">ECharts</span>
+        <span class="chip">FastAPI</span>
+      </div>
+      <h1 style="margin-top:22px">GenAI <span class="grad">微积分导师</span></h1>
+      <p class="lead">
+        一套「有据可依」的大学微积分 AI 学习系统：以 <b>RAG 检索增强</b> 将回答锚定到 MIT 公开课教材并附引用，
+        用 <b>苏格拉底式引导 + 解释才解锁</b> 促使学生说清思路而非直接抄答案；
+        同时为教师提供「学情总览 / 诊断 / 布置 / 数据助手」四大看板，让教与学都可观测、可追溯。
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://frontend-web-sooty.vercel.app/" target="_blank" rel="noopener">🚀 在线访问系统</a>
+        <a class="btn btn-ghost" href="#modules">查看功能模块</a>
+        <a class="btn btn-ghost" href="#background">了解项目背景</a>
+      </div>
+      <div class="live-link">
+        在线体验地址：
+        <a href="https://frontend-web-sooty.vercel.app/" target="_blank" rel="noopener">https://frontend-web-sooty.vercel.app/</a>
+      </div>
+      <div class="privacy-note">
+        <span>🔒</span>
+        <span><b>数据说明：</b>在线站点与本页截图中的学生成绩、答题、班级学情等均为<b>模拟演示数据</b>，
+        用于展示界面与交互形式；真实学生数据涉及隐私，不对外暴露。系统在后端不可达时会自动回退到演示数据（界面右上角标有 <b>● demo data</b>）。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Background / Pain points -->
+  <section id="background">
+    <div class="container">
+      <span class="section-tag">Background</span>
+      <h2 class="section-title">项目背景与痛点</h2>
+      <p class="section-desc">
+        大模型进课堂后，最大的隐患不是「不会答」，而是「答得太快太满」：学生容易直接要答案、跳过推理，
+        而模型又可能一本正经地编造。本项目围绕「解释驱动学习」重新设计交互，针对以下核心痛点逐一给出方案。
+      </p>
+      <div class="pain-grid">
+        <div class="pain-card">
+          <div class="ic">🤖</div>
+          <h3>AI 直接给答案，学生不思考</h3>
+          <p>学生倾向于让模型「把答案给我」，跳过推理过程，练习沦为复制粘贴，学习效果无从谈起。</p>
+          <div class="fix">✦ 方案：<b>解释才解锁（Explain-to-unlock）</b>，学生须先说清"为什么/怎么做"，导师才推进下一步提示。</div>
+        </div>
+        <div class="pain-card">
+          <div class="ic">📚</div>
+          <h3>模型幻觉、内容不可溯源</h3>
+          <p>通用大模型可能编造定义与公式，学生无法判断对错，也找不到对应的教材依据。</p>
+          <div class="fix">✦ 方案：<b>RAG 基于 MIT 教材检索</b>，概念卡与导师回答均标注章节、页码与出处引用。</div>
+        </div>
+        <div class="pain-card">
+          <div class="ic">📝</div>
+          <h3>题目脱离教材，质量不齐</h3>
+          <p>随手生成的练习题常与课程进度、教材口径脱节，难度与知识点覆盖难以把控。</p>
+          <div class="fix">✦ 方案：<b>验证教材内容出题 + 受限生成</b>，四种题型围绕已验证章节，服务端判分。</div>
+        </div>
+        <div class="pain-card">
+          <div class="ic">🛡️</div>
+          <h3>易被套答案、易被注入</h3>
+          <p>"直接告诉我结果""忽略之前的规则"等话术会绕过教学意图，让引导式教学失效。</p>
+          <div class="fix">✦ 方案：<b>双向护栏</b>，拦截"索要答案"与提示注入，作答错误也不泄漏正确答案。</div>
+        </div>
+        <div class="pain-card">
+          <div class="ic">📊</div>
+          <h3>教师看不见真实学情</h3>
+          <p>学生在 AI 工具里的表现是黑盒，教师无法知道哪个知识点最薄弱、推理质量如何。</p>
+          <div class="fix">✦ 方案：<b>教师看板</b>，KPI、知识点正确率、推理质量分布、掌握度散点一目了然。</div>
+        </div>
+        <div class="pain-card">
+          <div class="ic">🔬</div>
+          <h3>缺少可复现的评估</h3>
+          <p>教学策略是否有效难以量化，改动后效果好坏全凭感觉，无法做对照实验。</p>
+          <div class="fix">✦ 方案：<b>逐轮日志 + 评估 fixtures</b>，记录推理评分/动作/掌握度，支持 explain vs control 对照。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Learning flow -->
+  <section id="flow" class="flow-wrap">
+    <div class="container">
+      <span class="section-tag">Learning Loop</span>
+      <h2 class="section-title">学生学习闭环</h2>
+      <p class="section-desc">学生侧以「概念 → 练习 → 导师」三段式聚焦流程串联，每一步都锚定教材、强调思路表达。</p>
+      <div class="flow">
+        <div class="flow-step"><span class="num">01</span><div class="fi">📖</div><h4>概念学习</h4><p>检索 MIT 教材对应章节，生成带引用出处的概念卡，先把定义讲清楚。</p></div>
+        <div class="flow-step"><span class="num">02</span><div class="fi">✍️</div><h4>练习作答</h4><p>基于验证内容出题或生成四种题型，服务端判分，错题不泄漏答案。</p></div>
+        <div class="flow-step"><span class="num">03</span><div class="fi">💬</div><h4>导师引导</h4><p>苏格拉底式追问，先解释思路再解锁下一条提示，全程可溯源。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modules -->
+  <section id="modules">
+    <div class="container">
+      <span class="section-tag">Features</span>
+      <h2 class="section-title">功能模块展示</h2>
+      <p class="section-desc">系统分为「学生端学习闭环」与「教师端数据看板」两大部分，以下按模块展示实际界面（均为模拟演示数据）。</p>
+      <div id="module-list"></div>
+    </div>
+  </section>
+
+  <!-- Tech stack -->
+  <section id="tech" class="tech-wrap">
+    <div class="container">
+      <span class="section-tag">Tech Stack</span>
+      <h2 class="section-title">技术栈</h2>
+      <p class="section-desc">前端单页应用 + FastAPI 后端 + Chroma 向量检索；无后端时前端自动回退演示数据，可独立在线预览。</p>
+      <div class="tech-grid">
+        <div class="tech-card"><div class="t-cat">Framework</div><div class="t-name">React 18</div><div class="t-desc">函数式组件 + Hooks 构建教师看板与学生学习流。</div></div>
+        <div class="tech-card"><div class="t-cat">Build Tool</div><div class="t-name">Vite</div><div class="t-desc">极速冷启动与热更新，/api 代理到 FastAPI 后端。</div></div>
+        <div class="tech-card"><div class="t-cat">Charts</div><div class="t-name">ECharts</div><div class="t-desc">KPI、知识点正确率、推理质量分布、掌握度散点可视化。</div></div>
+        <div class="tech-card"><div class="t-cat">Math</div><div class="t-name">KaTeX</div><div class="t-desc">概念卡与题目公式渲染，支持上下角标与 LaTeX 排版。</div></div>
+        <div class="tech-card"><div class="t-cat">Backend</div><div class="t-name">FastAPI</div><div class="t-desc">概念/出题/判分/会话/学情等 REST 接口，服务端判分防泄漏。</div></div>
+        <div class="tech-card"><div class="t-cat">Retrieval</div><div class="t-name">Chroma · RAG</div><div class="t-desc">MIT 微积分 1–8 章语义检索，回答附章节/页码引用。</div></div>
+        <div class="tech-card"><div class="t-cat">Routing / i18n</div><div class="t-name">React Router</div><div class="t-desc">SPA 路由 + 中英双语切换 + 明暗主题。</div></div>
+        <div class="tech-card"><div class="t-cat">Data</div><div class="t-name">Mock 演示数据</div><div class="t-desc">内置真实感演示数据，后端不可达时自动回退，保护隐私。</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      GenAI 微积分导师 · 作品集 &nbsp;|&nbsp;
+      <a href="https://frontend-web-sooty.vercel.app/" target="_blank" rel="noopener">在线体验</a>
+      &nbsp;·&nbsp; 数据均为模拟演示，真实数据因隐私不予展示
+    </div>
+  </footer>
+
+<script>
+  const modules = [
+    {
+      role: "student", roleLabel: "学生端",
+      title: "概念学习 · RAG 溯源概念卡",
+      sub: "Concept · grounded & cited",
+      desc: "检索 MIT 公开课教材对应章节，生成结构化概念卡：定义、关键思想、示例与常见误区，并标注出处引用，让每个知识点都有据可查。",
+      points: ["基于 Chroma 语义检索，锚定教材章节", "公式经 KaTeX 渲染，上下角标正常显示", "标注来源、章节与许可（MIT OCW，CC BY-NC-SA）", "可一键进入练习或向导师提问"],
+      shot: "__SHOT_5__",
+    },
+    {
+      role: "student", roleLabel: "学生端",
+      title: "练习作答 · 四种题型即时判分",
+      sub: "Practice · verified & generated",
+      desc: "基于已验证教材内容出题或按需生成题目，覆盖单选、多选、填空、排序四种题型；服务端判分，答错时不泄漏正确答案，鼓励重试或求助导师。",
+      points: ["单选 / 多选 / 填空 / 排序 四种题型", "难度可选，题目锚定当前章节主题", "服务端判分，错题不泄漏答案防套答", "可收藏题目、遇到卡点直接转交导师"],
+      shot: "__SHOT_6__",
+    },
+    {
+      role: "student", roleLabel: "学生端",
+      title: "苏格拉底导师 · 解释才解锁",
+      sub: "Tutor · explain-to-unlock",
+      desc: "引导式对话代替直接给答案：学生需先说清自己的推理，导师才推进下一条提示。全程基于教材检索，既防止套答案，也沉淀可分析的推理数据。",
+      points: ["苏格拉底式追问，逐步引导而非直接给解", "解释才解锁：先讲思路，再解锁下一步", "双向护栏拦截“索要答案”与提示注入", "逐轮记录推理评分、动作与掌握度"],
+      shot: "__SHOT_7__",
+    },
+    {
+      role: "teacher", roleLabel: "教师端",
+      title: "学情总览 · KPI 与关键洞察",
+      sub: "Overview · KPIs & insights",
+      desc: "教师进入即见班级整体画像：活跃学生、平均正确率、会话数、平均推理分等 KPI，配合自动生成的关键洞察与掌握度散点，快速把握教学全局。",
+      points: ["活跃学生 / 正确率 / 会话数 / 推理分 KPI 卡", "自动洞察：最薄弱知识点、低效作答提醒等", "掌握度散点图，识别高潜与掉队学生", "中英双语 + 明暗主题，响应式布局"],
+      shot: "__SHOT_1__",
+    },
+    {
+      role: "teacher", roleLabel: "教师端",
+      title: "学情诊断 · 知识点与推理质量",
+      sub: "Diagnose · by knowledge point",
+      desc: "按知识点拆解班级掌握情况：各章节正确率对比、推理质量分布（优秀→无），帮助教师定位到底是哪一块、哪一种能力出了问题。",
+      points: ["知识点正确率横向对比条形图", "推理质量分布环形图（优秀 / 良好 / 一般 / 弱 / 无）", "定位最需要补强的章节与能力项", "由同一套指标口径驱动，与真实数据一致"],
+      shot: "__SHOT_2__",
+    },
+    {
+      role: "teacher", roleLabel: "教师端",
+      title: "布置练习 · 题组搭建与计划",
+      sub: "Assign · problem-set builder",
+      desc: "可视化搭建练习题组：选择知识点、题型、难度与数量，支持快捷模板一键套用，并管理已布置的计划任务（新建 / 删除）。",
+      points: ["按知识点 / 题型 / 难度 / 数量组卷", "快捷模板一键生成常用题组", "计划任务列表：查看、新建、删除", "与后端 /assignments 接口对接（含回退）"],
+      shot: "__SHOT_3__",
+    },
+    {
+      role: "teacher", roleLabel: "教师端",
+      title: "数据助手 · 自然语言问学情",
+      sub: "Assistant · NL Q&A over class data",
+      desc: "用大白话向系统提问班级数据：“哪个知识点最需要关注？”，助手基于当前学情给出结论与练习建议；模型不可达时回退为规则化摘要。",
+      points: ["自然语言问答，聚焦班级真实学情", "给出结论 + 可执行的练习建议", "内置常见问题快捷入口", "模型不可用时回退为规则化摘要"],
+      shot: "__SHOT_4__",
+    },
+  ];
+
+  const wrap = document.getElementById("module-list");
+  modules.forEach((m, i) => {
+    const reverse = i % 2 === 1 ? "reverse" : "";
+    const num = String(i + 1).padStart(2, "0");
+    const li = m.points.map(p => `<li>${p}</li>`).join("");
+    wrap.insertAdjacentHTML("beforeend", `
+      <div class="module ${reverse}">
+        <div class="m-text">
+          <span class="m-role ${m.role}">${m.roleLabel}</span>
+          <div class="m-index">${num}</div>
+          <h3>${m.title}</h3>
+          <div class="m-sub">${m.sub}</div>
+          <p class="m-desc">${m.desc}</p>
+          <ul class="m-list">${li}</ul>
+        </div>
+        <div class="m-shot">
+          <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+          <div class="shot-frame"><img src="${m.shot}" alt="${m.title}" loading="lazy" /></div>
+        </div>
+      </div>
+    `);
+  });
+</script>
+</body>
+</html>
