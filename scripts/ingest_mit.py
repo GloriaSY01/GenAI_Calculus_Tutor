@@ -152,7 +152,10 @@ def _raw_chunks(
     )
     content_file = base_dir / f"chapter_{chapter:02d}_content_list.json"
     if not content_file.exists():
-        raise FileNotFoundError(f"Missing MinerU output: {content_file}")
+        # Raw MinerU output is optional: when it is absent the collection is
+        # built from verified content and curated exercises only. Existing
+        # figure metadata is preserved separately in build_chunks().
+        return [], {}
 
     chunks: list[dict[str, Any]] = []
     figures: dict[str, dict[str, Any]] = {}
@@ -273,6 +276,11 @@ def build_chunks(chapters: Iterable[int]) -> tuple[list[dict[str, Any]], dict[st
     verified_sections = {chunk["section_id"] for chunk in verified}
     curated_exercises = _curated_exercises(section_ids)
     figures: dict[str, Any] = {}
+    # Seed with previously parsed figure metadata so verified-content figure
+    # references still resolve even when raw MinerU output is unavailable.
+    existing_figures_file = config.TEXTBOOK_DIR / "figures.json"
+    if existing_figures_file.exists():
+        figures.update(_read_json(existing_figures_file))
     raw_chunks: list[dict[str, Any]] = []
     for chapter in sorted(chapter_set):
         raw, chapter_figures = _raw_chunks(chapter, by_page, verified_sections)

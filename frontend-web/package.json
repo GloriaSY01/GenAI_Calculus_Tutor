@@ -1,0 +1,24 @@
+{
+  "name": "genai-calculus-tutor-teacher",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Teacher dashboard for GenAI Calculus Tutor — Vite + React rewrite of the Streamlit teacher app.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "echarts": "^5.5.1",
+    "echarts-for-react": "^3.0.2",
+    "katex": "^0.16.47",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.8"
+  }
+}

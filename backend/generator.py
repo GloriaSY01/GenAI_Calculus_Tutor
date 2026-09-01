@@ -11,6 +11,7 @@ server-side and handed to the Socratic tutor (2.2) by id. Answers are never
 sent to the client; grading happens here.
 """
 import random
+import re
 import time
 import uuid
 from typing import Any, Dict, List, Tuple
@@ -308,10 +309,70 @@ def generate_question(
             f"{context}\n\n"
         )
     prompt += _SPECS[qtype]
-    data = llm.chat_to_json([
-        {"role": "system", "content": "You output only valid JSON."},
-        {"role": "user", "content": prompt},
-    ])
+    citations = rag.citations(retrieved) or [_citation(section)]
+    source = "generated"
+    try:
+        data = llm.chat_to_json([
+            {"role": "system", "content": "You output only valid JSON."},
+            {"role": "user", "content": prompt},
+        ])
+    except Exception:
+        # Demo/offline fallback: still ground the question in real MIT textbook
+        # chunks instead of returning a fake/demo frontend question when no LLM
+        # key is configured.
+        source = "textbook"
+        excerpt = (retrieved[0]["text"] if retrieved else section["display_title"]).strip()
+        first_sentence = re.split(r"(?<=[.!?])\s+", excerpt)[0][:220]
+        title = section["display_title"]
+        if qtype == "single_choice":
+            data = {
+                "stem": f"Which statement is best supported by the textbook section '{title}'?",
+                "options": [
+                    first_sentence,
+                    "The section says this topic is unrelated to rates of change.",
+                    "The section says formulas should be memorized without interpretation.",
+                    "The section says this topic only appears in algebra, not calculus.",
+                ],
+                "correct_index": 0,
+                "explanation": "The first option is directly grounded in the MIT textbook excerpt for this section.",
+                "key_idea": title,
+                "solution_steps": ["Read the excerpt.", "Identify the statement that matches it.", "Choose the grounded option."],
+            }
+        elif qtype == "multiple_choice":
+            data = {
+                "stem": f"Select the statements that match the textbook discussion of '{title}'.",
+                "options": [
+                    first_sentence,
+                    f"This question is about {title}.",
+                    "The topic is unrelated to Calculus 1.",
+                    "The textbook source should be ignored.",
+                ],
+                "correct_indices": [0, 1],
+                "explanation": "The correct statements are grounded in the section title and excerpt.",
+                "key_idea": title,
+                "solution_steps": ["Match each option against the excerpt.", "Select only supported claims."],
+            }
+        elif qtype == "fill_blank":
+            data = {
+                "stem": f"This MIT textbook section is about ___ .",
+                "blanks": [{"answer": title, "alternatives": [section["title"]]}],
+                "explanation": "The blank is the section topic shown in the textbook citation.",
+                "key_idea": title,
+                "solution_steps": ["Use the section title as the topic."],
+            }
+        else:
+            data = {
+                "stem": f"Arrange the steps for studying the textbook section '{title}'.",
+                "steps": [
+                    "Read the textbook excerpt carefully.",
+                    "Identify the main calculus idea.",
+                    "Connect the idea to the section title.",
+                    "Use the idea to answer the question.",
+                ],
+                "final_answer": title,
+                "explanation": "The order follows a normal reading-to-application workflow grounded in the section.",
+                "key_idea": title,
+            }
     qid = "gen_" + uuid.uuid4().hex[:10]
     record = _build_record(
         qid=qid,
@@ -320,8 +381,8 @@ def generate_question(
         section_id=section["id"],
         difficulty=difficulty,
         data=data,
-        source="generated",
-        citations=rag.citations(retrieved),
+        source=source,
+        citations=citations,
         language=language,
     )
     _REGISTRY[qid] = record

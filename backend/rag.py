@@ -282,6 +282,36 @@ def _clean_excerpt(text: str, limit: int = 900) -> str:
 
 
 @lru_cache(maxsize=1)
+def _clean_caption(text: str) -> str:
+    """Normalize MinerU/OCR artifacts in Strang figure captions.
+
+    The scanned source renders some glyphs oddly: a standalone ``D`` is the
+    ``=`` sign and a standalone ``C`` is ``+``. Inline math also arrives as
+    ``$f = 6 0 t$`` with the delimiters kept and digits spaced apart.
+    """
+    if not text:
+        return text
+
+    def fix_math(inner: str) -> str:
+        inner = re.sub(r"(?<=\d)\s+(?=\d)", "", inner)        # "6 0"  -> "60"
+        inner = re.sub(r"(?<=\d)\s+(?=[A-Za-z])", "", inner)  # "60 t" -> "60t"
+        inner = re.sub(r"(?<=[A-Za-z])\s+(?=\()", "", inner)  # "f ("  -> "f("
+        inner = re.sub(r"\(\s+", "(", inner)                   # "( 6"  -> "(6"
+        inner = re.sub(r"\s+\)", ")", inner)                   # "6 )"  -> "6)"
+        inner = re.sub(r"\s+([.,;])", r"\1", inner)            # "0 ."  -> "0."
+        return inner
+
+    # Normalize the interior of inline-math spans, then drop the $ delimiters.
+    text = re.sub(r"\$(.+?)\$", lambda m: fix_math(m.group(1)), text)
+    text = text.replace("$", "")
+    # OCR glyph fixes for equation signs that survive as bare capitals.
+    text = re.sub(r"(?<=\s)D(?=\s)", "=", text)
+    text = re.sub(r"(?<=\s)C(?=\s)", "+", text)
+    text = re.sub(r"\s{2,}", " ", text).strip()
+    return text
+
+
+@lru_cache(maxsize=1)
 def _figures() -> dict[str, dict[str, Any]]:
     path = config.TEXTBOOK_DIR / "figures.json"
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
@@ -313,6 +343,7 @@ def _figure_payload(
             caption,
             flags=re.IGNORECASE,
         ).strip()
+    caption = _clean_caption(caption)
     return {
         "id": figure_id,
         "url": f"/textbook-assets/{path}",
@@ -362,11 +393,14 @@ def section_page(section_id: str) -> dict[str, Any]:
                 continue
             shown_figures.add(figure_id)
             figures.append(figure)
+        heading = chunk["title"]
+        if chunk.get("subtype") == "textbook_excerpt" and heading == meta["display_title"]:
+            heading = "Overview" if not content else "Concept"
         content.append({
             "id": chunk["id"],
             "content_type": chunk["content_type"],
             "subtype": chunk.get("subtype", chunk["content_type"]),
-            "heading": chunk["title"],
+            "heading": heading,
             "text": _clean_excerpt(str(chunk["text"]), 1400),
             "formulas": chunk.get("formulas", []),
             "order": int(chunk.get("order", 0)),

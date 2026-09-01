@@ -10,6 +10,12 @@ __pycache__/
 venv/
 env/
 
+# Node / frontend build
+node_modules/
+frontend-web/dist/
+frontend-web/.vite-dev.log
+*.log
+
 # Logs / runtime data
 data/logs/*.jsonl
 data/favorites.json
