@@ -1,0 +1,162 @@
+{
+  "mit-1-1-concept-velocity-distance": [
+    "\\displaystyle v = \\text{slope of } f",
+    "\\displaystyle \\Delta f = \\text{signed area under } v"
+  ],
+  "mit-1-1-rule-constant-velocity": [
+    "\\displaystyle f(t) = f(0) + vt",
+    "\\displaystyle v = \\frac{f(t_2)-f(t_1)}{t_2-t_1}",
+    "\\displaystyle f(t_2)-f(t_1) = v(t_2-t_1)"
+  ],
+  "mit-1-1-example-forward-back": [
+    "\\displaystyle f(T) = VT",
+    "\\displaystyle f(2T) = VT - VT = 0",
+    "\\displaystyle A = \\text{velocity} \\times \\text{time}"
+  ],
+  "mit-1-1-concept-functions": [
+    "\\displaystyle f: \\text{domain} \\to \\text{range}",
+    "\\displaystyle f(t) = vt + C",
+    "\\displaystyle \\text{slope of } (vt+C) = v"
+  ],
+  "mit-1-1-example-break-even": [
+    "\\displaystyle \\operatorname{cost}(x) = 1200 + 30x",
+    "\\displaystyle \\operatorname{income}(x) = 40x",
+    "\\displaystyle 1200 + 30x = 40x",
+    "\\displaystyle x = 120"
+  ],
+  "mit-1-2-definition-differences": [
+    "\\displaystyle v_j = f_j - f_{j-1}",
+    "\\displaystyle f_j = f_{j-1} + v_j",
+    "\\displaystyle f_n-f_0 = \\sum_{j=1}^{n} v_j"
+  ],
+  "mit-1-2-rule-piecewise-linear": [
+    "\\displaystyle v = \\frac{\\Delta f}{\\Delta t}",
+    "\\displaystyle \\Delta f = v\\,\\Delta t",
+    "\\displaystyle f(t_{\\mathrm{end}})-f(t_{\\mathrm{start}}) = \\text{area under } v"
+  ],
+  "mit-1-2-example-composition": [
+    "\\displaystyle g(t) = 2t + 1",
+    "\\displaystyle f(t) = 4t",
+    "\\displaystyle f(g(t)) = 4(2t+1) = 8t+4",
+    "\\displaystyle \\operatorname{slope}(f\\circ g) = 4\\cdot 2 = 8"
+  ],
+  "mit-1-2-concept-step": [
+    "\\displaystyle \\text{distance from burst} = VT",
+    "\\displaystyle VT = 1",
+    "\\displaystyle T = \\frac{1}{V}",
+    "\\displaystyle \\lim_{V\\to\\infty} T = 0"
+  ],
+  "mit-1-2-example-two-speed": [
+    "\\displaystyle f(t) = 2t \\quad (t\\le 5)",
+    "\\displaystyle f(5) = 10",
+    "\\displaystyle f(t) = 10+3(t-5) \\quad (t\\ge 5)",
+    "\\displaystyle f(10) = 25"
+  ],
+  "mit-1-3-definition-average-velocity": [
+    "\\displaystyle v_{\\mathrm{avg}} = \\frac{f(t+h)-f(t)}{h}",
+    "\\displaystyle v_{\\mathrm{avg}} = \\frac{\\Delta f}{\\Delta t}",
+    "\\displaystyle \\text{secant slope} = \\frac{f(B)-f(A)}{B-A}"
+  ],
+  "mit-1-3-definition-instantaneous": [
+    "\\displaystyle v(t) = \\lim_{h\\to 0} \\frac{f(t+h)-f(t)}{h}",
+    "\\displaystyle v(t) = f'(t)",
+    "\\displaystyle \\text{tangent slope} = \\text{instantaneous velocity}"
+  ],
+  "mit-1-3-example-square": [
+    "\\displaystyle f(t+h) = (t+h)^2",
+    "\\displaystyle \\frac{(t+h)^2-t^2}{h} = 2t+h",
+    "\\displaystyle \\lim_{h\\to 0}(2t+h) = 2t",
+    "\\displaystyle v(t) = 2t"
+  ],
+  "mit-1-3-rule-constant-acceleration": [
+    "\\displaystyle f(t) = \\frac{1}{2}at^2+bt+c",
+    "\\displaystyle v(t) = at+b",
+    "\\displaystyle a(t) = a",
+    "\\displaystyle f(0) = c",
+    "\\displaystyle v(0) = b"
+  ],
+  "mit-1-3-concept-local-global": [
+    "\\displaystyle v(t) \\text{ depends on } f \\text{ near } t",
+    "\\displaystyle f(t) = f(0) + \\text{accumulated area under } v"
+  ],
+  "mit-1-4-concept-position-on-circle": [
+    "\\displaystyle x^2+y^2=1",
+    "\\displaystyle x=\\cos t",
+    "\\displaystyle y=\\sin t",
+    "\\displaystyle \\text{angle}=t\\text{ radians}"
+  ],
+  "mit-1-4-definition-radian-measure": [
+    "\\displaystyle 2\\pi\\text{ radians}=360^\\circ",
+    "\\displaystyle 1\\text{ radian}=\\frac{360^\\circ}{2\\pi}",
+    "\\displaystyle \\text{arc length}=r\\theta",
+    "\\displaystyle \\text{arc}=\\theta\\quad\\text{when }r=1"
+  ],
+  "mit-1-4-rule-velocity-on-circle": [
+    "\\displaystyle \\text{speed}=1",
+    "\\displaystyle \\mathbf v=(-\\sin t,\\cos t)",
+    "\\displaystyle \\mathbf v\\perp\\text{radius}"
+  ],
+  "mit-1-4-concept-harmonic-motion": [
+    "\\displaystyle f(t)=\\sin t",
+    "\\displaystyle -1\\le\\text{height}\\le 1",
+    "\\displaystyle \\text{speed}=0\\text{ at the top and bottom, and }1\\text{ at the center}"
+  ],
+  "mit-1-4-rule-slope-of-sine": [
+    "\\displaystyle \\frac{d}{dt}(\\sin t)=\\cos t",
+    "\\displaystyle \\frac{d}{dt}(\\cos t)=-\\sin t"
+  ],
+  "mit-1-4-example-double-speed": [
+    "\\displaystyle x=\\cos 2t",
+    "\\displaystyle y=\\sin 2t",
+    "\\displaystyle \\text{period}=\\pi",
+    "\\displaystyle \\mathbf v=(-2\\sin 2t,2\\cos 2t)",
+    "\\displaystyle \\text{speed}=2"
+  ],
+  "mit-1-5-definition-six-ratios": [
+    "\\displaystyle \\cos\\theta=\\frac{x}{r}",
+    "\\displaystyle \\sin\\theta=\\frac{y}{r}",
+    "\\displaystyle \\tan\\theta=\\frac{y}{x}=\\frac{\\sin\\theta}{\\cos\\theta}",
+    "\\displaystyle \\sec\\theta=\\frac{1}{\\cos\\theta}",
+    "\\displaystyle \\csc\\theta=\\frac{1}{\\sin\\theta}",
+    "\\displaystyle \\cot\\theta=\\frac{1}{\\tan\\theta}"
+  ],
+  "mit-1-5-definition-radian-angle": [
+    "\\displaystyle 360^\\circ=2\\pi\\text{ radians}",
+    "\\displaystyle 180^\\circ=\\pi\\text{ radians}",
+    "\\displaystyle 90^\\circ=\\frac{\\pi}{2}\\text{ radians}",
+    "\\displaystyle \\text{arc length}=r\\theta"
+  ],
+  "mit-1-5-rule-even-odd-periodic": [
+    "\\displaystyle \\cos(-x)=\\cos x",
+    "\\displaystyle \\sin(-x)=-\\sin x",
+    "\\displaystyle \\tan(-x)=-\\tan x",
+    "\\displaystyle \\text{period of }\\sin x\\text{ and }\\cos x=2\\pi",
+    "\\displaystyle \\text{period of }\\tan x=\\pi"
+  ],
+  "mit-1-5-rule-identities": [
+    "\\displaystyle \\sin^2x+\\cos^2x=1",
+    "\\displaystyle \\sin(x+y)=\\sin x\\cos y+\\cos x\\sin y",
+    "\\displaystyle \\cos(x+y)=\\cos x\\cos y-\\sin x\\sin y",
+    "\\displaystyle \\cos 2x=1-2\\sin^2x"
+  ],
+  "mit-1-5-example-values-2pi-3": [
+    "\\displaystyle \\cos\\frac{2\\pi}{3}=-\\frac12",
+    "\\displaystyle \\sin\\frac{2\\pi}{3}=\\frac{\\sqrt3}{2}",
+    "\\displaystyle \\tan\\frac{2\\pi}{3}=-\\sqrt3",
+    "\\displaystyle \\sec\\frac{2\\pi}{3}=-2"
+  ],
+  "mit-1-6-concept-sampling-sine": [
+    "\\displaystyle y=\\sin n\\quad(n\\in\\mathbb Z)",
+    "\\displaystyle \\sin x\\text{ is continuous; }\\sin n\\text{ samples it}"
+  ],
+  "mit-1-6-concept-pi-approximations": [
+    "\\displaystyle \\frac{22}{7}\\approx\\pi",
+    "\\displaystyle \\sin 22=\\sin(22-7\\pi)\\approx 0.01",
+    "\\displaystyle \\sin 44\\approx 0.02"
+  ],
+  "mit-1-6-concept-aliasing-moire": [
+    "\\displaystyle \\text{about }44\\text{ apparent sine curves}",
+    "\\displaystyle y=\\sin\\left(\\frac{x}{7810}\\right)",
+    "\\displaystyle \\text{period}\\approx 15620"
+  ]
+}

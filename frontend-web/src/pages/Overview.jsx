@@ -1,10 +1,11 @@
+import { displayLabel, localizeInsight } from '../localization.js'
 import { useNavigate } from 'react-router-dom'
 import { useLang } from '../i18n.jsx'
 import { useAnalytics } from '../components/hooks.js'
-import { Card, Kpi, Badge, Bar, Loading, MockPill, Chart, StatStrip } from '../components/ui.jsx'
+import { Card, Kpi, Badge, Bar, Loading, MockPill, StatStrip } from '../components/ui.jsx'
 
 export default function Overview() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const navigate = useNavigate()
   const { loading, data, error, reload } = useAnalytics()
 
@@ -21,7 +22,6 @@ export default function Overview() {
   )
 
   const k = data.kpis || {}
-  const cond = data.conditions || []
   const rMax = k.reasoning_score_max || data.reasoning_max || 4
   const topics = data.by_topic || []
   const ex = data.extra || {}
@@ -35,9 +35,8 @@ export default function Overview() {
         <MockPill show={data._mock} />
       </div>
 
-      <div className="grid cols-4">
+      <div className="grid cols-3">
         <Kpi label={t('kpi_accuracy')}  value={((k.avg_accuracy ?? 0) * 100).toFixed(0)} unit="%" delta={k.avg_accuracy_delta} sub={t('kpi_solve_sub')} />
-        <Kpi label={t('kpi_mastery')}   value={(ex.avg_final_mastery ?? 0).toFixed(1)} delta={null} sub={t('kpi_mastery_sub')} />
         <Kpi label={t('kpi_students')}  value={k.active_students ?? 0} delta={k.active_students_delta} sub={t('kpi_students_sub')} />
         <Kpi label={t('kpi_sessions')}  value={(k.problems_solved ?? 0).toLocaleString()} delta={k.problems_solved_delta} sub={t('kpi_sessions_sub').replace('{n}', (ex.n_turns ?? 0).toLocaleString())} />
       </div>
@@ -54,7 +53,7 @@ export default function Overview() {
           {(!data.insights || data.insights.length === 0)
             ? <div className="muted">{t('insights_empty')}</div>
             : <div className="stack" style={{ gap: 14 }}>
-                {data.insights.map((it, i) => (
+                {data.insights.map(it => localizeInsight(it, lang)).map((it, i) => (
                   <div key={i} className="row" style={{ alignItems: 'start', gap: 12 }}>
                     <Badge level={it.level}>
                       {it.level === 'bad' ? '!' : it.level === 'warn' ? '~' : '✓'}
@@ -78,40 +77,6 @@ export default function Overview() {
         </Card>
       </div>
 
-      {cond.length > 0 ? (
-        <Card title={t('condition_compare')} icon="⚖️" sub={t('condition_sub')}>
-          <Chart height={260} option={{
-            tooltip: { trigger: 'axis' },
-            legend: { data: [t('kpi_accuracy'), t('kpi_reasoning')], bottom: 0 },
-            xAxis: { type: 'category', data: cond.map(c => c.condition) },
-            yAxis: [{ type: 'value', max: 100, name: '%' }, { type: 'value', max: rMax, name: `/${rMax}` }],
-            series: [
-              { name: t('kpi_accuracy'), type: 'bar', barWidth: 34, itemStyle: { borderRadius: [6, 6, 0, 0] },
-                data: cond.map(c => +(c.accuracy * 100).toFixed(1)) },
-              { name: t('kpi_reasoning'), type: 'line', yAxisIndex: 1, smooth: true, symbolSize: 8,
-                data: cond.map(c => c.reasoning) },
-            ],
-          }} />
-        </Card>
-      ) : (
-        <Card title={t('mastery_vs_reasoning')} icon="🎯" sub={t('mastery_vs_reasoning_sub')}>
-          <Chart height={280} option={{
-            tooltip: {
-              trigger: 'item',
-              formatter: (p) => `${p.data[2]}<br/>${t('kpi_reasoning')}: ${p.data[0]}/${rMax}<br/>${t('kpi_mastery')}: ${p.data[1]}`,
-            },
-            xAxis: { type: 'value', name: t('kpi_reasoning'), max: rMax, min: 0 },
-            yAxis: { type: 'value', name: t('kpi_mastery'), max: 100, min: 0 },
-            series: [{
-              type: 'scatter', symbolSize: (d) => 14 + Math.sqrt(d[3] || 1) * 3,
-              data: topics.map(x => [x.reasoning, x.mastery, x.topic, x.attempts]),
-              itemStyle: { color: '#3b66f0', opacity: .8 },
-              label: { show: true, formatter: (p) => p.data[2], position: 'top', color: 'var(--text-2)', fontSize: 11 },
-            }],
-          }} />
-        </Card>
-      )}
-
       <Card title={t('topic_health')} icon="🩺" sub={t('topic_health_sub')}>
         <table className="tbl">
           <thead>
@@ -125,8 +90,8 @@ export default function Overview() {
           </thead>
           <tbody>
             {topics.map((row) => (
-              <tr key={row.topic}>
-                <td style={{ fontWeight: 700 }}>{row.topic}</td>
+              <tr key={displayLabel(row.topic, lang)}>
+                <td style={{ fontWeight: 700 }}>{displayLabel(row.topic, lang)}</td>
                 <td>
                   <div className="row" style={{ gap: 10 }}>
                     <div style={{ flex: 1 }}><Bar value={row.accuracy} /></div>

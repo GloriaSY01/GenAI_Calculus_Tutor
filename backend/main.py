@@ -141,14 +141,14 @@ def get_learning_path():
 # Teacher analytics (class-level)
 # --------------------------------------------------------------------------- #
 @app.get("/analytics/class", response_model=ClassAnalytics)
-def get_class_analytics():
-    return analytics.compute()
+def get_class_analytics(class_id: str | None = None):
+    return analytics.compute(class_id)
 
 
 @app.post("/analytics/ask", response_model=AnalyticsAnswer)
 def ask_analytics(req: AnalyticsQuery):
-    data = analytics.compute()
-    answer, llm_available = analytics.answer_question(req.question, data)
+    data = analytics.compute(req.class_id)
+    answer, llm_available = analytics.answer_question(req.question, data, req.language)
     return AnalyticsAnswer(answer=answer, grounded_on=data,
                            llm_available=llm_available)
 
@@ -157,8 +157,9 @@ def ask_analytics(req: AnalyticsQuery):
 # Assignments (teacher -> class)
 # --------------------------------------------------------------------------- #
 @app.get("/assignments", response_model=list[Assignment])
-def get_assignments():
-    return assignments.list_assignments()
+def get_assignments(class_id: str | None = None):
+    records = assignments.list_assignments()
+    return [record for record in records if not class_id or record.class_id == class_id]
 
 
 @app.post("/assignments", response_model=Assignment)
@@ -178,7 +179,8 @@ def delete_assignment(assignment_id: str):
 def generate(req: GenerateRequest):
     try:
         return generator.generate_question(
-            req.type, req.topic, req.difficulty, language=req.language
+            req.type, req.topic, req.difficulty, language=req.language,
+            exclude_stems=req.exclude_stems,
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Unknown section") from exc

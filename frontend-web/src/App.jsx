@@ -6,6 +6,8 @@ import Diagnose from './pages/Diagnose.jsx'
 import Assign from './pages/Assign.jsx'
 import Assistant from './pages/Assistant.jsx'
 import StudentApp from './pages/StudentApp.jsx'
+import { api } from './api.js'
+import { TeacherClassContext } from './components/TeacherClass.jsx'
 
 const NAV = [
   { to: '/overview',  key: 'nav_overview',  ic: '📊', group: 'main' },
@@ -75,7 +77,10 @@ export default function App() {
 }
 
 function TeacherApp({ controls }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
+  const [classId, setClassId] = useState('')
+  const [classes, setClasses] = useState([])
+  useEffect(() => { api.getClasses().then(res => setClasses(Array.isArray(res) ? res : res.classes || [])) }, [])
   const loc = useLocation()
   const titleKey = TITLES[loc.pathname] || 'app_title'
 
@@ -91,6 +96,13 @@ function TeacherApp({ controls }) {
         </div>
 
         <div className="nav-group-label">{t('nav_group_main')}</div>
+        <label style={{ display: 'block', marginBottom: 16 }}>
+          <span className="ctrl-label">{lang === 'zh' ? '当前班级' : 'Current class'}</span>
+          <select className="inp" value={classId} onChange={e => setClassId(e.target.value)}>
+            <option value="">{lang === 'zh' ? '全部记录（含未分班）' : 'All records (including unassigned)'}</option>
+            {classes.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+          </select>
+        </label>
         {NAV.filter((n) => n.group === 'main').map((n) => (
           <NavLink key={n.to} to={n.to} className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
             <span className="ic">{n.ic}</span>{t(n.key)}
@@ -116,7 +128,8 @@ function TeacherApp({ controls }) {
           <div className="topbar-spacer" />
         </header>
 
-        <div className="content" key={loc.pathname}>
+        <TeacherClassContext.Provider value={classId}>
+        <div className="content" key={loc.pathname + classId}>
           <Routes>
             <Route path="/" element={<Navigate to="/overview" replace />} />
             <Route path="/overview" element={<Overview />} />
@@ -126,6 +139,7 @@ function TeacherApp({ controls }) {
             <Route path="*" element={<Navigate to="/overview" replace />} />
           </Routes>
         </div>
+        </TeacherClassContext.Provider>
       </main>
     </div>
   )

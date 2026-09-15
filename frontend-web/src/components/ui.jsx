@@ -77,12 +77,9 @@ export function Empty({ icon = '🗂️', children }) {
 }
 
 export function MockPill({ show }) {
+  const { t } = useLang()
   if (!show) return null
-  return (
-    <span className="badge warn" title="Backend unreachable — showing demo data">
-      ● demo data
-    </span>
-  )
+  return <span className="badge warn" title={t('demo_tip')}>{t('demo_data')}</span>
 }
 
 /* ---- Chart theme helper: reads CSS vars so charts match light/dark ---- */

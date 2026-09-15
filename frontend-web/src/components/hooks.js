@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
+import { useTeacherClass } from './TeacherClass.jsx'
 
 export function useAsync(fn, deps = []) {
   const [state, setState] = useState({ loading: true, data: null, error: null })
@@ -16,4 +17,7 @@ export function useAsync(fn, deps = []) {
   return { ...state, reload: run }
 }
 
-export const useAnalytics = () => useAsync(() => api.getClassAnalytics(), [])
+export const useAnalytics = () => {
+  const classId = useTeacherClass()
+  return useAsync(() => api.getClassAnalytics(classId), [classId])
+}

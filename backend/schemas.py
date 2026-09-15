@@ -91,6 +91,7 @@ class StartSessionResponse(BaseModel):
 
 
 class TextbookFigure(BaseModel):
+    available: bool = True
     id: str
     url: str
     figure_number: str = ""
@@ -165,6 +166,7 @@ class GenerateRequest(BaseModel):
     topic: str
     difficulty: str = "medium"
     language: Language = "en"
+    exclude_stems: List[str] = Field(default_factory=list, max_length=50)
 
 
 class GeneratedQuestionPublic(BaseModel):
@@ -253,9 +255,11 @@ class AnalyticsInsight(BaseModel):
     severity: Literal["info", "warning", "critical"]
     title: str
     detail: str
+    params: dict = Field(default_factory=dict)
 
 
 class ClassAnalytics(BaseModel):
+    practice: List[dict] = Field(default_factory=list)
     n_sessions: int
     n_students: int
     n_turns: int
@@ -271,7 +275,9 @@ class ClassAnalytics(BaseModel):
 
 
 class AnalyticsQuery(BaseModel):
+    class_id: Optional[str] = None
     question: str
+    language: Language = "en"
 
 
 class AnalyticsAnswer(BaseModel):
@@ -302,6 +308,7 @@ class AssignmentCreate(BaseModel):
     title: str
     note: str = ""
     items: List[AssignmentItem]
+    class_id: Optional[str] = None
 
 
 class Assignment(AssignmentCreate):

@@ -1,8 +1,10 @@
+import { displayLabel } from '../localization.js'
 import { useState } from 'react'
 import { useLang } from '../i18n.jsx'
 import { useAsync } from '../components/hooks.js'
 import { api } from '../api.js'
 import { Card, Loading, MockPill, Empty } from '../components/ui.jsx'
+import { useTeacherClass } from '../components/TeacherClass.jsx'
 
 const QTYPES = ['single_choice', 'multiple_choice', 'fill_blank', 'drag_order']
 const DIFFS = ['easy', 'medium', 'hard']
@@ -19,8 +21,17 @@ const TEMPLATES = {
 const EST_MIN = { single_choice: 1.5, multiple_choice: 2.0, fill_blank: 3.0, drag_order: 3.0 }
 const DIFF_MULT = { easy: 0.8, medium: 1.0, hard: 1.4 }
 
+const BUILTIN_TITLE_TRANSLATIONS = {
+  '极限复习综合': { zh: '极限复习综合', en: 'Limits review mix' },
+  'Limits review mix': { zh: '极限复习综合', en: 'Limits review mix' },
+  '「导数」巩固练习': { zh: '「导数」巩固练习', en: 'Derivative consolidation practice' },
+  'Derivative consolidation practice': { zh: '「导数」巩固练习', en: 'Derivative consolidation practice' },
+}
+
+const assignmentTitle = (title, lang) =>
+  BUILTIN_TITLE_TRANSLATIONS[title]?.[lang] || title
+
 // Topic display map (backend topics are English keys).
-const TOPIC_ZH = { Limits: '极限', Derivatives: '导数', Integrals: '积分', 'Chain Rule': '链式法则', 'U-Substitution': '换元' }
 
 let _bid = 0
 const newBlock = (topic, qtype = 'single_choice', difficulty = 'easy', count = 3) =>
@@ -32,14 +43,15 @@ const estimateMinutes = (items) =>
 
 export default function Assign() {
   const { t, lang } = useLang()
+  const classId = useTeacherClass()
   const topicsQ = useAsync(() => api.getTopics(), [])
-  const listQ = useAsync(() => api.getAssignments(), [])
+  const listQ = useAsync(() => api.getAssignments(classId), [classId])
 
   const topics = topicsQ.data?.topics || []
   const topicNames = topics.map(tp => tp.name)
   const assignments = listQ.data?.assignments || []
 
-  const topicLabel = (name) => (lang === 'zh' ? (TOPIC_ZH[name] || name) : name)
+  const topicLabel = (name) => displayLabel(name, lang)
   const qtypeLabel = (q) => t('qtype_' + q)
   const diffLabel = (d) => t('diff_' + d)
 
@@ -62,7 +74,7 @@ export default function Assign() {
     if (!title.trim()) { setWarn(t('assign_need_title')); return }
     if (blocks.length === 0) { setWarn(t('assign_need_items')); return }
     setWarn(''); setSaving(true)
-    await api.createAssignment({ title: title.trim(), note: note.trim(), items: blocks })
+    await api.createAssignment({ title: title.trim(), note: note.trim(), items: blocks, class_id: classId || null })
     setSaving(false)
     setTitle(''); setNote(''); setBlocks([newBlock(topicNames[0] || 'Limits')])
     listQ.reload()
@@ -167,7 +179,7 @@ export default function Assign() {
                 return (
                   <div className="asg-card" key={a.id}>
                     <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ fontWeight: 800 }}>{a.title}</div>
+                      <div style={{ fontWeight: 800 }}>{assignmentTitle(a.title, lang)}</div>
                       <button className="btn sm ghost" onClick={() => remove(a.id)}>{t('assign_delete')}</button>
                     </div>
                     <div className="muted" style={{ fontSize: 13, margin: '6px 0 8px' }}>

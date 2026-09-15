@@ -38,20 +38,22 @@ export default function Concept({ topic, onAskTutor, onStartPractice }) {
 
       {mock && <div className="note-tip">{t('concept_unavailable')}</div>}
 
+      {!mock && <div className="note-tip">{t("textbook_original")}</div>}
       <Card>
         <div className="stack" style={{ gap: 18 }}>
           {card.summary && <MathText as="p" style={{ margin: 0, fontSize: 15, lineHeight: 1.7 }}>{card.summary}</MathText>}
 
           {blocks.length > 0 ? blocks.map((b) => (
-            <div key={b.id} className="concept-block">
+            <div key={b.id} className={'concept-block' + (b.subtype === 'illustrated_concept' ? ' concept-illustrated' : '')}>
               <div className="concept-block-kind">{b.heading || b.subtype}</div>
               {b.text && <MathText as="p" style={{ margin: '6px 0', lineHeight: 1.7 }}>{b.text}</MathText>}
               {(b.formulas || []).map((f, i) => (
                 <Formula key={i}>{f}</Formula>
               ))}
-              {(b.figures || []).map((fig) => (
+              {(b.figures || []).some(fig => fig.available === false) && <p className="muted">{t("figure_missing")}</p>}
+              {(b.figures || []).filter(fig => fig.available !== false).map((fig) => (
                 <figure key={fig.id} style={{ margin: '10px 0' }}>
-                  <img src={fig.url} alt={fig.caption} style={{ maxWidth: '100%', borderRadius: 12, border: '1px solid var(--border)' }} />
+                  <a href={fig.url} target="_blank" rel="noreferrer"><TextbookImage fig={fig} style={{ maxWidth: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 12, border: '1px solid var(--border)', background: '#fff' }} /></a>
                   {(fig.figure_number || fig.caption) && (
                     <figcaption className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>
                       {[fig.figure_number, fig.caption].filter(Boolean).join(' — ')}
@@ -98,4 +100,12 @@ function ConceptSection({ title, text, formulas }) {
       {(formulas || []).map((f, i) => <Formula key={i}>{f}</Formula>)}
     </div>
   )
+}
+
+function TextbookImage({ fig, style }) {
+  const { t } = useLang()
+  const [failed, setFailed] = useState(false)
+  useEffect(() => setFailed(false), [fig.url])
+  return failed ? <span role="status" className="muted">{t('image_load_failed')}</span>
+    : <img src={fig.url} alt={fig.caption || t('source_page')} loading="lazy" onError={() => setFailed(true)} style={style} />
 }

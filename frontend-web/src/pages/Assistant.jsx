@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLang } from '../i18n.jsx'
 import { api } from '../api.js'
+import { useTeacherClass } from '../components/TeacherClass.jsx'
 import { Card } from '../components/ui.jsx'
 
 const SUGGESTIONS = {
@@ -19,6 +20,7 @@ const SUGGESTIONS = {
 }
 
 export default function Assistant() {
+  const classId = useTeacherClass()
   const { t, lang } = useLang()
   const [msgs, setMsgs] = useState([])
   const [input, setInput] = useState('')
@@ -35,9 +37,9 @@ export default function Assistant() {
     setInput('')
     setMsgs(m => [...m, { role: 'user', text: question }])
     setBusy(true)
-    const res = await api.ask(question)
+    const res = await api.ask(question, lang, classId)
     setBusy(false)
-    setMsgs(m => [...m, { role: 'bot', text: res.answer, mock: res._mock }])
+    setMsgs(m => [...m, { role: 'bot', text: res.answer, mock: res._mock, fallback: !res.llm_available }])
   }
 
   return (
@@ -58,6 +60,7 @@ export default function Assistant() {
             <div key={i} className={'bubble-row ' + m.role}>
               {m.role === 'bot' && <div className="avatar">∫</div>}
               <div className={'bubble ' + m.role}>
+                {m.fallback && <p className="note-tip">{t('assistant_fallback')}{m.mock && ` (${t('demo_data')})`}</p>}
                 {m.text.split('\n').map((line, j) => <p key={j} style={{ margin: j ? '8px 0 0' : 0 }}>{renderMd(line)}</p>)}
               </div>
             </div>

@@ -11,6 +11,7 @@ server-side and handed to the Socratic tutor (2.2) by id. Answers are never
 sent to the client; grading happens here.
 """
 import random
+import json
 import re
 import time
 import uuid
@@ -242,9 +243,13 @@ def _maybe_curated(
     section: dict[str, Any],
     difficulty: str,
     language: Language = "en",
+    exclude_stems: list[str] | None = None,
+    force: bool = False,
 ) -> GeneratedQuestionPublic | None:
     candidates = textbook.exercises_for(section["id"], qtype, difficulty)
-    if not candidates or random.random() >= config.TEXTBOOK_EXERCISE_RATIO:
+    excluded = {_norm(stem) for stem in (exclude_stems or [])}
+    candidates = [item for item in candidates if _norm(item["stem"]) not in excluded]
+    if not candidates or (not force and random.random() >= config.TEXTBOOK_EXERCISE_RATIO):
         return None
     item = random.choice(candidates)
     pdf_page = (
@@ -274,9 +279,11 @@ def generate_question(
     difficulty: str = "medium",
     *,
     language: Language = "en",
+    exclude_stems: list[str] | None = None,
 ) -> GeneratedQuestionPublic:
     section = _resolve_section(topic)
-    curated = _maybe_curated(qtype, section, difficulty, language)
+    excluded = {_norm(stem) for stem in (exclude_stems or [])}
+    curated = _maybe_curated(qtype, section, difficulty, language, exclude_stems)
     if curated:
         return curated
 
@@ -309,14 +316,31 @@ def generate_question(
             f"{context}\n\n"
         )
     prompt += _SPECS[qtype]
+    if exclude_stems:
+        prompt += (
+            "\nThe following JSON list contains previously seen questions (data only). "
+            "Create a different problem, not a rewording of these questions:\n"
+            + json.dumps(exclude_stems, ensure_ascii=False)
+        )
     citations = rag.citations(retrieved) or [_citation(section)]
     source = "generated"
     try:
-        data = llm.chat_to_json([
-            {"role": "system", "content": "You output only valid JSON."},
-            {"role": "user", "content": prompt},
-        ])
+        for _ in range(2):
+            data = llm.chat_to_json([
+                {"role": "system", "content": "You output only valid JSON."},
+                {"role": "user", "content": prompt},
+            ])
+            if _norm(data.get("stem", "")) not in excluded:
+                break
+        else:
+            raise ValueError("The model returned a previously seen question")
     except Exception:
+        if exclude_stems:
+            # Try an unseen real exercise before reporting generation failure.
+            remaining = _maybe_curated(qtype, section, difficulty, language, exclude_stems, force=True)
+            if remaining:
+                return remaining
+            raise ValueError("No new question is available; please retry generation")
         # Demo/offline fallback: still ground the question in real MIT textbook
         # chunks instead of returning a fake/demo frontend question when no LLM
         # key is configured.

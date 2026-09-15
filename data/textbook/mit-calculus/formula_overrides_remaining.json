@@ -1,0 +1,520 @@
+{
+  "mit-2-1-definition-derivative": [
+    "\\displaystyle f'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}h",
+    "\\displaystyle \\text{average rate}=\\frac{f(x+h)-f(x)}h",
+    "\\displaystyle \\frac{df}{dx}=f'(x)"
+  ],
+  "mit-2-1-rule-notation": [
+    "\\displaystyle \\frac{df}{dx}=\\lim_{\\Delta x\\to0}\\frac{\\Delta f}{\\Delta x}",
+    "\\displaystyle \\Delta f=f(x+\\Delta x)-f(x)",
+    "\\displaystyle \\text{secant slope}\\to\\text{tangent slope}"
+  ],
+  "mit-2-1-example-x-squared": [
+    "\\displaystyle f(x+h)=(x+h)^2",
+    "\\displaystyle \\frac{(x+h)^2-x^2}h=2x+h",
+    "\\displaystyle f'(x)=2x"
+  ],
+  "mit-2-1-example-reciprocal": [
+    "\\displaystyle \\frac{\\frac1{x+h}-\\frac1x}h=-\\frac1{x(x+h)}",
+    "\\displaystyle f'(x)=-\\frac1{x^2}"
+  ],
+  "mit-2-2-rule-power-rule": [
+    "\\displaystyle \\frac{d}{dx}x^n=nx^{n-1}",
+    "\\displaystyle \\frac{d}{dx}x^3=3x^2",
+    "\\displaystyle \\frac{d}{dx}x=1",
+    "\\displaystyle \\frac{d}{dx}C=0"
+  ],
+  "mit-2-2-rule-linearity": [
+    "\\displaystyle (f+g)'=f'+g'",
+    "\\displaystyle (cf)'=cf'",
+    "\\displaystyle \\frac{d}{dx}(ax^2+bx+c)=2ax+b"
+  ],
+  "mit-2-2-example-polynomial": [
+    "\\displaystyle f(x)=2x^3-5x^2+4x-7",
+    "\\displaystyle f'(x)=6x^2-10x+4"
+  ],
+  "mit-2-2-rule-negative-fractional-powers": [
+    "\\displaystyle \\frac{d}{dx}x^{-1}=-x^{-2}",
+    "\\displaystyle \\frac{d}{dx}x^{1/2}=\\frac12x^{-1/2}",
+    "\\displaystyle \\frac{d}{dx}\\sqrt{x}=\\frac1{2\\sqrt{x}}"
+  ],
+  "mit-2-3-definition-tangent-line": [
+    "\\displaystyle \\text{slope of tangent}=f'(a)",
+    "\\displaystyle y-f(a)=f'(a)(x-a)"
+  ],
+  "mit-2-3-rule-tangent-equation": [
+    "\\displaystyle y=f(a)+f'(a)(x-a)",
+    "\\displaystyle \\text{linear approximation near }x=a"
+  ],
+  "mit-2-3-example-tangent-parabola": [
+    "\\displaystyle f'(x)=2x",
+    "\\displaystyle f'(3)=6",
+    "\\displaystyle y=9+6(x-3)",
+    "\\displaystyle y=6x-9"
+  ],
+  "mit-2-3-concept-secant-to-tangent": [
+    "\\displaystyle \\text{secant slope}=\\frac{f(x+h)-f(x)}h",
+    "\\displaystyle \\lim_{h\\to0}\\text{secant slope}=f'(x)"
+  ],
+  "mit-2-4-rule-derivative-sine-cosine": [
+    "\\displaystyle \\frac{d}{dx}\\sin x=\\cos x",
+    "\\displaystyle \\frac{d}{dx}\\cos x=-\\sin x"
+  ],
+  "mit-2-4-concept-small-angle-limits": [
+    "\\displaystyle \\lim_{h\\to0}\\frac{\\sin h}h=1",
+    "\\displaystyle \\lim_{h\\to0}\\frac{1-\\cos h}h=0"
+  ],
+  "mit-2-4-example-derivative-sine": [
+    "\\displaystyle \\sin(x+h)=\\sin x\\cos h+\\cos x\\sin h",
+    "\\displaystyle \\frac{\\sin(x+h)-\\sin x}h\\to\\cos x\\quad(h\\to0)",
+    "\\displaystyle \\frac{d}{dx}\\sin x=\\cos x"
+  ],
+  "mit-2-5-rule-product-rule": [
+    "\\displaystyle (uv)'=u'v+uv'",
+    "\\displaystyle (x^2\\sin x)'=2x\\sin x+x^2\\cos x"
+  ],
+  "mit-2-5-rule-quotient-rule": [
+    "\\displaystyle \\left(\\frac uv\\right)'=\\frac{u'v-uv'}{v^2}",
+    "\\displaystyle \\frac{d}{dx}\\tan x=\\sec^2x"
+  ],
+  "mit-2-5-rule-power-rule-general": [
+    "\\displaystyle \\frac{d}{dx}x^n=nx^{n-1}",
+    "\\displaystyle \\frac{d}{dx}x^{-n}=-nx^{-n-1}"
+  ],
+  "mit-2-5-example-product": [
+    "\\displaystyle y=x^3\\cos x",
+    "\\displaystyle y'=3x^2\\cos x-x^3\\sin x"
+  ],
+  "mit-2-6-definition-limit": [
+    "\\displaystyle \\lim_{x\\to a}f(x)=L",
+    "\\displaystyle \\forall\\varepsilon>0,\\ \\exists\\delta>0"
+  ],
+  "mit-2-6-rule-limit-laws": [
+    "\\displaystyle \\lim(f+g)=\\lim f+\\lim g",
+    "\\displaystyle \\lim(fg)=(\\lim f)(\\lim g)",
+    "\\displaystyle \\lim\\frac fg=\\frac{\\lim f}{\\lim g}\\quad(\\lim g\\ne0)"
+  ],
+  "mit-2-6-example-zero-over-zero": [
+    "\\displaystyle \\frac{x^2-1}{x-1}=x+1\\quad(x\\ne1)",
+    "\\displaystyle \\lim_{x\\to1}\\frac{x^2-1}{x-1}=2"
+  ],
+  "mit-2-7-definition-continuity": [
+    "\\displaystyle \\lim_{x\\to a}f(x)=f(a)",
+    "\\displaystyle \\text{no jump, hole, or break at }a"
+  ],
+  "mit-2-7-rule-differentiable-implies-continuous": [
+    "\\displaystyle \\text{differentiable at }a\\implies\\text{continuous at }a",
+    "\\displaystyle |x|\\text{ is continuous but not differentiable at }0"
+  ],
+  "mit-2-7-concept-intermediate-value": [
+    "\\displaystyle f\\text{ continuous on }[a,b]",
+    "\\displaystyle f\\text{ takes every value between }f(a)\\text{ and }f(b)"
+  ],
+  "mit-3-1-rule-linear-approximation": [
+    "\\displaystyle f(x)\\approx f(a)+f'(a)(x-a)",
+    "\\displaystyle \\Delta f\\approx f'(a)\\Delta x"
+  ],
+  "mit-3-1-definition-differentials": [
+    "\\displaystyle dy=f'(x)\\,dx",
+    "\\displaystyle dy\\approx\\Delta y\\quad\\text{for small }dx"
+  ],
+  "mit-3-1-example-square-root": [
+    "\\displaystyle f(x)=\\sqrt{x}",
+    "\\displaystyle f'(x)=\\frac1{2\\sqrt{x}}",
+    "\\displaystyle \\sqrt{4.1}\\approx2+\\frac14(0.1)=2.025"
+  ],
+  "mit-3-2-rule-critical-points": [
+    "\\displaystyle f'(x)=0\\quad\\text{at a differentiable interior extremum}",
+    "\\displaystyle \\text{check endpoints as well}"
+  ],
+  "mit-3-2-rule-second-derivative-test": [
+    "\\displaystyle f'(c)=0,\\ f''(c)>0\\implies\\text{local minimum}",
+    "\\displaystyle f'(c)=0,\\ f''(c)<0\\implies\\text{local maximum}",
+    "\\displaystyle f':+\\to-\\implies\\text{local maximum}"
+  ],
+  "mit-3-2-example-optimization": [
+    "\\displaystyle A(x)=x\\left(\\frac P2-x\\right)",
+    "\\displaystyle A'(x)=\\frac P2-2x=0",
+    "\\displaystyle x=\\frac P4"
+  ],
+  "mit-3-3-definition-second-derivative": [
+    "\\displaystyle f''(x)=\\frac{d}{dx}f'(x)",
+    "\\displaystyle \\text{acceleration}=\\frac{d}{dt}\\text{velocity}"
+  ],
+  "mit-3-3-rule-concavity": [
+    "\\displaystyle f''>0\\implies\\text{concave up}",
+    "\\displaystyle f''<0\\implies\\text{concave down}",
+    "\\displaystyle f''(c)=0\\quad\\text{at an inflection point if }f''\\text{ is continuous there}"
+  ],
+  "mit-3-3-example-acceleration": [
+    "\\displaystyle f(t)=\\frac12at^2",
+    "\\displaystyle f'(t)=at",
+    "\\displaystyle f''(t)=a"
+  ],
+  "mit-3-4-concept-curve-sketching": [
+    "\\displaystyle f'>0:\\text{ rising},\\quad f'<0:\\text{ falling}",
+    "\\displaystyle f''\\text{ determines concavity}"
+  ],
+  "mit-3-4-rule-asymptotes": [
+    "\\displaystyle \\text{vertical: }f(x)\\to\\pm\\infty\\text{ as }x\\to a",
+    "\\displaystyle \\text{horizontal: }f(x)\\to L\\text{ as }x\\to\\infty"
+  ],
+  "mit-3-4-example-sketch": [
+    "\\displaystyle f'(x)=3x^2-3",
+    "\\displaystyle \\text{critical points: }x=\\pm1",
+    "\\displaystyle f''(x)=6x",
+    "\\displaystyle \\text{inflection at }x=0"
+  ],
+  "mit-3-5-definition-conics": [
+    "\\displaystyle \\text{parabola: }y=ax^2",
+    "\\displaystyle \\text{ellipse: }\\frac{x^2}{a^2}+\\frac{y^2}{b^2}=1",
+    "\\displaystyle \\text{hyperbola: }\\frac{x^2}{a^2}-\\frac{y^2}{b^2}=1"
+  ],
+  "mit-3-5-concept-focus-directrix": [
+    "\\displaystyle \\text{parabola: distance to focus}=\\text{distance to directrix}",
+    "\\displaystyle \\text{ellipse: }r_1+r_2=\\text{constant}",
+    "\\displaystyle \\text{hyperbola: }|r_1-r_2|=\\text{constant}"
+  ],
+  "mit-3-5-example-parabola-slope": [
+    "\\displaystyle y=x^2",
+    "\\displaystyle \\frac{dy}{dx}=2x"
+  ],
+  "mit-3-6-definition-iteration": [
+    "\\displaystyle x_{n+1}=F(x_n)",
+    "\\displaystyle \\text{fixed point: }x^*=F(x^*)"
+  ],
+  "mit-3-6-rule-convergence": [
+    "\\displaystyle |F'(x^*)|<1\\implies\\text{locally attracting fixed point}",
+    "\\displaystyle |F'(x^*)|>1\\implies\\text{locally repelling fixed point}"
+  ],
+  "mit-3-6-example-cosine-iteration": [
+    "\\displaystyle x_{n+1}=\\cos x_n",
+    "\\displaystyle x^*\\approx0.739",
+    "\\displaystyle x^*=\\cos x^*"
+  ],
+  "mit-3-7-rule-newtons-method": [
+    "\\displaystyle x_{n+1}=x_n-\\frac{f(x_n)}{f'(x_n)}",
+    "\\displaystyle \\text{the next guess is the tangent's zero}"
+  ],
+  "mit-3-7-concept-quadratic-convergence": [
+    "\\displaystyle e_{n+1}\\approx Ce_n^2",
+    "\\displaystyle \\text{quadratic convergence near a simple root}"
+  ],
+  "mit-3-7-example-square-root": [
+    "\\displaystyle f(x)=x^2-a",
+    "\\displaystyle x_{n+1}=\\frac12\\left(x_n+\\frac a{x_n}\\right)"
+  ],
+  "mit-3-8-rule-mean-value-theorem": [
+    "\\displaystyle f'(c)=\\frac{f(b)-f(a)}{b-a}",
+    "\\displaystyle c\\in(a,b)"
+  ],
+  "mit-3-8-rule-lhopital": [
+    "\\displaystyle \\lim\\frac fg=\\lim\\frac{f'}{g'}\\quad\\text{for }0/0\\text{ or }\\infty/\\infty\\text{ under the rule's hypotheses}",
+    "\\displaystyle \\text{differentiate numerator and denominator separately}"
+  ],
+  "mit-3-8-example-lhopital": [
+    "\\displaystyle \\lim_{x\\to0}\\frac{\\sin x}x=\\lim_{x\\to0}\\frac{\\cos x}{1}=1"
+  ],
+  "mit-4-1-rule-chain-rule": [
+    "\\displaystyle \\frac{d}{dx}f(g(x))=f'(g(x))\\,g'(x)",
+    "\\displaystyle \\frac{dy}{dx}=\\frac{dy}{du}\\frac{du}{dx}"
+  ],
+  "mit-4-1-example-sine-of-square": [
+    "\\displaystyle y=\\sin(x^2)",
+    "\\displaystyle \\frac{dy}{dx}=\\cos(x^2)\\cdot2x",
+    "\\displaystyle \\frac{dy}{dx}=2x\\cos(x^2)"
+  ],
+  "mit-4-1-example-power-chain": [
+    "\\displaystyle y=(1+x^2)^5",
+    "\\displaystyle \\frac{dy}{dx}=5(1+x^2)^4\\cdot2x"
+  ],
+  "mit-4-2-rule-implicit-differentiation": [
+    "\\displaystyle \\text{differentiate both sides with respect to }x",
+    "\\displaystyle \\frac{d}{dx}y^2=2y\\frac{dy}{dx}",
+    "\\displaystyle \\text{solve for }\\frac{dy}{dx}"
+  ],
+  "mit-4-2-example-circle-slope": [
+    "\\displaystyle x^2+y^2=25",
+    "\\displaystyle 2x+2y\\frac{dy}{dx}=0",
+    "\\displaystyle \\frac{dy}{dx}=-\\frac xy"
+  ],
+  "mit-4-2-concept-related-rates": [
+    "\\displaystyle \\text{differentiate the relation with respect to }t",
+    "\\displaystyle A=\\pi r^2\\implies\\frac{dA}{dt}=2\\pi r\\frac{dr}{dt}"
+  ],
+  "mit-4-3-definition-inverse-function": [
+    "\\displaystyle f(f^{-1}(y))=y",
+    "\\displaystyle f^{-1}(f(x))=x",
+    "\\displaystyle \\text{graph reflected across }y=x"
+  ],
+  "mit-4-3-rule-derivative-of-inverse": [
+    "\\displaystyle (f^{-1})'(y)=\\frac1{f'(x)}\\quad(y=f(x),\\ f'(x)\\ne0)",
+    "\\displaystyle \\frac{dx}{dy}=\\frac1{dy/dx}"
+  ],
+  "mit-4-3-example-inverse-cube": [
+    "\\displaystyle y=x^3,\\quad\\frac{dy}{dx}=3x^2",
+    "\\displaystyle x=y^{1/3}",
+    "\\displaystyle \\frac{dx}{dy}=\\frac13y^{-2/3}"
+  ],
+  "mit-4-4-rule-derivative-arcsin": [
+    "\\displaystyle \\frac{d}{dx}\\arcsin x=\\frac1{\\sqrt{1-x^2}}",
+    "\\displaystyle \\frac{d}{dx}\\arccos x=-\\frac1{\\sqrt{1-x^2}}"
+  ],
+  "mit-4-4-rule-derivative-arctan": [
+    "\\displaystyle \\frac{d}{dx}\\arctan x=\\frac1{1+x^2}"
+  ],
+  "mit-4-4-example-arctan-chain": [
+    "\\displaystyle y=\\arctan(3x)",
+    "\\displaystyle \\frac{dy}{dx}=\\frac3{1+9x^2}"
+  ],
+  "mit-5-1-concept-idea-of-integral": [
+    "\\displaystyle \\text{integral adds pieces }v\\,\\Delta t",
+    "\\displaystyle \\text{distance}=\\text{accumulated velocity}"
+  ],
+  "mit-5-1-definition-sums-approximate-area": [
+    "\\displaystyle \\text{area}\\approx\\sum_i f(x_i)\\Delta x",
+    "\\displaystyle \\text{exact area}=\\lim_{\\Delta x\\to0}\\sum_i f(x_i)\\Delta x"
+  ],
+  "mit-5-1-example-triangle-area": [
+    "\\displaystyle \\text{area}=\\int_0^T t\\,dt",
+    "\\displaystyle \\text{area}=\\frac12T^2"
+  ],
+  "mit-5-2-definition-antiderivative": [
+    "\\displaystyle F'(x)=f(x)",
+    "\\displaystyle \\text{general antiderivative}=F(x)+C"
+  ],
+  "mit-5-2-rule-power-antiderivative": [
+    "\\displaystyle \\int x^n\\,dx=\\frac{x^{n+1}}{n+1}+C",
+    "\\displaystyle n\\ne-1"
+  ],
+  "mit-5-2-example-antiderivative": [
+    "\\displaystyle \\int(3x^2+2)\\,dx=x^3+2x+C"
+  ],
+  "mit-5-3-concept-summation-integration": [
+    "\\displaystyle \\sum_i f(x_i)\\Delta x\\to\\int f(x)\\,dx",
+    "\\displaystyle \\text{discrete sum and continuous integral}"
+  ],
+  "mit-5-3-rule-sum-formulas": [
+    "\\displaystyle \\sum_{i=1}^n i=\\frac{n(n+1)}2",
+    "\\displaystyle \\sum_{i=1}^n i^2=\\frac{n(n+1)(2n+1)}6"
+  ],
+  "mit-5-3-example-area-by-sums": [
+    "\\displaystyle \\sum_{i=1}^n x_i^2\\Delta x\\to\\frac13\\quad\\text{on }[0,1]",
+    "\\displaystyle \\int_0^1x^2\\,dx=\\frac13"
+  ],
+  "mit-5-4-rule-substitution": [
+    "\\displaystyle \\int f(g(x))g'(x)\\,dx=\\int f(u)\\,du",
+    "\\displaystyle u=g(x),\\quad du=g'(x)\\,dx"
+  ],
+  "mit-5-4-example-substitution": [
+    "\\displaystyle u=x^2,\\quad du=2x\\,dx",
+    "\\displaystyle \\int2x\\cos(x^2)\\,dx=\\sin(x^2)+C"
+  ],
+  "mit-5-5-definition-definite-integral": [
+    "\\displaystyle \\int_a^b f(x)\\,dx=\\lim_{\\max\\Delta x_i\\to0}\\sum_i f(x_i^*)\\Delta x_i",
+    "\\displaystyle \\text{signed area between curve and axis}"
+  ],
+  "mit-5-5-rule-limits-of-integration": [
+    "\\displaystyle \\int_a^b f(x)\\,dx=-\\int_b^a f(x)\\,dx",
+    "\\displaystyle \\int_a^a f(x)\\,dx=0",
+    "\\displaystyle \\int_a^c f(x)\\,dx=\\int_a^b f(x)\\,dx+\\int_b^c f(x)\\,dx"
+  ],
+  "mit-5-5-example-definite-integral": [
+    "\\displaystyle \\int_0^2x\\,dx=\\left[\\frac{x^2}2\\right]_0^2=2"
+  ],
+  "mit-5-6-rule-integral-properties": [
+    "\\displaystyle \\int(af+bg)\\,dx=a\\int f\\,dx+b\\int g\\,dx",
+    "\\displaystyle f\\le g\\implies\\int_a^b f(x)\\,dx\\le\\int_a^b g(x)\\,dx\\quad(a\\le b)"
+  ],
+  "mit-5-6-definition-average-value": [
+    "\\displaystyle f_{\\mathrm{avg}}=\\frac1{b-a}\\int_a^b f(x)\\,dx",
+    "\\displaystyle f(c)=f_{\\mathrm{avg}}\\quad\\text{for some }c\\in(a,b)\\text{ if }f\\text{ is continuous}"
+  ],
+  "mit-5-6-example-average-value": [
+    "\\displaystyle \\int_0^1x^2\\,dx=\\frac13",
+    "\\displaystyle f_{\\mathrm{avg}}=\\frac11\\cdot\\frac13=\\frac13"
+  ],
+  "mit-5-7-rule-fundamental-theorem": [
+    "\\displaystyle \\int_a^b f(x)\\,dx=F(b)-F(a)",
+    "\\displaystyle \\frac{d}{dx}\\int_a^x f(t)\\,dt=f(x)"
+  ],
+  "mit-5-7-concept-two-parts": [
+    "\\displaystyle \\text{differentiation undoes integration}",
+    "\\displaystyle \\text{integration undoes differentiation}"
+  ],
+  "mit-5-7-example-evaluate": [
+    "\\displaystyle \\int_0^{\\pi/2}\\cos x\\,dx=[\\sin x]_0^{\\pi/2}=1"
+  ],
+  "mit-5-8-rule-trapezoidal": [
+    "\\displaystyle \\int_a^b f(x)\\,dx\\approx\\frac{\\Delta x}2\\left(y_0+2\\sum_{i=1}^{n-1}y_i+y_n\\right)",
+    "\\displaystyle \\text{error}=O((\\Delta x)^2)"
+  ],
+  "mit-5-8-rule-simpson": [
+    "\\displaystyle \\int_a^b f(x)\\,dx\\approx\\frac{\\Delta x}3\\left(y_0+4\\sum_{\\substack{i=1\\\\i\\ \\mathrm{odd}}}^{n-1}y_i+2\\sum_{\\substack{i=2\\\\i\\ \\mathrm{even}}}^{n-2}y_i+y_n\\right)\\quad(n\\text{ even})",
+    "\\displaystyle \\text{error}=O((\\Delta x)^4)"
+  ],
+  "mit-5-8-example-numerical": [
+    "\\displaystyle \\int_1^2\\frac1x\\,dx=\\ln2\\approx0.693",
+    "\\displaystyle \\text{trapezoidal estimate approaches }0.693"
+  ],
+  "mit-6-1-concept-overview": [
+    "\\displaystyle y=b^x",
+    "\\displaystyle \\log_b x\\text{ is the inverse of }b^x\\quad(b>0,\\ b\\ne1)",
+    "\\displaystyle \\text{growth rate}\\propto\\text{size}"
+  ],
+  "mit-6-1-rule-exponent-log-laws": [
+    "\\displaystyle b^x b^y=b^{x+y}",
+    "\\displaystyle \\log(xy)=\\log x+\\log y",
+    "\\displaystyle \\log(x^n)=n\\log x"
+  ],
+  "mit-6-2-definition-e-and-derivative": [
+    "\\displaystyle \\frac{d}{dx}e^x=e^x",
+    "\\displaystyle e\\approx2.71828",
+    "\\displaystyle e=\\lim_{n\\to\\infty}\\left(1+\\frac1n\\right)^n"
+  ],
+  "mit-6-2-rule-derivative-general-exp": [
+    "\\displaystyle \\frac{d}{dx}b^x=(\\ln b)b^x",
+    "\\displaystyle \\frac{d}{dx}e^{kx}=ke^{kx}"
+  ],
+  "mit-6-2-example-exp-chain": [
+    "\\displaystyle y=e^{x^2}",
+    "\\displaystyle \\frac{dy}{dx}=2xe^{x^2}"
+  ],
+  "mit-6-3-rule-exponential-growth": [
+    "\\displaystyle \\frac{dy}{dt}=ky",
+    "\\displaystyle y(t)=y(0)e^{kt}",
+    "\\displaystyle k>0:\\text{ growth},\\quad k<0:\\text{ decay}"
+  ],
+  "mit-6-3-example-half-life": [
+    "\\displaystyle y(t)=y(0)e^{-kt}",
+    "\\displaystyle t_{1/2}=\\frac{\\ln2}k\\quad(k>0)"
+  ],
+  "mit-6-4-definition-natural-log": [
+    "\\displaystyle \\ln x=\\int_1^x\\frac1t\\,dt",
+    "\\displaystyle e^{\\ln x}=x\\quad(x>0)",
+    "\\displaystyle \\ln(e^x)=x"
+  ],
+  "mit-6-4-rule-derivative-log": [
+    "\\displaystyle \\frac{d}{dx}\\ln x=\\frac1x",
+    "\\displaystyle \\int\\frac1x\\,dx=\\ln|x|+C"
+  ],
+  "mit-6-4-example-log-differentiation": [
+    "\\displaystyle y=\\ln(x^2+1)",
+    "\\displaystyle \\frac{dy}{dx}=\\frac{2x}{x^2+1}"
+  ],
+  "mit-6-5-rule-separable-equations": [
+    "\\displaystyle \\frac{dy}{dx}=g(x)h(y)",
+    "\\displaystyle \\int\\frac{dy}{h(y)}=\\int g(x)\\,dx"
+  ],
+  "mit-6-5-concept-logistic": [
+    "\\displaystyle \\frac{dy}{dt}=ky\\left(1-\\frac yM\\right)",
+    "\\displaystyle y(t)\\to M\\quad(k>0,\\ y(0)>0)",
+    "\\displaystyle \\text{S-shaped growth for initial values below half capacity}"
+  ],
+  "mit-6-6-rule-power-vs-exponential": [
+    "\\displaystyle x^n\\text{ grows polynomially}",
+    "\\displaystyle e^x\\text{ grows exponentially}",
+    "\\displaystyle \\frac{e^x}{x^n}\\to\\infty\\quad(x\\to\\infty,\\ n\\text{ fixed})"
+  ],
+  "mit-6-6-concept-series": [
+    "\\displaystyle e^x=1+x+\\frac{x^2}{2!}+\\frac{x^3}{3!}+\\cdots",
+    "\\displaystyle \\text{differentiating the series gives the same series}"
+  ],
+  "mit-6-7-definition-hyperbolic": [
+    "\\displaystyle \\cosh x=\\frac{e^x+e^{-x}}2",
+    "\\displaystyle \\sinh x=\\frac{e^x-e^{-x}}2",
+    "\\displaystyle \\cosh^2x-\\sinh^2x=1"
+  ],
+  "mit-6-7-rule-hyperbolic-derivatives": [
+    "\\displaystyle \\frac{d}{dx}\\sinh x=\\cosh x",
+    "\\displaystyle \\frac{d}{dx}\\cosh x=\\sinh x"
+  ],
+  "mit-7-1-rule-integration-by-parts": [
+    "\\displaystyle \\int u\\,dv=uv-\\int v\\,du",
+    "\\displaystyle \\text{choose }u\\text{ to simplify when differentiated}"
+  ],
+  "mit-7-1-example-x-times-ex": [
+    "\\displaystyle u=x,\\quad dv=e^x\\,dx",
+    "\\displaystyle \\int xe^x\\,dx=xe^x-e^x+C"
+  ],
+  "mit-7-2-rule-trig-integrals": [
+    "\\displaystyle \\sin^2x=\\frac{1-\\cos2x}2",
+    "\\displaystyle \\cos^2x=\\frac{1+\\cos2x}2",
+    "\\displaystyle u=\\sin x\\text{ or }u=\\cos x\\quad\\text{for suitable odd powers}"
+  ],
+  "mit-7-2-example-sin-squared": [
+    "\\displaystyle \\int\\sin^2x\\,dx=\\frac x2-\\frac{\\sin2x}4+C"
+  ],
+  "mit-7-3-rule-trig-substitution": [
+    "\\displaystyle \\sqrt{a^2-x^2}:\\quad x=a\\sin\\theta",
+    "\\displaystyle \\sqrt{a^2+x^2}:\\quad x=a\\tan\\theta",
+    "\\displaystyle \\sqrt{x^2-a^2}:\\quad x=a\\sec\\theta"
+  ],
+  "mit-7-3-example-sqrt-substitution": [
+    "\\displaystyle x=\\sin\\theta,\\quad dx=\\cos\\theta\\,d\\theta",
+    "\\displaystyle \\sqrt{1-x^2}=\\cos\\theta\\quad(-\\pi/2\\le\\theta\\le\\pi/2)"
+  ],
+  "mit-7-4-rule-partial-fractions": [
+    "\\displaystyle \\frac{P(x)}{Q(x)}=\\sum_i\\frac{A_i}{x-r_i}\\quad\\text{for distinct linear factors and }\\deg P<\\deg Q",
+    "\\displaystyle \\int\\frac A{x-r}\\,dx=A\\ln|x-r|+C"
+  ],
+  "mit-7-4-example-partial-fraction": [
+    "\\displaystyle \\frac1{x(x-1)}=-\\frac1x+\\frac1{x-1}",
+    "\\displaystyle \\int\\frac{dx}{x(x-1)}=-\\ln|x|+\\ln|x-1|+C"
+  ],
+  "mit-7-5-definition-improper-integral": [
+    "\\displaystyle \\int_a^\\infty f(x)\\,dx=\\lim_{b\\to\\infty}\\int_a^b f(x)\\,dx",
+    "\\displaystyle \\text{converges if the limit is finite}"
+  ],
+  "mit-7-5-example-convergence": [
+    "\\displaystyle \\int_1^\\infty\\frac1{x^2}\\,dx=1",
+    "\\displaystyle \\int_1^\\infty\\frac1x\\,dx\\text{ diverges}"
+  ],
+  "mit-8-1-rule-volume-by-slices": [
+    "\\displaystyle A=\\int_a^b(\\text{top}-\\text{bottom})\\,dx",
+    "\\displaystyle V=\\int_a^b A(x)\\,dx",
+    "\\displaystyle V_{\\mathrm{disk}}=\\int_a^b\\pi[r(x)]^2\\,dx"
+  ],
+  "mit-8-1-example-cone-volume": [
+    "\\displaystyle r(x)=\\frac rhx",
+    "\\displaystyle V=\\int_0^h\\pi\\left(\\frac{rx}h\\right)^2\\,dx",
+    "\\displaystyle V=\\frac13\\pi r^2h"
+  ],
+  "mit-8-2-rule-arc-length": [
+    "\\displaystyle ds=\\sqrt{1+\\left(\\frac{dy}{dx}\\right)^2}\\,dx",
+    "\\displaystyle L=\\int_a^b\\sqrt{1+\\left(\\frac{dy}{dx}\\right)^2}\\,dx"
+  ],
+  "mit-8-2-example-arc-length": [
+    "\\displaystyle \\frac{dy}{dx}=2",
+    "\\displaystyle L=\\int_0^1\\sqrt{1+4}\\,dx=\\sqrt5"
+  ],
+  "mit-8-3-rule-surface-of-revolution": [
+    "\\displaystyle dA=2\\pi r\\,ds",
+    "\\displaystyle A=\\int_a^b2\\pi y\\sqrt{1+\\left(\\frac{dy}{dx}\\right)^2}\\,dx\\quad(y\\ge0)"
+  ],
+  "mit-8-4-definition-probability-density": [
+    "\\displaystyle \\int_{-\\infty}^{\\infty}p(x)\\,dx=1",
+    "\\displaystyle P(a\\le X\\le b)=\\int_a^b p(x)\\,dx"
+  ],
+  "mit-8-4-rule-mean": [
+    "\\displaystyle \\mu=\\int_{-\\infty}^{\\infty}xp(x)\\,dx",
+    "\\displaystyle \\sigma^2=\\int_{-\\infty}^{\\infty}(x-\\mu)^2p(x)\\,dx"
+  ],
+  "mit-8-5-rule-mass-moment": [
+    "\\displaystyle m=\\int\\rho(x)\\,dx",
+    "\\displaystyle M=\\int x\\rho(x)\\,dx",
+    "\\displaystyle \\bar x=\\frac Mm"
+  ],
+  "mit-8-5-example-center-of-mass": [
+    "\\displaystyle \\bar x=\\frac1L\\int_0^L x\\,dx",
+    "\\displaystyle \\bar x=\\frac L2"
+  ],
+  "mit-8-6-rule-work": [
+    "\\displaystyle W=\\int_a^bF(x)\\,dx",
+    "\\displaystyle W_{\\mathrm{spring}}=\\int_0^dkx\\,dx=\\frac12kd^2"
+  ],
+  "mit-8-6-example-spring-work": [
+    "\\displaystyle F(x)=kx",
+    "\\displaystyle W=\\int_0^dkx\\,dx=\\frac12kd^2"
+  ]
+}

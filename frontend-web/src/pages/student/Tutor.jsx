@@ -76,16 +76,19 @@ export default function Tutor({
 
       {/* context + progress */}
       <Card>
-        <div className="row" style={{ justifyContent: 'space-between', gap: 12 }}>
+        <div className="row wrap" style={{ justifyContent: 'space-between', gap: 12 }}>
           <div className="muted" style={{ fontSize: 13, fontWeight: 600 }}>
             {hasProblem ? t('tutor_context_practice') : t('tutor_context_concept')}{topic ? ` · ${topic}` : ''}
           </div>
-          <div style={{ minWidth: 180, flex: '0 0 220px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', fontSize: 12.5 }}>
-              <span className="muted">{t('tutor_progress')}</span>
+          <div style={{ flex: '0 1 340px', maxWidth: '100%' }} aria-live="polite">
+            <div className="row" style={{ justifyContent: 'space-between', gap: 12, fontSize: 12.5 }}>
+              <span className="muted">{t(hasProblem ? 'tutor_progress' : 'tutor_progress_topic')}</span>
               <span style={{ fontWeight: 700 }}>{mastery}%</span>
             </div>
-            <div className="bar" style={{ marginTop: 4 }}><span style={{ width: mastery + '%' }} /></div>
+            <div className="bar" style={{ marginTop: 6 }} role="progressbar" aria-label={t(hasProblem ? 'tutor_progress' : 'tutor_progress_topic')} aria-valuenow={mastery} aria-valuemin={0} aria-valuemax={100}>
+              <span style={{ width: mastery + '%' }} />
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t('tutor_progress_note')}</div>
           </div>
         </div>
         {problem?.statement && <MathText as="p" style={{ margin: '12px 0 0', lineHeight: 1.6 }}>{problem.statement}</MathText>}

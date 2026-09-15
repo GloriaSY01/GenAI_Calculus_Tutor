@@ -19,7 +19,7 @@ import logging
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
-from . import config
+from . import config, textbook
 from .schemas import AnalyticsInsight, ClassAnalytics, TopicStat
 
 log = logging.getLogger(__name__)
@@ -56,6 +56,7 @@ def _empty_analytics() -> ClassAnalytics:
         reasoning_distribution={lvl: 0.0 for lvl in _ASSESSMENT_LEVELS},
         insights=[AnalyticsInsight(
             kind="coverage", severity="info",
+            params=dict(n_sessions=0),
             title="No class data yet",
             detail="No tutoring sessions have been logged. Once students use "
                    "the tutor, class insights will appear here.",
@@ -63,8 +64,37 @@ def _empty_analytics() -> ClassAnalytics:
     )
 
 
-def compute() -> ClassAnalytics:
+def compute(class_id: str | None = None) -> ClassAnalytics:
     events = _load_events()
+    if class_id:
+        session_ids = {e.get("session_id") for e in events
+                       if e.get("event") == "session_start" and e.get("class_id") == class_id}
+        events = [e for e in events if e.get("class_id") == class_id
+                  or (e.get("session_id") is not None and e.get("session_id") in session_ids)]
+    # Canonicalise before aggregation so section IDs and titles share one row.
+    aliases = {}
+    for _, section in textbook.iter_sections():
+        info = textbook.get_section(section["id"])
+        if info:
+            for name in (info["id"], info["title"], info["display_title"]):
+                aliases[name] = info["display_title"]
+    events = [{**e, "topic": aliases.get(e.get("section_id") or e.get("topic"), e.get("topic"))} for e in events]
+    result = _compute_events(events)
+    # First submission per student/question: retries must not inflate accuracy.
+    first = {}
+    for e in sorted(events, key=lambda e: e.get("ts", 0)):
+        if e.get("event") == "practice_grade":
+            first.setdefault((e.get("class_id"), e.get("student_id"), e.get("question_id")), e)
+    buckets = defaultdict(list)
+    for e in first.values():
+        buckets[e.get("topic") or "General / Free chat"].append(e)
+    result.practice = [{"session": topic, "total": len(rows),
+                        "solved": sum(bool(e.get("correct")) for e in rows),
+                        "avg_time": "—"} for topic, rows in sorted(buckets.items())]
+    return result
+
+
+def _compute_events(events) -> ClassAnalytics:
     if not events:
         return _empty_analytics()
 
@@ -209,6 +239,7 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
         if weakest.solve_rate < 0.6:
             insights.append(AnalyticsInsight(
                 kind="weak_topic", severity="warning",
+                params=dict(topic=weakest.topic, solve_rate=weakest.solve_rate, avg_reasoning=weakest.avg_reasoning, attempts=weakest.attempts),
                 title=f"Class struggles most with {weakest.topic}",
                 detail=f"Solve rate {int(weakest.solve_rate * 100)}% and average "
                        f"reasoning {weakest.avg_reasoning}/4 across "
@@ -220,6 +251,7 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
     if a.gaming_rate >= 0.3:
         insights.append(AnalyticsInsight(
             kind="gaming", severity="critical",
+            params=dict(gaming_rate=a.gaming_rate),
             title="Possible gaming / low-effort behaviour",
             detail=f"About {int(a.gaming_rate * 100)}% of sessions show rushing, "
                    f"empty explanations, or 'just give me the answer' attempts. "
@@ -228,6 +260,7 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
     elif a.gaming_rate > 0:
         insights.append(AnalyticsInsight(
             kind="gaming", severity="info",
+            params=dict(gaming_rate=a.gaming_rate),
             title="Some low-effort turns detected",
             detail=f"{int(a.gaming_rate * 100)}% of sessions had rushed or empty "
                    f"replies. Worth watching but not widespread.",
@@ -237,6 +270,7 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
     if a.avg_reasoning < 1.5 and a.n_turns > 0:
         insights.append(AnalyticsInsight(
             kind="engagement", severity="warning",
+            params=dict(avg_reasoning=a.avg_reasoning),
             title="Reasoning quality is low overall",
             detail=f"Average reasoning is {a.avg_reasoning}/4. Students are "
                    f"often stating steps without justifying them. Encourage "
@@ -245,6 +279,7 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
     elif a.avg_reasoning >= 3.0 and a.n_turns > 0:
         insights.append(AnalyticsInsight(
             kind="positive", severity="info",
+            params=dict(avg_reasoning=a.avg_reasoning),
             title="Strong reasoning across the class",
             detail=f"Average reasoning is {a.avg_reasoning}/4 — students are "
                    f"explaining their thinking well.",
@@ -254,6 +289,7 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
     if a.n_sessions < 5:
         insights.append(AnalyticsInsight(
             kind="coverage", severity="info",
+            params=dict(n_sessions=a.n_sessions),
             title="Limited data so far",
             detail=f"Only {a.n_sessions} session(s) logged. Trends will become "
                    f"more reliable as more students practise.",
@@ -269,7 +305,7 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
     return insights
 
 
-def answer_question(question: str, a: ClassAnalytics) -> Tuple[str, bool]:
+def answer_question(question: str, a: ClassAnalytics, language: str = "en") -> Tuple[str, bool]:
     """LLM-backed Q&A grounded on the aggregate stats.
 
     Returns (answer, llm_available). When the model can't be reached we still
@@ -290,7 +326,7 @@ def answer_question(question: str, a: ClassAnalytics) -> Tuple[str, bool]:
             f"TEACHER QUESTION: {question}\n\nAnswer:"
         )
         answer = llm.chat(
-            [{"role": "system", "content": "You are concise and data-grounded."},
+            [{"role": "system", "content": "You are concise and data-grounded. " + ("Reply in Simplified Chinese." if language == "zh" else "Reply in English.")},
              {"role": "user", "content": prompt}],
             temperature=0.3, max_tokens=250, retries=1,
         ).strip()
@@ -299,7 +335,7 @@ def answer_question(question: str, a: ClassAnalytics) -> Tuple[str, bool]:
         log.warning("Analytics assistant: model returned an empty answer.")
     except Exception as exc:  # noqa: BLE001
         log.warning("Analytics assistant falling back to rules: %s", exc)
-    return _fallback_answer(a), False
+    return _fallback_answer(a, language), False
 
 
 def _facts_block(a: ClassAnalytics) -> str:
@@ -317,7 +353,12 @@ def _facts_block(a: ClassAnalytics) -> str:
     return "\n".join(lines)
 
 
-def _fallback_answer(a: ClassAnalytics) -> str:
+def _fallback_answer(a: ClassAnalytics, language: str = "en") -> str:
+    if language == "zh":
+        if not a.by_topic:
+            return "暂无足够的班级数据，请在学生完成练习后再查看。"
+        return (f"班级数据摘要：整体正确率 {int(a.solve_rate * 100)}%，"
+                f"平均推理得分 {a.avg_reasoning}/4。可在知识点诊断页查看各知识点表现。")
     if not a.by_topic:
         return ("There isn't enough class data yet to answer. Once students use "
                 "the tutor, ask again.")

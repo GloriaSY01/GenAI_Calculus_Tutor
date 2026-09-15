@@ -1,0 +1,902 @@
+{
+  "pdf-figure-1-1-1": {
+    "title": "Velocity and distance readings",
+    "text": "A speedometer measures instantaneous speed, while the odometer records accumulated distance.",
+    "caption": "Velocity and distance readings"
+  },
+  "pdf-figure-1-3-1": {
+    "title": "Slopes and initial values",
+    "text": "Changing a line's intercept changes its starting value; changing its slope changes its rate of change.",
+    "caption": "Slopes and initial values"
+  },
+  "pdf-figure-1-5-1": {
+    "title": "Domain and range of linear functions",
+    "text": "The horizontal interval gives the domain, and the corresponding vertical interval gives the range.",
+    "caption": "Domain and range of linear functions"
+  },
+  "pdf-figure-1-6-1": {
+    "title": "Scaling the input or the output",
+    "text": "Scaling a function's input and scaling its output can produce different intercepts even when their slopes agree.",
+    "caption": "Scaling the input or the output"
+  },
+  "pdf-figure-1-7-1": {
+    "title": "Signed velocity intervals",
+    "text": "Positive and negative velocity intervals contribute opposite signed changes in displacement.",
+    "caption": "Signed velocity intervals"
+  },
+  "pdf-figure-1-7-2": {
+    "title": "Reading motion from distance graphs",
+    "text": "Rising, falling and horizontal portions of a distance graph indicate different velocities.",
+    "caption": "Reading motion from distance graphs"
+  },
+  "pdf-figure-1-7-3": {
+    "title": "Velocity pulses",
+    "text": "The width and height of each velocity pulse determine its contribution to displacement.",
+    "caption": "Velocity pulses"
+  },
+  "pdf-figure-1-7-4": {
+    "title": "Slopes of piecewise distance graphs",
+    "text": "Each straight segment of a distance graph has a constant velocity given by its slope.",
+    "caption": "Slopes of piecewise distance graphs"
+  },
+  "pdf-figure-1-7-5": {
+    "title": "Comparing linear distance models",
+    "text": "The starting value and the slope must both be read when comparing two distance models.",
+    "caption": "Comparing linear distance models"
+  },
+  "pdf-figure-1-12-1": {
+    "title": "Recovering distance from velocity",
+    "text": "Accumulated signed area under a piecewise constant velocity graph produces a piecewise linear distance graph.",
+    "caption": "Recovering distance from velocity"
+  },
+  "pdf-figure-1-14-1": {
+    "title": "Piecewise rates and accumulated totals",
+    "text": "Constant rates on successive intervals create connected linear segments in the accumulated total.",
+    "caption": "Piecewise rates and accumulated totals"
+  },
+  "pdf-figure-1-15-1": {
+    "title": "Differences and accumulated sums",
+    "text": "Step heights represent discrete changes, while successive sums reconstruct the accumulated values.",
+    "caption": "Differences and accumulated sums"
+  },
+  "pdf-figure-1-17-1": {
+    "title": "Secants approaching a tangent",
+    "text": "As the time increment decreases, the average velocity approaches the slope of the tangent.",
+    "caption": "Secants approaching a tangent"
+  },
+  "pdf-figure-1-20-2": {
+    "title": "Secants, tangents and velocity graphs",
+    "text": "The first diagram compares a secant with a tangent; the remaining diagrams distinguish distance graphs from velocity graphs.",
+    "caption": "Secants, tangents and velocity graphs"
+  },
+  "pdf-figure-1-23-1": {
+    "title": "Sine and cosine over a full revolution",
+    "text": "The trigonometric graphs relate angular position on a circle to periodic horizontal and vertical coordinates.",
+    "caption": "Sine and cosine over a full revolution"
+  },
+  "pdf-figure-1-24-1": {
+    "title": "Position and velocity on a circle",
+    "text": "The velocity vector is tangent to the circular path and perpendicular to the radius.",
+    "caption": "Position and velocity on a circle"
+  },
+  "pdf-figure-1-25-1": {
+    "title": "Vertical motion on a circle",
+    "text": "The vertical coordinate and the vertical component of velocity vary with the angular position.",
+    "caption": "Vertical motion on a circle"
+  },
+  "pdf-figure-1-26-1": {
+    "title": "Harmonic motion and its derivative",
+    "text": "The sine curve and its cosine derivative explain when height increases, decreases or reaches a turning point.",
+    "caption": "Harmonic motion and its derivative"
+  },
+  "pdf-figure-1-30-1": {
+    "title": "Trigonometric ratios",
+    "text": "The horizontal coordinate, vertical coordinate and radius determine the basic trigonometric ratios.",
+    "caption": "Trigonometric ratios"
+  },
+  "pdf-figure-1-30-2": {
+    "title": "Angles and trigonometric periods",
+    "text": "A full turn corresponds to a full period; doubling the angle changes the period of the resulting oscillation.",
+    "caption": "Angles and trigonometric periods"
+  },
+  "pdf-figure-1-32-1": {
+    "title": "Tangent, secant and cosecant",
+    "text": "The diagrams interpret trigonometric ratios as slopes and lengths associated with a point on the unit circle.",
+    "caption": "Tangent, secant and cosecant"
+  },
+  "pdf-figure-1-33-1": {
+    "title": "Special angles",
+    "text": "Standard right triangles and the unit circle determine exact trigonometric values at special angles.",
+    "caption": "Special angles"
+  },
+  "pdf-figure-1-35-1": {
+    "title": "Sampling a sine curve",
+    "text": "Plotting values only at selected sample points can produce large-scale patterns that differ from the continuous curve.",
+    "caption": "Sampling a sine curve"
+  },
+  "pdf-figure-1-36-1": {
+    "title": "Patterns in sampled data",
+    "text": "Different sampling scales reveal apparent curves and repeating patterns in the same oscillatory data.",
+    "caption": "Patterns in sampled data"
+  },
+  "pdf-figure-2-3-1": {
+    "title": "Derivative at a corner",
+    "text": "The distance graph changes slope abruptly at the corner, so the derivative does not exist there.",
+    "caption": "Derivative at a corner"
+  },
+  "pdf-figure-2-4-1": {
+    "title": "Average slope and tangent slope",
+    "text": "The secant gives an average rate over an interval, while the tangent gives the rate at one point.",
+    "caption": "Average slope and tangent slope"
+  },
+  "pdf-figure-2-4-2": {
+    "title": "A reciprocal function and its derivative",
+    "text": "The reciprocal graph decreases, and its derivative records a negative slope whose magnitude depends on position.",
+    "caption": "A reciprocal function and its derivative"
+  },
+  "pdf-figure-2-7-1": {
+    "title": "Difference quotients",
+    "text": "The change in a function value over an interval determines the secant slope used in the derivative definition.",
+    "caption": "Difference quotients"
+  },
+  "pdf-figure-2-7-2": {
+    "title": "Reading changes from graphs",
+    "text": "Differences between plotted values can be compared with the slopes of the intervening segments.",
+    "caption": "Reading changes from graphs"
+  },
+  "pdf-figure-2-12-1": {
+    "title": "Marginal and average quantities",
+    "text": "Slopes describe marginal changes, while ratios to the input describe average quantities.",
+    "caption": "Marginal and average quantities"
+  },
+  "pdf-figure-2-16-1": {
+    "title": "Zooming in on a smooth curve",
+    "text": "Successive magnifications make a smooth curve look increasingly like its tangent line.",
+    "caption": "Zooming in on a smooth curve"
+  },
+  "pdf-figure-2-18-1": {
+    "title": "Tangents, normals and motion",
+    "text": "A tangent records local direction; a normal is perpendicular to it, and motion graphs provide related slope examples.",
+    "caption": "Tangents, normals and motion"
+  },
+  "pdf-figure-2-20-1": {
+    "title": "Nearby secant lines",
+    "text": "Secants through nearby points approach the tangent as their second point moves toward the point of contact.",
+    "caption": "Nearby secant lines"
+  },
+  "pdf-figure-2-22-1": {
+    "title": "Parabolas and reciprocal curves",
+    "text": "The plotted geometry connects tangent directions with familiar algebraic curves.",
+    "caption": "Parabolas and reciprocal curves"
+  },
+  "pdf-figure-2-24-1": {
+    "title": "Small-angle geometry",
+    "text": "Geometric comparisons near the origin support the limits used to differentiate sine and cosine.",
+    "caption": "Small-angle geometry"
+  },
+  "pdf-figure-2-24-2": {
+    "title": "The sine difference quotient",
+    "text": "The slope of a short secant on the sine curve approaches the cosine value at the point.",
+    "caption": "The sine difference quotient"
+  },
+  "pdf-figure-2-25-1": {
+    "title": "Small-angle trigonometric functions",
+    "text": "Sine, tangent and their small-angle ratios have closely related behavior near the origin.",
+    "caption": "Small-angle trigonometric functions"
+  },
+  "pdf-figure-2-25-2": {
+    "title": "Comparing a sector with triangles",
+    "text": "Areas of a sector and neighboring triangles provide bounds for the small-angle sine limit.",
+    "caption": "Comparing a sector with triangles"
+  },
+  "pdf-figure-2-27-1": {
+    "title": "Signs of trigonometric slopes",
+    "text": "Increasing and decreasing portions of sine and cosine correspond to the signs of their derivatives.",
+    "caption": "Signs of trigonometric slopes"
+  },
+  "pdf-figure-2-31-1": {
+    "title": "The product rule by area",
+    "text": "A small change in a rectangle's area can be separated into contributions from changing each side.",
+    "caption": "The product rule by area"
+  },
+  "pdf-figure-2-32-1": {
+    "title": "Changes in a ratio",
+    "text": "A triangle diagram relates changes in numerator and denominator to the resulting ratio.",
+    "caption": "Changes in a ratio"
+  },
+  "pdf-figure-2-32-2": {
+    "title": "Normalized ratio geometry",
+    "text": "Rescaling the triangle helps compare a quotient before and after a small change.",
+    "caption": "Normalized ratio geometry"
+  },
+  "pdf-figure-2-34-1": {
+    "title": "The power rule by geometry",
+    "text": "Changes in area and volume illustrate why differentiating powers introduces a coefficient.",
+    "caption": "The power rule by geometry"
+  },
+  "pdf-figure-2-35-1": {
+    "title": "Fractional powers at the origin",
+    "text": "Fractional-power curves can have zero or infinite tangent slope at the origin.",
+    "caption": "Fractional powers at the origin"
+  },
+  "pdf-figure-2-37-1": {
+    "title": "Limit bounds",
+    "text": "Horizontal and vertical bands express how controlling the input keeps function values close to a limit.",
+    "caption": "Limit bounds"
+  },
+  "pdf-figure-2-38-1": {
+    "title": "Limits and shrinking intervals",
+    "text": "The diagrams compare bounds and successive approximations to illustrate convergence.",
+    "caption": "Limits and shrinking intervals"
+  },
+  "pdf-figure-2-41-1": {
+    "title": "Different types of limiting behavior",
+    "text": "The graphs distinguish finite limits, discontinuities and behavior that prevents a limit from existing.",
+    "caption": "Different types of limiting behavior"
+  },
+  "pdf-figure-2-45-1": {
+    "title": "Continuity and discontinuity",
+    "text": "Jumps, missing values and oscillations illustrate different ways continuity can fail.",
+    "caption": "Continuity and discontinuity"
+  },
+  "pdf-figure-3-2-1": {
+    "title": "A tangent approximation",
+    "text": "The tangent line provides a nearby linear estimate to a curved function.",
+    "caption": "A tangent approximation"
+  },
+  "pdf-figure-3-4-1": {
+    "title": "Differential and actual change",
+    "text": "The tangent predicts the differential, while the curve gives the actual change in function value.",
+    "caption": "Differential and actual change"
+  },
+  "pdf-figure-3-7-1": {
+    "title": "Stationary points and derivatives",
+    "text": "Zeros of the first derivative identify candidates for local extrema, whose behavior is checked on the graph.",
+    "caption": "Stationary points and derivatives"
+  },
+  "pdf-figure-3-9-1": {
+    "title": "Local and absolute extrema",
+    "text": "A local extremum compares nearby values, while an absolute extremum compares values over the whole domain.",
+    "caption": "Local and absolute extrema"
+  },
+  "pdf-figure-3-11-1": {
+    "title": "Optimization through rates",
+    "text": "Competing travel times and their slopes determine an optimal choice.",
+    "caption": "Optimization through rates"
+  },
+  "pdf-figure-3-12-1": {
+    "title": "Costs, energy and optimization",
+    "text": "Different applications lead to functions whose derivatives locate possible optimal values.",
+    "caption": "Costs, energy and optimization"
+  },
+  "pdf-figure-3-14-1": {
+    "title": "Geometric and economic objectives",
+    "text": "A diagram helps express the quantity to optimize in terms of a single variable.",
+    "caption": "Geometric and economic objectives"
+  },
+  "pdf-figure-3-14-2": {
+    "title": "Optimizing dimensions",
+    "text": "Geometric constraints reduce the number of independent dimensions before differentiation.",
+    "caption": "Optimizing dimensions"
+  },
+  "pdf-figure-3-15-1": {
+    "title": "Reflection and refraction paths",
+    "text": "Comparing path lengths and travel costs explains why optimal paths obey geometric conditions.",
+    "caption": "Reflection and refraction paths"
+  },
+  "pdf-figure-3-17-1": {
+    "title": "Curvature and the second derivative",
+    "text": "The sign of the second derivative describes how the slope changes and how the curve bends.",
+    "caption": "Curvature and the second derivative"
+  },
+  "pdf-figure-3-21-1": {
+    "title": "Linear and quadratic approximations",
+    "text": "Adding a quadratic term can reproduce bending that a tangent line alone cannot capture.",
+    "caption": "Linear and quadratic approximations"
+  },
+  "pdf-figure-3-24-1": {
+    "title": "Reading a heart-rate scale",
+    "text": "The reference scale relates the spacing of repeated recorded cycles to heart rate.",
+    "caption": "Reading a heart-rate scale"
+  },
+  "pdf-figure-3-24-2": {
+    "title": "Features of a recorded waveform",
+    "text": "Peaks, timing and repeated patterns provide information that can be read from a measured graph.",
+    "caption": "Features of a recorded waveform"
+  },
+  "pdf-figure-3-25-1": {
+    "title": "Recording electrical activity",
+    "text": "The heart and electrode diagram explains the physical source of the plotted electrical signals.",
+    "caption": "Recording electrical activity"
+  },
+  "pdf-figure-3-26-1": {
+    "title": "Comparing waveforms",
+    "text": "Different recorded waveforms show why shape, timing and repeated features matter when interpreting a graph.",
+    "caption": "Comparing waveforms"
+  },
+  "pdf-figure-3-27-1": {
+    "title": "Qualitative curve sketches",
+    "text": "Intercepts, asymptotes, extrema and bending work together to determine a plausible curve.",
+    "caption": "Qualitative curve sketches"
+  },
+  "pdf-figure-3-29-1": {
+    "title": "Zooming near an optimum",
+    "text": "Changing the plotting scale reveals the local shape of a function near its minimum.",
+    "caption": "Zooming near an optimum"
+  },
+  "pdf-figure-3-30-1": {
+    "title": "Slope crossing zero",
+    "text": "A negative-to-positive change in slope indicates a local minimum.",
+    "caption": "Slope crossing zero"
+  },
+  "pdf-figure-3-31-1": {
+    "title": "The effect of plotting scale",
+    "text": "The apparent angle of a line changes with the scale, even though its mathematical slope is fixed.",
+    "caption": "The effect of plotting scale"
+  },
+  "pdf-figure-3-34-1": {
+    "title": "Conic sections",
+    "text": "Different cutting planes through a cone produce the standard conic curves.",
+    "caption": "Conic sections"
+  },
+  "pdf-figure-3-35-1": {
+    "title": "Parabolas and focal geometry",
+    "text": "The focus and directrix determine a parabola and help describe its tangent geometry.",
+    "caption": "Parabolas and focal geometry"
+  },
+  "pdf-figure-3-37-1": {
+    "title": "Ellipses and their foci",
+    "text": "The sum of distances to two foci remains constant along an ellipse.",
+    "caption": "Ellipses and their foci"
+  },
+  "pdf-figure-3-39-1": {
+    "title": "Hyperbolas and asymptotes",
+    "text": "The two branches of a hyperbola approach straight asymptotes and have a focal description.",
+    "caption": "Hyperbolas and asymptotes"
+  },
+  "pdf-figure-3-42-1": {
+    "title": "Tangents to an ellipse",
+    "text": "The focal geometry of an ellipse constrains the direction of a tangent at a point.",
+    "caption": "Tangents to an ellipse"
+  },
+  "pdf-figure-3-45-1": {
+    "title": "Graphical fixed-point iteration",
+    "text": "Alternating between the function graph and the diagonal shows successive iterates.",
+    "caption": "Graphical fixed-point iteration"
+  },
+  "pdf-figure-3-46-1": {
+    "title": "Attracting and repelling fixed points",
+    "text": "The local slope of the iteration function helps explain whether nearby iterates move toward or away from a fixed point.",
+    "caption": "Attracting and repelling fixed points"
+  },
+  "pdf-figure-3-48-1": {
+    "title": "Improving an iteration",
+    "text": "Changing the iteration function can change convergence even when the desired fixed point remains the same.",
+    "caption": "Improving an iteration"
+  },
+  "pdf-figure-3-51-1": {
+    "title": "Newton steps from tangent lines",
+    "text": "Each tangent line gives a new estimate of the root through its horizontal-axis intercept.",
+    "caption": "Newton steps from tangent lines"
+  },
+  "pdf-figure-3-54-1": {
+    "title": "Sensitivity of iterative methods",
+    "text": "Different starting points and function shapes can lead to different iterative behavior.",
+    "caption": "Sensitivity of iterative methods"
+  },
+  "pdf-figure-3-57-1": {
+    "title": "Bifurcation patterns",
+    "text": "Varying an iteration parameter can change a stable fixed point into cycles and more complex behavior.",
+    "caption": "Bifurcation patterns"
+  },
+  "pdf-figure-3-57-2": {
+    "title": "Successive geometric constructions",
+    "text": "Repeated refinement builds increasingly detailed geometric patterns.",
+    "caption": "Successive geometric constructions"
+  },
+  "pdf-figure-3-61-1": {
+    "title": "The mean value theorem",
+    "text": "A tangent somewhere inside an interval has the same slope as the secant joining its endpoints.",
+    "caption": "The mean value theorem"
+  },
+  "pdf-figure-3-62-1": {
+    "title": "Rolle's theorem and equal slopes",
+    "text": "Endpoint conditions force a horizontal tangent in one case and a tangent parallel to a secant in another.",
+    "caption": "Rolle's theorem and equal slopes"
+  },
+  "pdf-figure-3-64-1": {
+    "title": "Comparing function changes",
+    "text": "The diagrams relate endpoint changes to slopes within the interval.",
+    "caption": "Comparing function changes"
+  },
+  "pdf-figure-3-67-1": {
+    "title": "Geometric limit comparisons",
+    "text": "Areas and bounding shapes provide geometric ways to compare limiting quantities.",
+    "caption": "Geometric limit comparisons"
+  },
+  "pdf-figure-4-2-1": {
+    "title": "Composing functions",
+    "text": "Changing the inner function changes the input supplied to the outer function.",
+    "caption": "Composing functions"
+  },
+  "pdf-figure-4-3-1": {
+    "title": "The chain rule through increments",
+    "text": "An input change passes through two functions, so the overall rate combines the two rates.",
+    "caption": "The chain rule through increments"
+  },
+  "pdf-figure-4-9-1": {
+    "title": "Related-rate geometry",
+    "text": "A fixed geometric relation connects changing lengths, allowing one rate to be found from another.",
+    "caption": "Related-rate geometry"
+  },
+  "pdf-figure-4-11-1": {
+    "title": "A moving point and a changing angle",
+    "text": "The triangle relates horizontal separation, height, distance and angle before their rates are compared.",
+    "caption": "A moving point and a changing angle"
+  },
+  "pdf-figure-4-12-1": {
+    "title": "Linked geometric quantities",
+    "text": "Lengths constrained by a mechanism or triangle cannot change independently.",
+    "caption": "Linked geometric quantities"
+  },
+  "pdf-figure-4-13-1": {
+    "title": "Inverse functions",
+    "text": "Reversing the roles of input and output reverses the action of a one-to-one function.",
+    "caption": "Inverse functions"
+  },
+  "pdf-figure-4-14-1": {
+    "title": "Restricting a domain for an inverse",
+    "text": "A function must be one-to-one on the chosen interval to define an inverse function.",
+    "caption": "Restricting a domain for an inverse"
+  },
+  "pdf-figure-4-15-1": {
+    "title": "Reciprocal slopes of inverse graphs",
+    "text": "Reflecting across the diagonal exchanges horizontal and vertical changes.",
+    "caption": "Reciprocal slopes of inverse graphs"
+  },
+  "pdf-figure-4-16-1": {
+    "title": "Exponential and logarithmic inverses",
+    "text": "An exponential graph and its logarithmic inverse illustrate reciprocal tangent slopes.",
+    "caption": "Exponential and logarithmic inverses"
+  },
+  "pdf-figure-4-17-1": {
+    "title": "Function and inverse composition",
+    "text": "Applying a function and then its inverse returns the original input on the appropriate domain.",
+    "caption": "Function and inverse composition"
+  },
+  "pdf-figure-4-20-1": {
+    "title": "The inverse sine derivative",
+    "text": "A right triangle and the unit circle relate the derivative of inverse sine to the original sine function.",
+    "caption": "The inverse sine derivative"
+  },
+  "pdf-figure-4-22-1": {
+    "title": "Inverse trigonometric derivatives",
+    "text": "The graphs illustrate how the slopes of inverse trigonometric functions vary across their domains.",
+    "caption": "Inverse trigonometric derivatives"
+  },
+  "pdf-figure-4-22-2": {
+    "title": "Inverse tangent and related curves",
+    "text": "The inverse tangent graph has a bounded range and a slope that decreases away from the origin.",
+    "caption": "Inverse tangent and related curves"
+  },
+  "pdf-figure-4-23-1": {
+    "title": "Triangles for inverse trigonometry",
+    "text": "A suitable right triangle turns inverse trigonometric expressions into ratios of side lengths.",
+    "caption": "Triangles for inverse trigonometry"
+  },
+  "pdf-figure-5-3-1": {
+    "title": "Accumulation with rectangles",
+    "text": "Adding rectangular contributions builds an accumulated total from successive rates.",
+    "caption": "Accumulation with rectangles"
+  },
+  "pdf-figure-5-4-1": {
+    "title": "Finer partitions",
+    "text": "Smaller intervals produce more rectangles and a closer approximation to accumulated area.",
+    "caption": "Finer partitions"
+  },
+  "pdf-figure-5-7-1": {
+    "title": "A rate and its accumulation",
+    "text": "The height of the rate curve determines how quickly the accumulated total changes.",
+    "caption": "A rate and its accumulation"
+  },
+  "pdf-figure-5-8-1": {
+    "title": "Area as a limit of sums",
+    "text": "Refining rectangular approximations leads to the definite integral.",
+    "caption": "Area as a limit of sums"
+  },
+  "pdf-figure-5-9-1": {
+    "title": "Recovering a function from its rate",
+    "text": "Positive and negative rates determine where the accumulated function rises or falls.",
+    "caption": "Recovering a function from its rate"
+  },
+  "pdf-figure-5-11-1": {
+    "title": "Rates with changing sign",
+    "text": "The sign and area of each part of a rate graph control the accumulated change.",
+    "caption": "Rates with changing sign"
+  },
+  "pdf-figure-5-11-2": {
+    "title": "Comparing rates and totals",
+    "text": "A rate graph and its accumulated total encode different but related information.",
+    "caption": "Comparing rates and totals"
+  },
+  "pdf-figure-5-15-1": {
+    "title": "Power sums and areas",
+    "text": "Sums of powers can be interpreted as geometric approximations to integrals.",
+    "caption": "Power sums and areas"
+  },
+  "pdf-figure-5-17-1": {
+    "title": "Geometric power sums",
+    "text": "Squares and cubes provide visual models for sums of powers.",
+    "caption": "Geometric power sums"
+  },
+  "pdf-figure-5-18-1": {
+    "title": "Error and computational work",
+    "text": "A numerical integration method balances its approximation error against the number of evaluations.",
+    "caption": "Error and computational work"
+  },
+  "pdf-figure-5-24-1": {
+    "title": "Substitution and accumulated area",
+    "text": "Changing variables transforms both the argument of the function and the differential.",
+    "caption": "Substitution and accumulated area"
+  },
+  "pdf-figure-5-28-1": {
+    "title": "Upper and lower sums",
+    "text": "Rectangles based on different heights bound or approximate the area under a curve.",
+    "caption": "Upper and lower sums"
+  },
+  "pdf-figure-5-29-1": {
+    "title": "Choices of rectangle heights",
+    "text": "Left, right, midpoint and extreme values lead to different integral approximations.",
+    "caption": "Choices of rectangle heights"
+  },
+  "pdf-figure-5-33-1": {
+    "title": "Additivity and signed area",
+    "text": "Integrals combine across intervals and retain the sign of the region relative to the axis.",
+    "caption": "Additivity and signed area"
+  },
+  "pdf-figure-5-33-2": {
+    "title": "Average height",
+    "text": "A constant height over an interval can have the same signed area as a varying function.",
+    "caption": "Average height"
+  },
+  "pdf-figure-5-34-1": {
+    "title": "Integral averages",
+    "text": "The average value depends on the signed area divided by the interval length.",
+    "caption": "Integral averages"
+  },
+  "pdf-figure-5-38-1": {
+    "title": "A geometric probability model",
+    "text": "Lengths and angles in the needle diagram determine whether a randomly placed segment crosses a line.",
+    "caption": "A geometric probability model"
+  },
+  "pdf-figure-5-40-1": {
+    "title": "The derivative of accumulated area",
+    "text": "A small extension of the interval adds a thin strip whose area is approximately height times width.",
+    "caption": "The derivative of accumulated area"
+  },
+  "pdf-figure-5-40-2": {
+    "title": "Changing integration limits",
+    "text": "Moving an endpoint adds or removes area at that endpoint.",
+    "caption": "Changing integration limits"
+  },
+  "pdf-figure-5-43-1": {
+    "title": "Thin rings and shells",
+    "text": "A thin geometric layer has area or volume approximated by its boundary measure times its thickness.",
+    "caption": "Thin rings and shells"
+  },
+  "pdf-figure-5-44-1": {
+    "title": "Differentials in geometry",
+    "text": "Small changes in geometric dimensions lead to first-order changes in areas and lengths.",
+    "caption": "Differentials in geometry"
+  },
+  "pdf-figure-5-45-1": {
+    "title": "Area elements in different coordinates",
+    "text": "Triangles and sectors illustrate different ways to describe a small area element.",
+    "caption": "Area elements in different coordinates"
+  },
+  "pdf-figure-5-45-2": {
+    "title": "Choosing an area element",
+    "text": "The geometry determines which variable and differential make an integral convenient.",
+    "caption": "Choosing an area element"
+  },
+  "pdf-figure-5-47-1": {
+    "title": "Trapezoidal approximation",
+    "text": "Replacing each short curve segment by a straight line gives a trapezoidal area estimate.",
+    "caption": "Trapezoidal approximation"
+  },
+  "pdf-figure-5-49-1": {
+    "title": "Numerical integration error",
+    "text": "The shape of the curve explains the discrepancy between a numerical rule and the true integral.",
+    "caption": "Numerical integration error"
+  },
+  "pdf-figure-5-51-1": {
+    "title": "Weighted quadrature rules",
+    "text": "Different patterns of weights combine sampled values into integral approximations.",
+    "caption": "Weighted quadrature rules"
+  },
+  "pdf-figure-6-3-1": {
+    "title": "A logarithmic scale",
+    "text": "Equal distances on a logarithmic scale represent equal multiplicative factors.",
+    "caption": "A logarithmic scale"
+  },
+  "pdf-figure-6-4-1": {
+    "title": "Exponentials and logarithms",
+    "text": "Exponential growth and its logarithmic inverse have different shapes and exchange input with output.",
+    "caption": "Exponentials and logarithms"
+  },
+  "pdf-figure-6-6-1": {
+    "title": "Straight lines on logarithmic axes",
+    "text": "A logarithmic change of scale can turn multiplicative relationships into straight lines.",
+    "caption": "Straight lines on logarithmic axes"
+  },
+  "pdf-figure-6-6-2": {
+    "title": "Powers on logarithmic axes",
+    "text": "The slope on a log-log plot represents the exponent of a power relationship.",
+    "caption": "Powers on logarithmic axes"
+  },
+  "pdf-figure-6-7-1": {
+    "title": "Slopes of exponential and logarithmic graphs",
+    "text": "Inverse graphs have reciprocal slopes at corresponding points.",
+    "caption": "Slopes of exponential and logarithmic graphs"
+  },
+  "pdf-figure-6-12-1": {
+    "title": "Exponential derivative relationships",
+    "text": "The derivative of an exponential is proportional to the original exponential.",
+    "caption": "Exponential derivative relationships"
+  },
+  "pdf-figure-6-17-1": {
+    "title": "Direction fields for growth",
+    "text": "Short line segments show the local slope required by a differential equation.",
+    "caption": "Direction fields for growth"
+  },
+  "pdf-figure-6-18-1": {
+    "title": "Growth, decay and compounding",
+    "text": "Different growth laws produce different long-term behavior even when their initial values agree.",
+    "caption": "Growth, decay and compounding"
+  },
+  "pdf-figure-6-21-1": {
+    "title": "Exponential approaches to equilibrium",
+    "text": "The sign of the rate determines whether a solution grows away from or decays toward an equilibrium.",
+    "caption": "Exponential approaches to equilibrium"
+  },
+  "pdf-figure-6-24-1": {
+    "title": "Growth models with shifted equilibria",
+    "text": "An added constant term changes the equilibrium around which exponential behavior occurs.",
+    "caption": "Growth models with shifted equilibria"
+  },
+  "pdf-figure-6-28-1": {
+    "title": "Logarithms as areas",
+    "text": "Area under the reciprocal curve provides a geometric definition of the natural logarithm.",
+    "caption": "Logarithms as areas"
+  },
+  "pdf-figure-6-30-1": {
+    "title": "The exponential and reciprocal area",
+    "text": "Scaling an endpoint under the reciprocal curve corresponds to changes in logarithmic area.",
+    "caption": "The exponential and reciprocal area"
+  },
+  "pdf-figure-6-30-2": {
+    "title": "A logarithmic curve and its slope",
+    "text": "The logarithm increases while its reciprocal derivative decreases.",
+    "caption": "A logarithmic curve and its slope"
+  },
+  "pdf-figure-6-30-3": {
+    "title": "Small changes and logarithmic area",
+    "text": "A narrow strip under the reciprocal curve gives the differential of the logarithm.",
+    "caption": "Small changes and logarithmic area"
+  },
+  "pdf-figure-6-36-1": {
+    "title": "Separable growth laws",
+    "text": "Different dependences on the current value can produce qualitatively different growth curves.",
+    "caption": "Separable growth laws"
+  },
+  "pdf-figure-6-38-1": {
+    "title": "Logistic saturation",
+    "text": "A logistic solution slows as it approaches a finite carrying capacity.",
+    "caption": "Logistic saturation"
+  },
+  "pdf-figure-6-39-1": {
+    "title": "Equilibria and direction of change",
+    "text": "The signs of the differential equation show how solutions move between equilibrium values.",
+    "caption": "Equilibria and direction of change"
+  },
+  "pdf-figure-6-40-1": {
+    "title": "Qualitative behavior of differential equations",
+    "text": "Direction and equilibrium information help predict a solution without explicitly solving the equation.",
+    "caption": "Qualitative behavior of differential equations"
+  },
+  "pdf-figure-6-47-1": {
+    "title": "Powers, decay and oscillation",
+    "text": "Different exponents or parameters can create growth, decay or oscillatory behavior.",
+    "caption": "Powers, decay and oscillation"
+  },
+  "pdf-figure-6-54-1": {
+    "title": "A catenary-shaped arch",
+    "text": "Hyperbolic functions describe the catenary curve associated with a hanging chain and related arch geometry.",
+    "caption": "A catenary-shaped arch"
+  },
+  "pdf-figure-6-54-2": {
+    "title": "Hyperbolic sine and cosine",
+    "text": "Combining positive and negative exponentials produces the hyperbolic functions.",
+    "caption": "Hyperbolic sine and cosine"
+  },
+  "pdf-figure-6-55-1": {
+    "title": "Circular and hyperbolic parametrizations",
+    "text": "Trigonometric and hyperbolic functions parametrize different geometric curves.",
+    "caption": "Circular and hyperbolic parametrizations"
+  },
+  "pdf-figure-7-4-1": {
+    "title": "Integration by parts as complementary areas",
+    "text": "The product can be divided into complementary accumulated contributions.",
+    "caption": "Integration by parts as complementary areas"
+  },
+  "pdf-figure-7-6-1": {
+    "title": "A variable force and displacement",
+    "text": "The force-displacement relation determines the work and motivates an integral calculation.",
+    "caption": "A variable force and displacement"
+  },
+  "pdf-figure-7-12-1": {
+    "title": "Trigonometric integrals in geometry",
+    "text": "Circular geometry and latitude bands lead to integrals involving trigonometric functions.",
+    "caption": "Trigonometric integrals in geometry"
+  },
+  "pdf-figure-7-14-1": {
+    "title": "Products of oscillations",
+    "text": "Multiplying oscillatory functions produces alternating contributions whose signs affect their integrals.",
+    "caption": "Products of oscillations"
+  },
+  "pdf-figure-7-15-1": {
+    "title": "Trigonometric substitution geometry",
+    "text": "A circular arc can be parametrized by an angle to simplify a square root.",
+    "caption": "Trigonometric substitution geometry"
+  },
+  "pdf-figure-7-16-1": {
+    "title": "Areas after substitution",
+    "text": "A substitution changes the expression while preserving the accumulated area represented by the integral.",
+    "caption": "Areas after substitution"
+  },
+  "pdf-figure-7-20-1": {
+    "title": "Triangles for radical substitutions",
+    "text": "A right triangle connects the chosen trigonometric substitution with the square root in the integrand.",
+    "caption": "Triangles for radical substitutions"
+  },
+  "pdf-figure-7-27-1": {
+    "title": "Improper areas",
+    "text": "An unbounded interval can enclose either a finite or an infinite total area.",
+    "caption": "Improper areas"
+  },
+  "pdf-figure-7-28-1": {
+    "title": "Convergence of power tails",
+    "text": "The rate of decay determines whether the area of a power-function tail converges.",
+    "caption": "Convergence of power tails"
+  },
+  "pdf-figure-7-30-1": {
+    "title": "Limits defining improper integrals",
+    "text": "Truncating an infinite interval gives finite integrals whose limiting behavior decides convergence.",
+    "caption": "Limits defining improper integrals"
+  },
+  "pdf-figure-8-2-1": {
+    "title": "Areas between curves",
+    "text": "The difference between upper and lower boundaries determines the height of each slice.",
+    "caption": "Areas between curves"
+  },
+  "pdf-figure-8-3-1": {
+    "title": "Integrating slices",
+    "text": "Different choices of slicing direction produce different but equivalent descriptions of area.",
+    "caption": "Integrating slices"
+  },
+  "pdf-figure-8-4-1": {
+    "title": "Choosing coordinates for area",
+    "text": "Expressing the boundaries in the slicing variable makes the area calculation possible.",
+    "caption": "Choosing coordinates for area"
+  },
+  "pdf-figure-8-5-1": {
+    "title": "Volumes by cross sections",
+    "text": "A solid's cross-sectional area varies along the axis and is accumulated to obtain volume.",
+    "caption": "Volumes by cross sections"
+  },
+  "pdf-figure-8-6-1": {
+    "title": "Disks and washers",
+    "text": "A cross section perpendicular to an axis of rotation can be a disk or a washer with a central hole.",
+    "caption": "Disks and washers"
+  },
+  "pdf-figure-8-7-1": {
+    "title": "Alternative volume decompositions",
+    "text": "Disks, washers and cylindrical layers describe the same volume through different decompositions.",
+    "caption": "Alternative volume decompositions"
+  },
+  "pdf-figure-8-9-1": {
+    "title": "Cylindrical shells",
+    "text": "Rotating a thin strip parallel to the axis creates a cylindrical shell.",
+    "caption": "Cylindrical shells"
+  },
+  "pdf-figure-8-10-1": {
+    "title": "Setting up geometric integrals",
+    "text": "The shape and orientation of a region determine convenient slices and their limits.",
+    "caption": "Setting up geometric integrals"
+  },
+  "pdf-figure-8-10-2": {
+    "title": "Sections of solids",
+    "text": "A diagram helps identify the radius, height or area needed for a volume integral.",
+    "caption": "Sections of solids"
+  },
+  "pdf-figure-8-12-1": {
+    "title": "Approximating arc length",
+    "text": "A small curve segment is approximated by a straight segment whose length follows from the Pythagorean theorem.",
+    "caption": "Approximating arc length"
+  },
+  "pdf-figure-8-12-2": {
+    "title": "Differential arc length",
+    "text": "Horizontal and vertical differentials combine to give the differential of curve length.",
+    "caption": "Differential arc length"
+  },
+  "pdf-figure-8-13-1": {
+    "title": "Polygonal approximations to a curve",
+    "text": "Adding lengths of short straight segments approaches the length of the curve.",
+    "caption": "Polygonal approximations to a curve"
+  },
+  "pdf-figure-8-13-2": {
+    "title": "Arc-length elements for different curves",
+    "text": "The derivative enters the length element through the local right triangle.",
+    "caption": "Arc-length elements for different curves"
+  },
+  "pdf-figure-8-17-1": {
+    "title": "Surface area of revolution",
+    "text": "Rotating a short arc creates a narrow band whose area depends on radius and arc length.",
+    "caption": "Surface area of revolution"
+  },
+  "pdf-figure-8-19-1": {
+    "title": "Unrolling a conical surface",
+    "text": "A cone's curved surface can be unrolled into a sector to calculate its area.",
+    "caption": "Unrolling a conical surface"
+  },
+  "pdf-figure-8-19-2": {
+    "title": "A narrow conical band",
+    "text": "The geometry of a frustum leads to the local area element used for surfaces of revolution.",
+    "caption": "A narrow conical band"
+  },
+  "pdf-figure-8-22-1": {
+    "title": "Probability densities",
+    "text": "The height of a density is related to the probability in a small interval through area.",
+    "caption": "Probability densities"
+  },
+  "pdf-figure-8-23-1": {
+    "title": "Density and cumulative probability",
+    "text": "Integrating a probability density gives the cumulative probability function.",
+    "caption": "Density and cumulative probability"
+  },
+  "pdf-figure-8-28-1": {
+    "title": "Masses and moments",
+    "text": "Weighted positions combine through moments to determine a system's center of mass.",
+    "caption": "Masses and moments"
+  },
+  "pdf-figure-8-30-1": {
+    "title": "Centroids of planar regions",
+    "text": "Symmetry and weighted area integrals determine the center of a uniform region.",
+    "caption": "Centroids of planar regions"
+  },
+  "pdf-figure-8-31-1": {
+    "title": "Centers of mass in physical objects",
+    "text": "The distribution of mass, rather than the outline alone, determines the center of mass.",
+    "caption": "Centers of mass in physical objects"
+  },
+  "pdf-figure-8-33-1": {
+    "title": "Centroids and rotational geometry",
+    "text": "The position of a centroid connects planar geometry with volumes generated by rotation.",
+    "caption": "Centroids and rotational geometry"
+  },
+  "pdf-figure-8-33-2": {
+    "title": "Volumes and weighted positions",
+    "text": "Cross-sectional areas and their locations determine both total volume and centroid.",
+    "caption": "Volumes and weighted positions"
+  },
+  "pdf-figure-8-36-1": {
+    "title": "Work in different force fields",
+    "text": "Springs, lifting and gravitational motion require integrating force along displacement.",
+    "caption": "Work in different force fields"
+  },
+  "pdf-figure-8-38-1": {
+    "title": "Work and fluid pressure",
+    "text": "The distance moved and the depth-dependent pressure determine the integrals for pumping and hydrostatic force.",
+    "caption": "Work and fluid pressure"
+  }
+}

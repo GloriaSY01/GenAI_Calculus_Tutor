@@ -71,6 +71,9 @@ def _collection():
 def reset_cache() -> None:
     _collection.cache_clear()
     _client.cache_clear()
+    _figures.cache_clear()
+    _formula_overrides.cache_clear()
+    _presentation_data.cache_clear()
 
 
 def _decode_list(value: Any) -> list[str]:
@@ -314,7 +317,28 @@ def _clean_caption(text: str) -> str:
 @lru_cache(maxsize=1)
 def _figures() -> dict[str, dict[str, Any]]:
     path = config.TEXTBOOK_DIR / "figures.json"
+    figures = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    extracted = _presentation_data("extracted_figures.json")
+    notes = _presentation_data("illustration_notes.json")
+    for key, value in extracted.items():
+        figures[key] = {**value, "caption": notes.get(key, {}).get("caption", "")}
+    for key, caption in _presentation_data("figure_caption_overrides.json").items():
+        if key in figures:
+            figures[key] = {**figures[key], "caption": caption}
+    return figures
+
+
+@lru_cache(maxsize=8)
+def _presentation_data(filename: str) -> dict:
+    path = config.TEXTBOOK_DIR / filename
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+@lru_cache(maxsize=1)
+def _formula_overrides() -> dict[str, list[str]]:
+    path = config.TEXTBOOK_FORMULA_OVERRIDES_FILE
+    first = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    return {**first, **_presentation_data("formula_overrides_remaining.json")}
 
 
 def _figure_payload(
@@ -347,6 +371,7 @@ def _figure_payload(
     return {
         "id": figure_id,
         "url": f"/textbook-assets/{path}",
+        "available": (config.TEXTBOOK_ASSETS_DIR / path).is_file(),
         "figure_number": figure_number,
         "caption": caption or f"Textbook illustration on page {printed_page}",
         "printed_page": printed_page,
@@ -367,6 +392,8 @@ def section_page(section_id: str) -> dict[str, Any]:
             f"No indexed text for {meta['display_title']}. "
             "Run: python -m scripts.ingest_mit"
         )
+    text_overrides = _presentation_data("text_overrides.json")
+    chunks = [{**chunk, "text": text_overrides.get(chunk["id"], chunk["text"])} for chunk in chunks]
     concepts = [chunk for chunk in chunks if chunk["content_type"] == "concept"]
     examples = [chunk for chunk in chunks if chunk["content_type"] == "example"]
     overview = concepts[0] if concepts else chunks[0]
@@ -402,12 +429,33 @@ def section_page(section_id: str) -> dict[str, Any]:
             "subtype": chunk.get("subtype", chunk["content_type"]),
             "heading": heading,
             "text": _clean_excerpt(str(chunk["text"]), 1400),
-            "formulas": chunk.get("formulas", []),
+            "formulas": _formula_overrides().get(chunk["id"], chunk.get("formulas", [])),
             "order": int(chunk.get("order", 0)),
             "printed_page": printed_page(chunk),
             "requires_figure": bool(chunk.get("requires_figure", False)),
             "figures": figures,
         })
+    # Additional figures have their own reviewed explanations, rather than
+    # inheriting a possibly unrelated example merely because it shares a page.
+    chapter = int(meta["chapter_id"].removeprefix("mit-ch"))
+    for figure_id, note in _presentation_data("illustration_notes.json").items():
+        source = _presentation_data("extracted_figures.json").get(figure_id)
+        if not source or int(source["chapter"]) != chapter:
+            continue
+        page = int(source["pdf_page"])
+        if not int(meta["pdf_page_start"]) <= page <= int(meta["pdf_page_end"]):
+            continue
+        figure = _figure_payload(figure_id, printed_page({"pdf_page": page}))
+        if not figure:
+            continue
+        content.append({
+            "id": "illustration-" + figure_id, "content_type": "concept",
+            "subtype": "illustrated_concept", "heading": note["title"],
+            "text": note["text"], "formulas": [], "order": 1000,
+            "printed_page": printed_page({"pdf_page": page}),
+            "requires_figure": True, "figures": [figure],
+        })
+    content.sort(key=lambda block: (block["printed_page"] or 0, block["order"]))
     definition = next(
         (
             chunk

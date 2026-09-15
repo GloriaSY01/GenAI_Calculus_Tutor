@@ -25,11 +25,11 @@ export const MOCK = {
     ],
     reasoning_distribution: { none: 0.06, weak: 0.14, partial: 0.30, adequate: 0.32, strong: 0.18 },
     insights: [
-      { kind: 'weak_topic', severity: 'warning', title: 'Class struggles most with U-Substitution',
+      { kind: 'weak_topic', params: { topic: 'U-Substitution', solve_rate: .48, avg_reasoning: 1.9, attempts: 26 }, severity: 'warning', title: 'Class struggles most with U-Substitution',
         detail: 'Solve rate 48% and average reasoning 1.9/4 across 26 sessions. Consider a short review or easier practice on this topic.' },
-      { kind: 'gaming', severity: 'info', title: 'Some low-effort turns detected',
+      { kind: 'gaming', params: { gaming_rate: .14 }, severity: 'info', title: 'Some low-effort turns detected',
         detail: '14% of sessions had rushed or empty replies. Worth watching but not widespread.' },
-      { kind: 'positive', severity: 'info', title: 'Strong start on Limits',
+      { kind: 'positive', params: { topic: 'Limits', solve_rate: .86, avg_reasoning: 3.3 }, severity: 'info', title: 'Strong start on Limits',
         detail: 'Limits shows an 86% solve rate with solid reasoning (3.3/4).' },
     ],
   },
@@ -57,7 +57,43 @@ export const MOCK = {
     ] },
   ],
 
-  askAnswer: (q) =>
+  // Frontend-only preview data for teacher-assigned practice results.
+  // This is intentionally separate from analytics.practice, which represents
+  // independent practice and cannot identify a teacher assignment.
+  assignmentResults: [
+    {
+      id: 'a1',
+      title: 'Limits review mix',
+      title_zh: '极限复习综合',
+      class_id: 'class-a',
+      assigned_students: 25,
+      started_students: 22,
+      completed_students: 18,
+      first_attempt_correct: 91,
+      first_attempt_attempted: 142,
+      topics: [
+        { topic: 'Limits', correct: 52, attempted: 74, accuracy: 0.70 },
+        { topic: 'Continuity', correct: 39, attempted: 68, accuracy: 0.57 },
+      ],
+    },
+    {
+      id: 'a2',
+      title: 'Derivatives practice set',
+      title_zh: '导数综合练习',
+      class_id: 'class-a',
+      assigned_students: 25,
+      started_students: 19,
+      completed_students: 15,
+      first_attempt_correct: 76,
+      first_attempt_attempted: 120,
+      topics: [
+        { topic: 'Derivatives', correct: 43, attempted: 72, accuracy: 0.60 },
+        { topic: 'Chain Rule', correct: 33, attempted: 48, accuracy: 0.69 },
+      ],
+    },
+  ],
+
+  askAnswer: (q, language = 'en') => language === 'zh' ? '演示数据摘要：换元积分的正确率为 48%，平均推理得分为 1.9/4。可考虑复习换元的选择与计算。' :
     `Based on the current class data, **U-Substitution** needs the most attention: ` +
     `solve rate is 48% and reasoning there skews weak (1.9/4). I'd suggest a short ` +
     `targeted set of 6–8 problems on choosing u and computing du.\n\n` +

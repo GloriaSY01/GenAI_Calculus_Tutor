@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLang } from '../../i18n.jsx'
 import { api } from '../../api.js'
 import { Card, Loading, MockPill, Badge } from '../../components/ui.jsx'
@@ -20,15 +20,31 @@ export default function Practice({
   const [answer, setAnswer] = useState({})
   const [grade, setGrade] = useState(null)
   const [grading, setGrading] = useState(false)
+  const [error, setError] = useState(false)
+  const seen = useRef(new Map())
+  const requestId = useRef(0)
 
   const load = () => {
-    setLoading(true); setGrade(null); setAnswer({})
-    api.generateQuestion({ type: qtype, topic, difficulty, language: lang }).then((res) => {
+    const id = ++requestId.current
+    const key = JSON.stringify([topic, qtype, difficulty, lang])
+    const previous = seen.current.get(key) || []
+    setLoading(true); setError(false)
+    api.generateQuestion({ type: qtype, topic, difficulty, language: lang, exclude_stems: previous }).then((res) => {
+      if (id !== requestId.current) return
+      seen.current.set(key, [...previous, res.stem].slice(-50))
+      setGrade(null); setAnswer({})
       setQ(res); setMock(!!res._mock); setLoading(false)
+    }).catch(() => {
+      if (id !== requestId.current) return
+      setLoading(false); setError(true)
     })
   }
   // regenerate on topic/qtype/difficulty change
-  useEffect(load, [topic, qtype, difficulty]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setQ(null); setGrade(null); setAnswer({})
+    load()
+    return () => { requestId.current += 1 }
+  }, [topic, qtype, difficulty, lang]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isFav = q && favorites.some((f) => f.question_id === q.id)
 
@@ -75,6 +91,10 @@ export default function Practice({
         </div>
       </div>
 
+      {error && <div role="alert" className="grade-box bad">
+        {lang === 'zh' ? '暂时无法获取新题，可能是模型不可用或当前题库已练完。请重试或切换题型、难度。' : 'A new question is unavailable. The model may be unreachable or the available exercises exhausted. Retry or change the type or difficulty.'}
+        <button className="btn" onClick={load}>{lang === 'zh' ? '重试获取新题' : 'Retry new question'}</button>
+      </div>}
       {loading ? <Loading rows={2} /> : q && (
         <Card>
           <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -138,7 +158,7 @@ export default function Practice({
         ) : (
           <>
             <button className="btn" onClick={() => onStuck(q)}>{t('practice_stuck')}</button>
-            <button className="btn primary" disabled={grading} onClick={submit}>
+            <button className="btn primary" disabled={grading || loading || !q} onClick={submit}>
               {grading ? t('loading') : t('practice_submit')}
             </button>
           </>

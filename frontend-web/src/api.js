@@ -69,6 +69,7 @@ function normalizeAnalytics(raw) {
     .filter((d) => d.grade !== 'None' || d.count > 0)
 
   const insights = (raw.insights || []).map((i) => ({
+    kind: i.kind, params: i.params || {},
     level: SEVERITY_LEVEL[i.severity] || 'neutral',
     title: i.title,
     text: i.detail || i.title,
@@ -99,7 +100,7 @@ function normalizeAnalytics(raw) {
     by_topic: byTopic,
     reasoning_distribution,
     conditions: [],   // backend doesn't expose tutor-vs-solo here
-    practice: [],      // backend has no per-set practice breakdown here
+    practice: raw.practice || [],
     insights,
     reasoning_max: REASONING_MAX,
   }
@@ -140,9 +141,9 @@ async function withFallback(fn, mockShaped) {
 }
 
 export const api = {
-  getClassAnalytics: () =>
+  getClassAnalytics: (classId = '') =>
     withFallback(
-      async () => normalizeAnalytics(await req('/analytics/class')),
+      async () => normalizeAnalytics(await req('/analytics/class' + (classId ? '?class_id=' + encodeURIComponent(classId) : ''))),
       normalizeAnalytics(MOCK.analyticsBackend)
     ),
 
@@ -159,15 +160,23 @@ export const api = {
       { topics: MOCK.topics }
     ),
 
-  getAssignments: () =>
+  getAssignments: (classId = '') =>
     withFallback(
       async () => {
-        const data = await req('/assignments')
+        const data = await req('/assignments' + (classId ? '?class_id=' + encodeURIComponent(classId) : ''))
         const arr = Array.isArray(data) ? data : data.assignments || []
         return { assignments: arr.map(normalizeAssignment) }
       },
       { assignments: MOCK.assignments }
     ),
+
+  // Future backend contract: results grouped by a teacher-created assignment.
+  // The endpoint is intentionally not called yet; this keeps the current work
+  // frontend-only and makes the preview state explicit until backend work starts.
+  getAssignmentResults: (classId = '') => Promise.resolve({
+    results: classId && classId !== 'class-a' ? [] : structuredClone(MOCK.assignmentResults),
+    _mock: true,
+  }),
 
   // UI collects question blocks; backend wants { title, note, items:[...] }.
   createAssignment: (payload) => {
@@ -184,7 +193,7 @@ export const api = {
           difficulty: (payload.difficulty || 'medium').toLowerCase(),
           count: payload.count || 1,
         }]
-    const body = { title: payload.title, note: payload.note || '', items }
+    const body = { title: payload.title, note: payload.note || '', items, class_id: payload.class_id || null }
     return req('/assignments', { method: 'POST', body: JSON.stringify(body) })
       .then(normalizeAssignment)
       .catch(() => ({ ...normalizeAssignment({ ...body, id: 'local-' + Date.now(), created_at: Date.now() / 1000 }), _mock: true }))
@@ -194,10 +203,10 @@ export const api = {
     req(`/assignments/${id}`, { method: 'DELETE' }).catch(() => ({ ok: true, _mock: true })),
 
   // backend: POST /analytics/ask { question } -> { answer, llm_available, grounded_on }
-  ask: (question) =>
-    req('/analytics/ask', { method: 'POST', body: JSON.stringify({ question }) })
+  ask: (question, language = 'en', class_id = '') =>
+    req('/analytics/ask', { method: 'POST', body: JSON.stringify({ question, language, class_id: class_id || null }) })
       .then((r) => ({ answer: r.answer, llm_available: r.llm_available !== false }))
-      .catch(() => ({ answer: MOCK.askAnswer(question), _mock: true, llm_available: false })),
+      .catch(() => ({ answer: MOCK.askAnswer(question, language), _mock: true, llm_available: false })),
 
   /* ---------------- Student side ---------------- */
 
@@ -214,11 +223,8 @@ export const api = {
     withFallback(async () => await req('/concept?topic=' + encodeURIComponent(topic)), MOCK.concept(topic)),
 
   // POST /generate { type, topic, difficulty, language } -> GeneratedQuestionPublic
-  generateQuestion: ({ type, topic, difficulty, language = 'en' }) =>
-    withFallback(
-      async () => await req('/generate', { method: 'POST', body: JSON.stringify({ type, topic, difficulty, language }) }),
-      MOCK.question(type, topic, difficulty),
-    ),
+  generateQuestion: ({ type, topic, difficulty, language = 'en', exclude_stems = [] }) =>
+    req('/generate', { method: 'POST', body: JSON.stringify({ type, topic, difficulty, language, exclude_stems }) }),
 
   // POST /grade { question_id, single|multiple|blanks|order, student_id, class_id } -> GradeResponse
   gradeAnswer: (payload) =>
