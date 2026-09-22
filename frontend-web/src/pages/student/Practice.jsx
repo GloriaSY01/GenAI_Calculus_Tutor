@@ -168,7 +168,7 @@ export default function Practice({
   )
 }
 
-function AnswerControls({ q, answer, setAnswer, disabled }) {
+export function AnswerControls({ q, answer, setAnswer, disabled, displayText = value => value }) {
   if (q.type === 'single_choice') {
     return (
       <div className="stack" style={{ gap: 8 }}>
@@ -176,7 +176,7 @@ function AnswerControls({ q, answer, setAnswer, disabled }) {
           <label key={i} className={'opt-row' + (answer.single === i ? ' sel' : '')}>
             <input type="radio" name="single" disabled={disabled} checked={answer.single === i}
               onChange={() => setAnswer({ single: i })} />
-            <MathText>{opt}</MathText>
+            <MathText>{displayText(opt)}</MathText>
           </label>
         ))}
       </div>
@@ -190,7 +190,7 @@ function AnswerControls({ q, answer, setAnswer, disabled }) {
         {(q.options || []).map((opt, i) => (
           <label key={i} className={'opt-row' + (chosen.includes(i) ? ' sel' : '')}>
             <input type="checkbox" disabled={disabled} checked={chosen.includes(i)} onChange={() => toggle(i)} />
-            <MathText>{opt}</MathText>
+            <MathText>{displayText(opt)}</MathText>
           </label>
         ))}
       </div>
@@ -220,7 +220,7 @@ function AnswerControls({ q, answer, setAnswer, disabled }) {
       {order.map((step, i) => (
         <div key={i} className="order-row">
           <span className="order-idx">{i + 1}</span>
-          <MathText style={{ flex: 1 }}>{step}</MathText>
+          <MathText style={{ flex: 1 }}>{displayText(step)}</MathText>
           <button className="btn sm ghost" disabled={disabled || i === 0} onClick={() => move(i, -1)}>↑</button>
           <button className="btn sm ghost" disabled={disabled || i === order.length - 1} onClick={() => move(i, 1)}>↓</button>
         </div>

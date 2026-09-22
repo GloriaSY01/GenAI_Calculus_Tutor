@@ -5,7 +5,7 @@ import Overview from './pages/Overview.jsx'
 import Diagnose from './pages/Diagnose.jsx'
 import Assign from './pages/Assign.jsx'
 import Assistant from './pages/Assistant.jsx'
-import StudentApp from './pages/StudentApp.jsx'
+import StudentApp from './pages/StudentWorkspace.jsx'
 import { api } from './api.js'
 import { TeacherClassContext } from './components/TeacherClass.jsx'
 

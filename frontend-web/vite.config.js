@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5175,
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, ''),
       },
@@ -17,7 +17,7 @@ export default defineConfig({
       // They are referenced by absolute path in <img src>, so the dev server
       // must forward them too (no rewrite — the backend mount path matches).
       '/textbook-assets': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

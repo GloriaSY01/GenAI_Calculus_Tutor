@@ -12,6 +12,9 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel, Field
+from typing import Literal
+from . import localization
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -362,3 +365,18 @@ def delete_favorite(
     if not store.remove_favorite(normalized_id, question_id):
         raise HTTPException(status_code=404, detail="Favorite not found")
     return {"removed": True}
+
+
+class LocalizationRequest(BaseModel):
+    texts: list[str] = Field(max_length=100)
+    language: Literal["zh", "en"]
+
+
+@app.post("/localize")
+def localize_content(req: LocalizationRequest):
+    if sum(len(t) for t in req.texts) > 30000:
+        raise HTTPException(413, "Translation request is too large")
+    try:
+        return {"translations": localization.translate_texts(req.texts, req.language)}
+    except Exception:
+        raise HTTPException(503, "Translation is temporarily unavailable")

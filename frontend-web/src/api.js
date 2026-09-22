@@ -264,3 +264,8 @@ export const api = {
     req(`/favorites/${questionId}?student_id=` + encodeURIComponent(studentId), { method: 'DELETE' })
       .catch(() => ({ removed: true, _mock: true })),
 }
+
+// No demo fallback for translations: never present unrelated text as a translation.
+export async function translateTexts(texts, language) {
+  return req('/localize', { method: 'POST', body: JSON.stringify({ texts, language }) })
+}

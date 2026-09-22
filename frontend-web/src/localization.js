@@ -1,5 +1,7 @@
+import textbookLabels from './textbook-labels.json'
 const labels = {"Limits": "极限", "Derivatives": "导数", "Integrals": "积分", "Chain Rule": "链式法则", "U-Substitution": "换元积分", "Series": "级数", "Excellent": "充分", "Good": "良好", "Fair": "部分", "Weak": "薄弱", "None": "无推理", "explain": "助教辅导", "control": "自主练习"}
 Object.assign(labels, {"Applications of Derivatives": "导数的应用", "Applications of the Derivative": "导数的应用", "Continuity": "连续性", "Continuous Functions": "连续函数", "Related Rates": "相关变化率", "General / Free chat": "综合问题 / 自由问答", "A Review of Trigonometry": "三角函数复习"})
+Object.assign(labels, textbookLabels)
 const normalizedLabels = Object.fromEntries(
   Object.entries(labels).map(([key, value]) => [key.toLowerCase(), value])
 )

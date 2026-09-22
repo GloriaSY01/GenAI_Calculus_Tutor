@@ -1,3 +1,5 @@
+import { useLang } from '../i18n.jsx'
+import formulaLabels from '../formula-labels.json'
 import { useMemo } from 'react'
 import katex from 'katex'
 
@@ -14,6 +16,14 @@ import katex from 'katex'
    lightweight prettifier that renders REAL <sup>/<sub> tags
    (not limited Unicode glyphs) + refined typography.
    ============================================================ */
+
+function localizeFormulaLabels(value, lang) {
+  if (lang !== 'zh') return value
+  return value.replace(/\\(text|operatorname)\{([^{}]*)\}/g, (match, command, label) => {
+    const translated = formulaLabels[label.trim()]
+    return translated ? '\\' + command + '{' + translated + '}' : match
+  })
+}
 
 function renderTeX(tex, displayMode) {
   try {
@@ -138,7 +148,8 @@ export function prettifyMath(input) {
 
 /* Block-level formula (one entry from a `formulas` array). */
 export function Formula({ children }) {
-  const raw = String(children ?? '')
+  const { lang } = useLang()
+  const raw = localizeFormulaLabels(String(children ?? ''), lang)
   const html = useMemo(() => (looksLikeLatex(raw) ? renderTeX(raw, true) : null), [raw])
   const nodes = useMemo(() => (html == null ? prettifyMathNodes(raw, 'f') : null), [raw, html])
   if (html != null) {
@@ -153,7 +164,8 @@ export function Formula({ children }) {
 const DELIM_RE = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$([^$\n]+?)\$/g
 
 export function MathText({ children, as: Tag = 'span', ...rest }) {
-  const text = String(children ?? '')
+  const { lang } = useLang()
+  const text = localizeFormulaLabels(String(children ?? ''), lang)
   const parts = useMemo(() => {
     const out = []
     let last = 0
