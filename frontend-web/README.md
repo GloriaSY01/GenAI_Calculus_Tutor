@@ -1,91 +1,52 @@
-# Teacher Dashboard — Vite + React
+# frontend-web
 
-A modern rewrite of the **teacher-facing** app (previously Streamlit) using
-**Vite + React + ECharts**. The student app and the FastAPI backend are unchanged.
+Vite + React client for **both** the student workspace and the teacher dashboard.
+KaTeX renders mathematics; ECharts renders teacher charts.
 
-## Why this exists
-
-The original teacher UI lived in `frontend/teacher_app.py` + `frontend/teacher/*.py`
-(Streamlit). This module reimplements the same features as a real single-page web
-app so the UI can be styled and customized freely:
-
-- **Overview** — KPI cards, key insights, tutor-vs-solo comparison, topic health
-- **Diagnose** — accuracy by knowledge point, reasoning-quality distribution, practice results
-- **Assign** — problem-set builder, quick templates, scheduled-assignment list (create/delete)
-- **Assistant** — natural-language Q&A over class data
-
-Extras: light/dark theme, 中文 / English toggle, responsive layout.
+This is the current UI. Do not start Streamlit under `frontend/` unless you
+are looking at the old prototype.
 
 ## Run
+
+Backend first (repo root):
+
+```bash
+python -m uvicorn backend.main:app --reload --reload-dir backend --host 127.0.0.1 --port 8000
+```
+
+Then:
 
 ```bash
 cd frontend-web
 npm install
-npm run dev        # http://localhost:5175
+npx vite --host 127.0.0.1
 ```
 
-The dev server proxies `/api/*` to the FastAPI backend (default
-`http://localhost:8000`). Start the backend as usual:
+PowerShell:
 
-```bash
-uvicorn backend.main:app --reload
+```powershell
+$env:VITE_BACKEND_URL="http://127.0.0.1:8000"
+npm run dev
 ```
 
-Override the backend URL if needed:
+Open http://127.0.0.1:5175. Switch **Teacher / Student** at the bottom of the
+sidebar. Use `127.0.0.1` rather than `localhost` on Windows so the `/api` proxy
+hits IPv4 uvicorn.
 
-```bash
-VITE_BACKEND_URL=http://localhost:8000 npm run dev
-```
+If the backend is unreachable, teacher pages fall back to demo data (`● demo data`).
+`POST /localize` has no demo fallback.
 
-> If the backend is unreachable, the UI automatically falls back to demo data
-> (marked with a `● demo data` pill) so you can still preview everything.
-
-## Build
-
-```bash
-npm run build      # outputs dist/
-npm run preview
-```
-
-## Backend endpoints used
-
-| Method | Path                 | Purpose                              |
-|--------|----------------------|--------------------------------------|
-| GET    | `/analytics/class`   | KPIs, topic accuracy, reasoning dist |
-| POST   | `/analytics/ask`     | Data-assistant Q&A                   |
-| GET    | `/topics`            | Topic list for the assignment form   |
-| GET    | `/assignments`       | List scheduled assignments           |
-| POST   | `/assignments`       | Create an assignment                 |
-| DELETE | `/assignments/{id}`  | Delete an assignment                 |
-
-## Structure
+## Layout
 
 ```
 frontend-web/
-├── index.html
-├── vite.config.js          # /api proxy -> FastAPI
+├── vite.config.js              # /api and /textbook-assets → 127.0.0.1:8000
 ├── src/
-│   ├── main.jsx
-│   ├── App.jsx             # sidebar nav + routing + theme/lang
-│   ├── i18n.jsx            # zh / en copy (ported from i18n.py)
-│   ├── api.js              # backend calls + mock fallback
-│   ├── mock.js             # demo data (mirrors backend shape)
-│   ├── styles/theme.css    # design system (light/dark tokens)
-│   ├── components/
-│   │   ├── ui.jsx          # Card, Kpi, Badge, Bar, Chart, ...
-│   │   └── hooks.js        # useAsync / useAnalytics
-│   └── pages/
-│       ├── Overview.jsx
-│       ├── Diagnose.jsx
-│       ├── Assign.jsx
-│       └── Assistant.jsx
+│   ├── App.jsx                 # role switch, teacher routes
+│   ├── pages/StudentWorkspace.jsx
+│   ├── pages/student/
+│   ├── pages/Overview.jsx      # teacher
+│   ├── pages/Diagnose.jsx
+│   ├── pages/Assign.jsx
+│   └── pages/Assistant.jsx
 ```
-
-## Notes on the migration
-
-- The **backend did not change** — React calls the same REST endpoints the
-  Streamlit app used.
-- The old Streamlit teacher files (`frontend/teacher_app.py`, `frontend/teacher/`)
-  can be retired once this is adopted; they are left in place for reference.
-- State that Streamlit handled implicitly (`st.session_state`, `?instructor=1`)
-  is now explicit React state / routing.
