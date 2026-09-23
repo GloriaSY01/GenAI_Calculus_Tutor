@@ -378,15 +378,52 @@ def _figure_payload(
     }
 
 
+def _verified_display_chunks(section_id: str, meta: dict[str, Any]) -> list[dict[str, Any]]:
+    """Learn-page chunks from the curated textbook, whose ids match formula overrides."""
+    rows = [
+        row
+        for row in textbook.load_verified_content()
+        if row.get("section_id") == section_id
+        and row.get("content_type") in ("concept", "example")
+    ]
+    if not rows:
+        return []
+    manifest = textbook.load_manifest()
+    source = f"{manifest['book']} — {manifest['author']}"
+    source_url = manifest["source_url"].split("#", 1)[0]
+    chunks: list[dict[str, Any]] = []
+    for row in sorted(rows, key=lambda item: int(item.get("order", 0))):
+        page = row.get("pdf_page")
+        chunks.append({
+            "id": row["id"],
+            "text": row.get("text", ""),
+            "title": row.get("heading") or meta["display_title"],
+            "section": meta["display_title"],
+            "section_id": section_id,
+            "content_type": row.get("content_type", "concept"),
+            "subtype": row.get("subtype", row.get("content_type", "concept")),
+            "order": int(row.get("order", 0)),
+            "pdf_page": page,
+            "figure_ids": list(row.get("figure_ids") or []),
+            "formulas": list(row.get("formulas") or []),
+            "requires_figure": bool(row.get("figure_ids")),
+            "source": source,
+            "source_url": f"{source_url}#page={page}" if page else source_url,
+        })
+    return chunks
+
+
 def section_page(section_id: str) -> dict[str, Any]:
     """Build a Learn page from ordered concept/example chunks."""
     meta = textbook.get_section(section_id)
     if meta is None:
         raise KeyError(section_id)
-    chunks = get_by_metadata(
-        section_id=section_id,
-        content_types=["concept", "example"],
-    )
+    chunks = _verified_display_chunks(section_id, meta)
+    if not chunks:
+        chunks = get_by_metadata(
+            section_id=section_id,
+            content_types=["concept", "example"],
+        )
     if not chunks:
         raise RAGUnavailable(
             f"No indexed text for {meta['display_title']}. "

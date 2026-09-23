@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "kind": "designed_cognitive_difficulty",
+  "levels": ["easy", "medium", "hard"],
+  "dimensions": {
+    "knowledge_integration": {
+      "easy": "A single knowledge point from the current section.",
+      "medium": "One or two related knowledge points.",
+      "hard": "Several knowledge points combined."
+    },
+    "strategy_selection": {
+      "easy": "The method is essentially given; the student knows which rule or formula to use.",
+      "medium": "The student must choose among learned methods or combine them.",
+      "hard": "The student must choose, combine, or construct a solution strategy."
+    },
+    "reasoning_process": {
+      "easy": "A few direct steps; a routine procedure.",
+      "medium": "Multi-step reasoning with some intermediate decisions.",
+      "hard": "Multi-stage reasoning that needs problem decomposition."
+    },
+    "transfer_interpretation": {
+      "easy": "A familiar standard form.",
+      "medium": "A variation, new representation, or simple application.",
+      "hard": "A new situation, modelling, interpretation, or justification."
+    }
+  },
+  "hard_must_not": [
+    "longer arithmetic",
+    "more complicated numbers",
+    "unnecessary algebraic manipulation",
+    "knowledge not yet taught in the current learning scope"
+  ],
+  "cognitive_tasks": [
+    "routine_calculation",
+    "conceptual_understanding",
+    "strategy_selection",
+    "error_diagnosis",
+    "graphical_interpretation",
+    "modelling",
+    "multi_step_reasoning"
+  ],
+  "note": "MATH Taxonomy Group A/B/C describes cognitive activity and is not a difficulty scale."
+}

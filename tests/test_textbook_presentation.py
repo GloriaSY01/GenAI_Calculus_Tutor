@@ -8,6 +8,12 @@ ROOT = Path(__file__).resolve().parents[1] / 'data/textbook/mit-calculus'
 def read(name):
     return json.loads((ROOT / name).read_text(encoding='utf-8'))
 
+def test_learn_page_uses_curated_formulas_after_chapter_one():
+    card = rag.section_page('mit-2-1-the-derivative-of-a-function')
+    formulas = [formula for block in card['content'] for formula in block['formulas']]
+    assert any(formula.startswith('\\displaystyle') for formula in formulas)
+    assert 'mit-2-1-concept-001' not in {block['id'] for block in card['content']}
+
 def test_all_formulas_have_overrides():
     overrides = rag._formula_overrides()
     for row in read('verified_content.json'):

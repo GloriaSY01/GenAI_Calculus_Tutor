@@ -80,6 +80,14 @@ def log_practice(payload: dict) -> None:
     log_activity("practice_grade", payload)
 
 
+def log_question(payload: dict) -> None:
+    """Append a generated-question record for later difficulty calibration."""
+    record = {"ts": time.time(), "event": "question_generated", "hint_usage": None, **payload}
+    path = config.LOG_DIR / "questions.jsonl"
+    with open(path, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
 def log_activity(event: str, payload: dict) -> None:
     """Append a student activity event to the shared JSONL stream."""
     record = {"ts": time.time(), "event": event, **payload}

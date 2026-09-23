@@ -22,9 +22,16 @@ data/favorites.json
 data/favorites.json.tmp
 data/chroma/
 data/models/
+data/exercises/raw/
+data/exercises/parsed/
+data/exercises/drafts/
+data/exercises/textbook_stems.jsonl
+data/chroma-exercises/
 data/rag/
 data/textbook/openstax-calculus-volume-1/
-data/textbook/mit-calculus/parsed/
+# MinerU chapter dumps stay local. The app serves figures from parsed/extracted/.
+data/textbook/mit-calculus/parsed/*
+!data/textbook/mit-calculus/parsed/extracted/
 
 # Generated analysis artifacts
 reports/

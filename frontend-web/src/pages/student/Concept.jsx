@@ -45,7 +45,7 @@ export default function Concept({ topic, onAskTutor, onStartPractice, embedded =
       {!mock && <div className="note-tip">{lang === 'zh' ? '正文与图注为中文译文；插图保留教材原图，图内文字可能为英文。' : 'Textbook notes and captions in English; figures retain their original labels.'}</div>}
       <Card>
         <div className="stack" style={{ gap: 18 }}>
-          {card.summary && <MathText as="p" style={{ margin: 0, fontSize: 15, lineHeight: 1.7 }}>{tr(card.summary)}</MathText>}
+          {!blocks.length && card.summary && <MathText as="p" style={{ margin: 0, fontSize: 15, lineHeight: 1.7 }}>{tr(card.summary)}</MathText>}
 
           {blocks.length > 0 ? blocks.map((b) => (
             <div key={b.id} className={'concept-block' + (b.subtype === 'illustrated_concept' ? ' concept-illustrated' : '')}>

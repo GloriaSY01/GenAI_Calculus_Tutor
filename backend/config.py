@@ -18,6 +18,14 @@ TEXTBOOK_FORMULA_OVERRIDES_FILE = TEXTBOOK_DIR / "formula_overrides.json"
 TEXTBOOK_EXERCISES_FILE = TEXTBOOK_DIR / "curated_exercises.json"
 TEXTBOOK_ASSETS_DIR = TEXTBOOK_DIR / "parsed"
 TEXTBOOK_PDF_DIR = TEXTBOOK_DIR / "pdfs"
+EXERCISES_DIR = DATA_DIR / "exercises"
+EXERCISE_BANK_FILE = EXERCISES_DIR / "exercise_bank.jsonl"
+EXERCISE_SOURCES_FILE = EXERCISES_DIR / "sources.json"
+EXERCISE_RUBRIC_FILE = EXERCISES_DIR / "difficulty_rubric.json"
+EXERCISE_RAW_DIR = EXERCISES_DIR / "raw"
+EXERCISE_PARSED_DIR = EXERCISES_DIR / "parsed"
+EXERCISE_DRAFT_DIR = EXERCISES_DIR / "drafts"
+EXERCISE_STEMS_FILE = EXERCISES_DIR / "textbook_stems.jsonl"
 LEARNING_PATH_FILE = DATA_DIR / "learning_path.json"
 ASSIGNMENTS_FILE = DATA_DIR / "assignments.json"
 
@@ -33,6 +41,12 @@ _chroma_dir = Path(os.getenv("CHROMA_DIR", str(DATA_DIR / "chroma")))
 CHROMA_DIR = _chroma_dir if _chroma_dir.is_absolute() else ROOT_DIR / _chroma_dir
 CHROMA_POINTER_FILE = CHROMA_DIR / "current.json"
 CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION", "mit_calculus")
+_exercise_chroma_dir = Path(os.getenv("EXERCISE_CHROMA_DIR", str(DATA_DIR / "chroma-exercises")))
+EXERCISE_CHROMA_DIR = (
+    _exercise_chroma_dir if _exercise_chroma_dir.is_absolute() else ROOT_DIR / _exercise_chroma_dir
+)
+EXERCISE_CHROMA_COLLECTION = os.getenv("EXERCISE_CHROMA_COLLECTION", "mit_calculus_exercises")
+EXERCISE_REFERENCE_K = int(os.getenv("EXERCISE_REFERENCE_K", "3"))
 RAG_EMBEDDING_MODEL = os.getenv(
     "RAG_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 )
@@ -63,3 +77,4 @@ CLASS_OPTIONS = [
 
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 TEXTBOOK_DIR.mkdir(parents=True, exist_ok=True)
+EXERCISES_DIR.mkdir(parents=True, exist_ok=True)

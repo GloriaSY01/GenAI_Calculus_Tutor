@@ -17,7 +17,7 @@ import time
 import uuid
 from typing import Any, Dict, List, Tuple
 
-from . import config, llm, rag, textbook
+from . import config, exercise_bank, llm, rag, textbook
 from .schemas import (
     GeneratedQuestionPublic,
     GradeRequest,
@@ -269,6 +269,8 @@ def _maybe_curated(
         citations=[_citation(section, pdf_page)],
         language=language,
     )
+    record["reference_ids"] = []
+    record["difficulty_reason"] = {}
     _REGISTRY[qid] = record
     return _public(record)
 
@@ -315,6 +317,43 @@ def generate_question(
             "textbook exercise verbatim and do not mention the context in the question.\n\n"
             f"{context}\n\n"
         )
+    references: list[dict[str, Any]] = []
+    try:
+        references = exercise_bank.retrieve_references(
+            section["id"], difficulty, section["display_title"]
+        )
+    except Exception:
+        references = []
+    rubric = exercise_bank.rubric_prompt()
+    if rubric:
+        prompt += rubric + "\n\n"
+    prompt += (
+        "Match the requested difficulty using those four dimensions. "
+        "Reference exercises, when present, are English source material for "
+        "difficulty and reasoning structure only. Do not copy a reference stem, "
+        "its function, its numbers, or its situation. Change all three. "
+        "Add a difficulty_reason object with knowledge_integration, "
+        "strategy_selection, reasoning_process, and transfer_interpretation.\n"
+    )
+    if references:
+        packed = [
+            {
+                "exercise_id": row["exercise_id"],
+                "stem": (row.get("stem") or "")[:700],
+                "designed_difficulty": row.get("designed_difficulty"),
+                "difficulty_reason": row.get("difficulty_reason") or {},
+            }
+            for row in references
+        ]
+        prompt += (
+            "Reference exercises:\n"
+            + json.dumps(packed, ensure_ascii=False)
+            + "\n\n"
+        )
+    else:
+        prompt += "No external reference exercises are available for this section and difficulty.\n\n"
+    blocked = [row.get("stem") or "" for row in references]
+    blocked.extend(exercise_bank.textbook_copy_stems(section["id"]))
     prompt += _SPECS[qtype]
     if exclude_stems:
         prompt += (
@@ -330,10 +369,21 @@ def generate_question(
                 {"role": "system", "content": "You output only valid JSON."},
                 {"role": "user", "content": prompt},
             ])
-            if _norm(data.get("stem", "")) not in excluded:
-                break
+            stem = data.get("stem", "")
+            if _norm(stem) in excluded or exercise_bank.too_close(stem, blocked):
+                continue
+            break
         else:
             raise ValueError("The model returned a previously seen question")
+    except ValueError:
+        if exclude_stems:
+            remaining = _maybe_curated(
+                qtype, section, difficulty, language, exclude_stems, force=True
+            )
+            if remaining:
+                return remaining
+            raise ValueError("No new question is available; please retry generation")
+        raise
     except Exception:
         if exclude_stems:
             # Try an unseen real exercise before reporting generation failure.
@@ -409,6 +459,8 @@ def generate_question(
         citations=citations,
         language=language,
     )
+    record["reference_ids"] = [row["exercise_id"] for row in references]
+    record["difficulty_reason"] = data.get("difficulty_reason") or {}
     _REGISTRY[qid] = record
     return _public(record)
 

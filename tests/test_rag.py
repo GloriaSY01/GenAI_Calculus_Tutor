@@ -151,6 +151,7 @@ def test_section_page_uses_ordered_concept_and_example(monkeypatch):
             "text": "Compute average velocities over shorter intervals.",
         },
     ]
+    monkeypatch.setattr(rag.textbook, "load_verified_content", lambda: [])
     monkeypatch.setattr(rag, "get_by_metadata", lambda **kwargs: chunks)
     monkeypatch.setattr(
         rag,

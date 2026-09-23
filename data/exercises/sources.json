@@ -1,0 +1,36 @@
+{
+  "sources": [
+    {
+      "source_id": "mit_strang_study_guide",
+      "title": "Gilbert Strang Calculus Study Guide",
+      "course_url": "https://ocw.mit.edu/courses/res-18-001-calculus-fall-2023/pages/study-guide/",
+      "license": "CC BY-NC-SA 4.0. Gilbert Strang Calculus Study Guide, MIT OpenCourseWare res-18-001.",
+      "use": ["model_problem", "drill"],
+      "exclude": ["textbook_exercise_reprint"],
+      "download": "auto",
+      "pdf_pattern": "https://ocw.mit.edu/courses/res-18-001-calculus-fall-2023/mitres_18_001_f17_guide_ch{nn}.pdf",
+      "chapters": [1, 2, 3, 4, 5, 6, 7, 8],
+      "save_dir": "raw/mit_strang_study_guide",
+      "filename_pattern": "guide_ch{nn}.pdf"
+    },
+    {
+      "source_id": "mit_18_01sc",
+      "title": "MIT 18.01SC Single Variable Calculus",
+      "course_url": "https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/",
+      "license": "CC BY-NC-SA 4.0. MIT 18.01SC Single Variable Calculus, Fall 2010, MIT OpenCourseWare.",
+      "use": ["problem_set"],
+      "exclude": ["exam", "worked_example"],
+      "download": "local",
+      "save_dir": "raw/mit_18_01sc",
+      "problems_dir": "promblems",
+      "solutions_dir": "solutions",
+      "files": {
+        "pset1": {"problem": "MIT18_01SC_pset1prb.pdf", "solution": "MIT18_01SC_pset1sol.pdf"},
+        "pset2": {"problem": "MIT18_01SC_pset2prb.pdf", "solution": "MIT18_01SC_pset2sol.pdf"},
+        "pset3": {"problem": "MIT18_01SC_pset3prb.pdf", "solution": "MIT18_01SC_pset3sol.pdf"},
+        "pset4": {"problem": "MIT18_01SC_pset4prb.pdf", "solution": "MIT18_01SC_pset4sol.pdf"},
+        "pset5": {"problem": "MIT18_01SC_pset5prb.pdf", "solution": "MIT18_01SC_pset5sol.pdf"}
+      }
+    }
+  ]
+}

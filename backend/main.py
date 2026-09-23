@@ -181,7 +181,7 @@ def delete_assignment(assignment_id: str):
 @app.post("/generate", response_model=GeneratedQuestionPublic)
 def generate(req: GenerateRequest):
     try:
-        return generator.generate_question(
+        public = generator.generate_question(
             req.type, req.topic, req.difficulty, language=req.language,
             exclude_stems=req.exclude_stems,
         )
@@ -190,6 +190,19 @@ def generate(req: GenerateRequest):
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502,
                             detail=f"Generation failed: {exc}") from exc
+    private = generator.get(public.id) or {}
+    store.log_question({
+        "question_id": public.id,
+        "stem": public.stem,
+        "difficulty": public.difficulty,
+        "difficulty_reason": private.get("difficulty_reason") or {},
+        "reference_ids": private.get("reference_ids") or [],
+        "section_id": public.section_id,
+        "type": public.type,
+        "source": public.source,
+        "hint_usage": None,
+    })
+    return public
 
 
 @app.post("/grade", response_model=GradeResponse)
@@ -205,6 +218,9 @@ def grade(req: GradeRequest):
             "section_id": question.get("section_id") if question else None,
             "source": question.get("source") if question else None,
             "language": question.get("language") if question else None,
+            "difficulty": question.get("difficulty") if question else None,
+            "type": question.get("type") if question else None,
+            "hint_usage": None,
             "correct": result.correct,
             "attempts": result.attempts,
             "answer_revealed": result.answer_revealed,
