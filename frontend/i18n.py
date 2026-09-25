@@ -137,6 +137,14 @@ STRINGS = {
     "teacher.kpi_students": {"en": "Students", "zh": "学生人数"},
     "teacher.kpi_sessions": {"en": "Conversations", "zh": "对话次数"},
     "teacher.kpi_solve": {"en": "Solved it", "zh": "会做的比例"},
+    "teacher.kpi_practice_submissions": {"en": "Practice submitted", "zh": "练习提交数"},
+    "teacher.kpi_independent_solve": {"en": "Solved independently", "zh": "自主做出"},
+    "teacher.kpi_ai_assisted_solve": {"en": "Solved with AI help", "zh": "AI辅助完成"},
+    "teacher.kpi_stuck": {"en": "Stuck rate", "zh": "卡住比例"},
+    "teacher.kpi_stuck_help": {
+        "en": "Estimated share of students who did not solve, gave weak explanations, or showed low-effort behaviour.",
+        "zh": "根据未做出、解释较弱或应付行为估算出的卡住比例。",
+    },
     "teacher.kpi_reasoning": {"en": "Explains why", "zh": "讲思路"},
     "teacher.kpi_mastery": {"en": "Mastery", "zh": "掌握度"},
     "teacher.kpi_turns": {"en": "Replies per conversation", "zh": "平均对话轮数"},
@@ -176,12 +184,23 @@ STRINGS = {
         "en": "No topic data yet. Charts appear once students practise.",
         "zh": "暂无知识点数据。学生开始练习后会出现图表。",
     },
+    "teacher.only_free_chat_data": {
+        "en": "{n} conversation(s) are logged, but they are free chat and not tied to a textbook topic yet. This chart appears after students start from a specific topic or practice question.",
+        "zh": "目前有 {n} 次对话记录，但都是自由聊天，还没有绑定到具体教材知识点。学生从某个知识点或练习题进入辅导后，这里才会出现图表。",
+    },
+    "teacher.topic_health_demo_note": {
+        "en": "Example preview only: real topic data will replace this chart once students practise from specific topics.",
+        "zh": "下方为示例预览：学生从具体知识点进入练习后，会自动替换为真实图表。",
+    },
+    "teacher.demo_topic_limits": {"en": "Limits", "zh": "极限"},
+    "teacher.demo_topic_derivatives": {"en": "Derivatives", "zh": "导数"},
+    "teacher.demo_topic_chain_rule": {"en": "Chain Rule", "zh": "链式法则"},
     "teacher.no_reasoning_data": {"en": "No reasoning data yet.",
                                   "zh": "暂无推理数据。"},
-    "teacher.insights": {"en": "What the data says", "zh": "数据告诉你"},
+    "teacher.insights": {"en": "Effort & attitude", "zh": "学习态度"},
     "teacher.insights_caption": {
-        "en": "Automatic findings in plain language — read these first.",
-        "zh": "系统自动总结的发现——先看这里。",
+        "en": "How students explain, persist, or show low-effort behaviour.",
+        "zh": "查看学生是否讲清思路、是否持续尝试，以及是否出现应付行为。",
     },
     "teacher.ask_heading": {"en": "Ask about your class", "zh": "问一问班级数据"},
     "teacher.ask_caption": {
@@ -225,6 +244,63 @@ STRINGS = {
     "teacher.delete": {"en": "Delete", "zh": "删除"},
 
     # ---- teacher · dashboard v2 sections ----
+    "teacher.flat_brief_title": {"en": "Class summary", "zh": "班级摘要"},
+    "teacher.flat_brief_sub": {
+        "en": "A short system-generated summary of the current class situation: "
+              "what needs attention, what data supports it, and what the "
+              "teacher can do next.",
+        "zh": "系统根据当前班级数据生成的简短摘要：指出需要关注的问题、"
+              "支撑判断的数据，以及老师下一步可以做什么。",
+    },
+    "teacher.flat_focus": {"en": "Teaching focus", "zh": "教学重点"},
+    "teacher.flat_evidence": {"en": "Evidence", "zh": "依据"},
+    "teacher.flat_next_action": {"en": "Next action", "zh": "下一步"},
+    "teacher.flat_focus_help": {
+        "en": "The topic or issue the teacher should look at first.",
+        "zh": "系统建议老师最先关注的知识点或学习问题。",
+    },
+    "teacher.flat_evidence_help": {
+        "en": "The class-level numbers behind this recommendation.",
+        "zh": "支撑这个判断的班级层面数据。",
+    },
+    "teacher.flat_next_action_help": {
+        "en": "A practical teaching response based on the data.",
+        "zh": "基于当前数据建议采取的教学动作。",
+    },
+    "teacher.flat_solved": {"en": "solved", "zh": "会做"},
+    "teacher.flat_reasoning": {"en": "reasoning", "zh": "讲思路"},
+    "teacher.flat_action_assign": {
+        "en": "Review this topic or assign an easier practice set.",
+        "zh": "建议复习这个知识点，或布置一组更简单的练习。",
+    },
+    "teacher.flat_no_weak_topic": {
+        "en": "No obvious weak topic",
+        "zh": "暂时没有明显薄弱点",
+    },
+    "teacher.flat_enough_data": {
+        "en": "Current topic-level data looks balanced.",
+        "zh": "目前各知识点数据比较均衡。",
+    },
+    "teacher.flat_action_monitor": {
+        "en": "Keep monitoring and assign practice when a topic drops.",
+        "zh": "继续观察，等某个知识点明显下降时再针对性布题。",
+    },
+    "teacher.flat_no_data_focus": {
+        "en": "Collect first learning records",
+        "zh": "先收集第一批学习记录",
+    },
+    "teacher.flat_no_data_evidence": {
+        "en": "No class conversations have been logged yet.",
+        "zh": "目前还没有班级对话记录。",
+    },
+    "teacher.flat_action_collect": {
+        "en": "Ask students to complete a short practice session first.",
+        "zh": "先让学生完成一次简短练习。",
+    },
+    "teacher.research_view": {
+        "en": "Research view: teaching-style experiment",
+        "zh": "研究视图：教学方式实验对比",
+    },
     "teacher.sec_overview": {"en": "Step 1 · Overview", "zh": "第一步 · 看整体"},
     "teacher.sec_overview_title": {"en": "How is the class doing?",
                                    "zh": "班级学得怎么样？"},
@@ -276,6 +352,18 @@ STRINGS = {
               "4 = fully justified.",
         "zh": "学生能不能讲清『为什么这么做』：0 分完全不解释，4 分解释充分。",
     },
+    "teacher.kpi_practice_submissions_help": {
+        "en": "Number of generated practice questions submitted by students.",
+        "zh": "学生在练习区提交答案的次数。",
+    },
+    "teacher.kpi_independent_solve_help": {
+        "en": "Share of generated practice questions answered correctly before the tutor was opened for that question.",
+        "zh": "学生生成题目后，在没有打开该题助教前就答对的比例。",
+    },
+    "teacher.kpi_ai_assisted_solve_help": {
+        "en": "Share of generated practice questions answered correctly after the tutor was opened for that question.",
+        "zh": "学生生成题目后，打开该题助教并答对的比例。",
+    },
     "teacher.badge_sim": {"en": "includes {n} simulated sessions",
                           "zh": "含 {n} 条模拟数据"},
     "teacher.data_scope": {"en": "Data scope", "zh": "数据范围"},
@@ -289,12 +377,16 @@ STRINGS = {
     "teacher.topic_health": {"en": "Which topics need attention",
                              "zh": "哪些知识点需要补"},
     "teacher.topic_health_sub": {
-        "en": "Each row is a topic; a shorter bar means fewer students could "
-              "solve it. Start from the top.",
-        "zh": "一行是一个知识点，条越短说明会做的学生越少；从最上面的开始补。",
+        "en": "Solved it = the share of topic-linked conversations where students eventually solved the problem. Prioritize topics with low rates and enough attempts.",
+        "zh": "会做的比例 = 该知识点相关对话中，学生最终做出题目的占比。优先关注比例低、尝试次数较多的部分。",
     },
     "teacher.axis_solve": {"en": "Solved it", "zh": "会做的比例"},
+    "teacher.axis_solve_help": {
+        "en": "The share of conversations for this topic where students eventually solved the problem.",
+        "zh": "该知识点相关对话中，学生最终做出题目的占比。",
+    },
     "teacher.axis_topic": {"en": "Topic", "zh": "知识点"},
+    "teacher.axis_rate": {"en": "Completion rate", "zh": "做出完成率"},
     "teacher.axis_attempts": {"en": "Conversations", "zh": "对话次数"},
     "teacher.axis_reasoning": {"en": "Explains why (0-4)", "zh": "讲思路 (0–4)"},
     "teacher.axis_mastery": {"en": "Mastery (0-100)", "zh": "掌握度 (0–100)"},
@@ -359,6 +451,30 @@ STRINGS = {
         "en": "(Answer in plain English, addressed to a teacher.)",
         "zh": "（请用中文、面向老师的通俗语言回答。）",
     },
+    "teacher.float_ai_button": {"en": "Ask AI", "zh": "问 AI"},
+    "teacher.float_ai_kicker": {"en": "On-demand help", "zh": "按需辅助"},
+    "teacher.float_ai_title": {"en": "AI Class Assistant", "zh": "AI 班级助手"},
+    "teacher.float_ai_sub": {
+        "en": "Ask when a chart is unclear or when you want teaching suggestions based on the current class data.",
+        "zh": "看不懂图表或需要下一步教学建议时再问；回答基于当前班级数据。",
+    },
+    "teacher.float_ai_empty": {
+        "en": "This assistant does not replace the dashboard. It helps explain the data and turn it into teaching actions.",
+        "zh": "这个助手不替代看板，只帮助解释数据，并把数据转成教学动作建议。",
+    },
+    "teacher.float_ai_try": {"en": "Try asking", "zh": "可以这样问"},
+    "teacher.float_ai_placeholder": {
+        "en": "Ask about a chart, metric, weak topic, or practice suggestion...",
+        "zh": "可以问图表、指标、薄弱知识点，或下一步练习建议…",
+    },
+    "teacher.float_ai_explain": {"en": "Explain the current dashboard",
+                                 "zh": "解释一下当前看板"},
+    "teacher.float_ai_next": {"en": "What should I teach next?",
+                              "zh": "下一节课应该先讲什么？"},
+    "teacher.float_ai_practice": {"en": "Suggest a practice set",
+                                  "zh": "给我一组练习建议"},
+    "teacher.float_ai_ai_help": {"en": "How should I read AI-assisted completion?",
+                                 "zh": "AI辅助完成应该怎么看？"},
 
     # practice stats (placeholder until answer_submitted logging lands)
     "teacher.practice_stats": {"en": "Quiz scores", "zh": "做题成绩"},
@@ -378,6 +494,63 @@ STRINGS = {
               "接通后，第三步布置任务的完成情况也会在这里体现。"
               "注意上面『会做的比例』说的是助教对话，不是做题成绩。",
     },
+    "teacher.practice_overview": {"en": "Practice results", "zh": "做题成绩"},
+    "teacher.practice_overview_sub": {
+        "en": "How students completed generated questions across difficulty levels.",
+        "zh": "查看不同难度下学生完成生成题目的情况。",
+    },
+    "teacher.practice_demo_note": {
+        "en": "No submitted practice records yet. The charts below use sample values to preview the dashboard layout.",
+        "zh": "暂无真实练习提交记录。下方图表使用示例数据，仅用于预览页面布局。",
+    },
+    "teacher.practice_independent": {"en": "Solved independently", "zh": "自主做出"},
+    "teacher.practice_ai_assisted": {"en": "Solved with AI help", "zh": "AI辅助完成"},
+    "teacher.practice_not_correct": {"en": "Not correct", "zh": "未答对"},
+    "teacher.practice_complete_mode": {"en": "Completion mode", "zh": "完成方式"},
+    "teacher.practice_difficulty_chart": {"en": "Completion rate by difficulty", "zh": "按难度对比做出完成率"},
+    "teacher.practice_difficulty_chart_sub": {
+        "en": "For each difficulty level, compare questions solved independently and questions solved after AI help.",
+        "zh": "按简单、中等、困难分别比较：学生自己做出的题目比例，以及借助 AI 后完成的题目比例。",
+    },
+    "teacher.practice_topic_table": {"en": "Completion rate by topic", "zh": "按知识点看完成率"},
+    "teacher.practice_topic_filter": {"en": "Choose a topic", "zh": "选择知识点"},
+    "teacher.practice_topic_filter_sub": {
+        "en": "Choose from the same textbook topics students see; topics with no submissions stay available.",
+        "zh": "从学生端同一套教材目录中选择；暂无提交的知识点也会保留。",
+    },
+    "teacher.practice_topic_no_data_value": {"en": "No data", "zh": "暂无数据"},
+    "teacher.practice_topic_selected": {"en": "Selected topic", "zh": "当前查看"},
+    "teacher.practice_topic_submissions": {"en": "Submissions", "zh": "提交数"},
+    "teacher.practice_topic_correct_count": {"en": "Correct answers", "zh": "答对次数"},
+    "teacher.practice_topic_correct_rate": {"en": "Correct rate", "zh": "答对比例"},
+    "teacher.practice_topic_independent_count": {"en": "Solved independently", "zh": "自主做出次数"},
+    "teacher.practice_topic_ai_assisted_count": {"en": "Solved with AI help", "zh": "AI辅助完成次数"},
+    "teacher.practice_topic_not_correct_count": {"en": "Not correct", "zh": "未答对次数"},
+    "teacher.practice_topic_submissions_help": {
+        "en": "Number of submitted practice answers for the selected topic.",
+        "zh": "当前知识点下学生提交练习答案的总次数。",
+    },
+    "teacher.practice_topic_correct_count_help": {
+        "en": "Number of submitted answers marked correct for the selected topic.",
+        "zh": "当前知识点下被判定为答对的提交次数。",
+    },
+    "teacher.practice_topic_correct_rate_help": {
+        "en": "Correct submissions divided by all submissions for the selected topic.",
+        "zh": "当前知识点答对次数占全部提交次数的比例。",
+    },
+    "teacher.practice_topic_independent_count_help": {
+        "en": "Correct submissions completed before opening the tutor for that question.",
+        "zh": "学生在打开该题助教前就答对的次数。",
+    },
+    "teacher.practice_topic_ai_assisted_count_help": {
+        "en": "Correct submissions completed after opening the tutor for that question.",
+        "zh": "学生打开该题助教后答对的次数。",
+    },
+    "teacher.practice_topic_not_correct_count_help": {
+        "en": "Submitted answers that were not marked correct for the selected topic.",
+        "zh": "当前知识点下提交后未被判定为答对的次数。",
+    },
+    "teacher.week_label": {"en": "Week {n}", "zh": "第{n}周"},
 
     # assign panel additions
     "teacher.assign_prefill": {"en": "Prefilled from: {source}",
@@ -537,9 +710,13 @@ def tr(language: str, english: str, chinese: str, **values) -> str:
 
 
 def current_lang() -> str:
-    return st.session_state.get(
-        "language", st.session_state.get("lang", "en")
-    )
+    lang = st.session_state.get("lang")
+    if lang in {"en", "zh"}:
+        return lang
+    language = st.session_state.get("language")
+    if language in {"en", "zh"}:
+        return language
+    return "en"
 
 
 def t(key: str) -> str:

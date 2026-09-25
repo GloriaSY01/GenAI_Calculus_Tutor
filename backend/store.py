@@ -4,6 +4,8 @@ Sessions live in memory (fine for a single-process demo). Every turn is also
 appended to data/logs/<session_id>.jsonl so the explanation/justification data
 can be analysed offline -- this is what feeds the planned empirical study.
 """
+from __future__ import annotations
+
 import json
 import threading
 import time

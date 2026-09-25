@@ -86,17 +86,51 @@ def _card_html(card: dict) -> str:
             f'<div class="insight-detail">{html.escape(card["detail"])}</div></div>')
 
 
-# Beyond this many cards the list scrolls in place instead of stretching the page.
-_SCROLL_AFTER = 3
-_SCROLL_HEIGHT = 380
+def render_insights_panel(data: dict, *, embedded: bool = False) -> None:
+    if embedded:
+        ui.panel_header("💡", t("teacher.insights"), t("teacher.insights_caption"))
+        _render_attitude_body(data)
+        return
 
-
-def render_insights_panel(data: dict) -> None:
     with st.container(border=True):
         ui.panel_header("💡", t("teacher.insights"), t("teacher.insights_caption"))
-        cards = build_local_insights(data)
-        body = (st.container(height=_SCROLL_HEIGHT) if len(cards) > _SCROLL_AFTER
-                else st.container())
-        with body:
-            for card in cards:
-                st.markdown(_card_html(card), unsafe_allow_html=True)
+        _render_attitude_body(data)
+
+
+def _pct(value) -> str:
+    return f"{round((value or 0) * 100)}%"
+
+
+def _render_attitude_body(data: dict) -> None:
+    _render_attitude_metrics(data)
+
+    cards = build_local_insights(data)
+    for card in cards:
+        st.markdown(_card_html(card), unsafe_allow_html=True)
+
+
+def _render_attitude_metrics(data: dict) -> None:
+    dist = data.get("reasoning_distribution") or {}
+    unclear_rate = (dist.get("none") or 0) + (dist.get("weak") or 0)
+    stuck_rate = max(unclear_rate, data.get("gaming_rate") or 0)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric(
+        t("teacher.kpi_sessions"),
+        f"{data.get('n_sessions', 0)}",
+        help=t("teacher.kpi_sessions_sub").format(n=data.get("n_turns", 0)),
+    )
+    m2.metric(
+        t("teacher.kpi_stuck"),
+        _pct(stuck_rate),
+        help=t("teacher.kpi_stuck_help"),
+    )
+    m3.metric(
+        t("teacher.kpi_gaming"),
+        _pct(data.get("gaming_rate")),
+        help=t("teacher.kpi_gaming_help"),
+    )
+    m4.metric(
+        t("teacher.kpi_guardrail"),
+        _pct(data.get("guardrail_rate")),
+        help=t("teacher.kpi_guardrail_help"),
+    )

@@ -81,9 +81,14 @@ def fetch_classes():
         return None
 
 
-def ask_analytics(question):
+def ask_analytics(question, *, class_id=None, language="en", history=None):
     r = requests.post(f"{BACKEND_URL}/analytics/ask",
-                      json={"question": question}, timeout=60)
+                      json={
+                          "question": question,
+                          "class_id": class_id,
+                          "language": language,
+                          "history": history or [],
+                      }, timeout=60)
     r.raise_for_status()
     return r.json()
 

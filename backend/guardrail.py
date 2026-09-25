@@ -4,6 +4,8 @@ This is intentionally minimal for the demo: it flags obvious attempts to
 extract the final answer outright or to override the tutor's instructions
 (prompt injection). A production version would use a classifier.
 """
+from __future__ import annotations
+
 import re
 
 # Patterns that strongly suggest "just give me the answer" or jailbreak.

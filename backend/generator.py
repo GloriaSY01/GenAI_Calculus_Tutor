@@ -10,6 +10,8 @@ Generated questions are kept in an in-memory registry so they can be graded
 server-side and handed to the Socratic tutor (2.2) by id. Answers are never
 sent to the client; grading happens here.
 """
+from __future__ import annotations
+
 import random
 import json
 import re

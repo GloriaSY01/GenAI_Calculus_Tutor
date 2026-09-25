@@ -14,6 +14,8 @@ Data: `by_topic[]` from `GET /analytics/class`.
 """
 from __future__ import annotations
 
+import html
+
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -28,6 +30,76 @@ def _split(by_topic: list[dict]) -> tuple[list[dict], int]:
     tied = [r for r in by_topic if r["topic"] not in UNTIED_TOPICS]
     untied = sum(r["attempts"] for r in by_topic if r["topic"] in UNTIED_TOPICS)
     return tied, untied
+
+
+def _demo_rows() -> list[dict]:
+    return [
+        {
+            "topic": t("teacher.demo_topic_limits"),
+            "attempts": 18,
+            "avg_reasoning": 1.4,
+            "solve_rate": 0.32,
+            "avg_final_mastery": 38,
+            "gaming_rate": 0.18,
+        },
+        {
+            "topic": t("teacher.demo_topic_derivatives"),
+            "attempts": 15,
+            "avg_reasoning": 2.1,
+            "solve_rate": 0.58,
+            "avg_final_mastery": 62,
+            "gaming_rate": 0.08,
+        },
+        {
+            "topic": t("teacher.demo_topic_chain_rule"),
+            "attempts": 11,
+            "avg_reasoning": 2.8,
+            "solve_rate": 0.74,
+            "avg_final_mastery": 76,
+            "gaming_rate": 0.04,
+        },
+    ]
+
+
+def _render_solve_rate_help() -> None:
+    label = html.escape(t("teacher.axis_solve"))
+    help_text = html.escape(t("teacher.axis_solve_help"), quote=True)
+    st.markdown(
+        f"""
+        <div class="topic-health-help" style="position:relative;display:inline-flex;align-items:center;
+             gap:8px;font-size:1rem;font-weight:600;color:{ui.FG};
+             margin:0.35rem 0 -0.1rem;">
+          {label}
+          <span style="
+            position:relative;display:inline-flex;align-items:center;
+            justify-content:center;">
+            <span style="
+            display:inline-flex;align-items:center;justify-content:center;
+            width:18px;height:18px;border-radius:999px;
+            border:1.5px solid #6B7280;color:#6B7280;font-size:12px;
+            font-weight:700;line-height:18px;vertical-align:middle;
+            cursor:default;">?</span>
+            <span style="
+              visibility:hidden;opacity:0;position:absolute;left:50%;
+              bottom:30px;transform:translateX(-50%);min-width:360px;
+              max-width:520px;background:#FFFFFF;color:{ui.FG};
+              border:1px solid {ui.BORDER};border-radius:12px;
+              padding:12px 14px;box-shadow:0 8px 24px rgba(15,23,42,.16);
+              font-size:0.9rem;font-weight:400;line-height:1.45;
+              z-index:9999;transition:opacity .12s ease;">
+              {help_text}
+            </span>
+          </span>
+        </div>
+        <style>
+        .topic-health-help > span:hover > span:last-child {{
+          visibility: visible !important;
+          opacity: 1 !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def _chart(df: pd.DataFrame) -> alt.LayerChart:
@@ -51,8 +123,8 @@ def _chart(df: pd.DataFrame) -> alt.LayerChart:
     bar = base.mark_bar(cornerRadius=6, height=22).encode(
         y=y, x=alt.X("solve_rate:Q", scale=alt.Scale(domain=[0, 1])),
         color=alt.Color("solve_rate:Q", legend=None,
-                        scale=alt.Scale(domain=[0, 0.5, 1],
-                                        range=[ui.DANGER, ui.SECONDARY, ui.SUCCESS])),
+                        scale=alt.Scale(domain=[0, 0.55, 1],
+                                        range=["#E76F51", "#E9C46A", "#2A9D55"])),
         tooltip=tooltip,
     )
     label = base.mark_text(align="left", dx=6, fontSize=11, color=ui.MUTED).encode(
@@ -78,12 +150,24 @@ def _render_body(by_topic: list[dict]) -> None:
 
     tied, untied = _split(by_topic or [])
     if not tied:
-        ui.empty_state(t("teacher.no_topic_data"))
+        message = (
+            t("teacher.only_free_chat_data").format(n=untied)
+            if untied
+            else t("teacher.no_topic_data")
+        )
+        ui.empty_state(message)
+        st.caption(t("teacher.topic_health_demo_note"))
+        demo_df = pd.DataFrame(_demo_rows())
+        demo_df["label"] = demo_df["topic"]
+        demo_df["max_scale"] = 1.0
+        _render_solve_rate_help()
+        st.altair_chart(_chart(demo_df), use_container_width=True)
         return
 
     df = pd.DataFrame(tied)
     df["label"] = df["topic"].map(topic_label)
     df["max_scale"] = 1.0
+    _render_solve_rate_help()
     st.altair_chart(_chart(df), use_container_width=True)
 
     if untied:

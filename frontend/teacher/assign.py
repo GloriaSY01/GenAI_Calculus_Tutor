@@ -272,7 +272,7 @@ def _render_items(assignments: list, delete_fn: Callable[[str], dict]) -> None:
         with st.container(border=True):
             body, action = st.columns([6, 1])
             with body:
-                st.markdown(f"**{item['title']}**")
+                st.markdown(f"**{_assignment_title(item)}**")
                 total = t("teacher.assign_total").format(
                     n=_total_questions(blocks), m=_estimate_minutes(blocks))
                 st.caption(f"{total} {_DOT} {t('teacher.assign_completion')}: -")
@@ -280,8 +280,8 @@ def _render_items(assignments: list, delete_fn: Callable[[str], dict]) -> None:
                     st.caption(f"{_DOT} {_block_caption(block)}")
                 if item.get("note"):
                     st.caption(f"{_MEMO} {item['note']}")
-            if action.button(t("teacher.delete"), key=f"del_{item['id']}",
-                             use_container_width=True):
+            if action.button(_CROSS, key=f"del_{item['id']}",
+                             help=t("teacher.delete"), use_container_width=True):
                 try:
                     delete_fn(item["id"])
                 except Exception as exc:  # noqa: BLE001
@@ -290,7 +290,17 @@ def _render_items(assignments: list, delete_fn: Callable[[str], dict]) -> None:
                 ui.rerun_fragment()
 
 
-@st.fragment
+def _assignment_title(item: dict) -> str:
+    """Show built-in/demo assignment titles in the active UI language."""
+    title = item.get("title", "")
+    if i18n.current_lang() != "en":
+        return title
+    return {
+        "\u300c\u5bfc\u6570\u300d\u5de9\u56fa\u7ec3\u4e60": "Derivatives practice set",
+        "\u6781\u9650\u590d\u4e60\u7efc\u5408": "Limits review set",
+    }.get(title, title)
+
+
 def render_assign_panel(ss, topics: list[str], *, list_fn: Callable[[], list],
                         create_fn: Callable[[dict], dict],
                         delete_fn: Callable[[str], dict],

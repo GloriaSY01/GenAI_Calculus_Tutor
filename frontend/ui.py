@@ -283,6 +283,7 @@ def language_toggle():
     string in the new language. No manual rerun (which caused websocket flaps).
     """
     st.session_state.setdefault("lang", "en")
+    previous_lang = st.session_state.get("_last_selected_lang")
     labels = {"en": "EN", "zh": "中文"}
     _, ctrl = st.columns([8, 1.2])
     with ctrl:
@@ -292,3 +293,8 @@ def language_toggle():
             key="lang",
             horizontal=True, label_visibility="collapsed",
         )
+    st.session_state.language = st.session_state.lang
+    if previous_lang and previous_lang != st.session_state.lang:
+        st.session_state._applied_query_lang = st.session_state.lang
+        st.query_params["lang"] = st.session_state.lang
+    st.session_state._last_selected_lang = st.session_state.lang

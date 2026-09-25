@@ -7,13 +7,15 @@ Endpoints:
   POST /session/{sid}/message        -> send a student message, get tutor turn
   GET  /session/{sid}                -> current session state
 """
+from __future__ import annotations
+
 import re
 import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import Literal
+from typing import Literal, Optional
 from . import localization
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -124,7 +126,12 @@ def get_concept(topic: str):
 
 
 @app.get("/retrieve")
-def retrieve_context(query: str, topic: str | None = None, section_id: str | None = None, k: int = 4):
+def retrieve_context(
+    query: str,
+    topic: Optional[str] = None,
+    section_id: Optional[str] = None,
+    k: int = 4,
+):
     """Instructor/debug endpoint; it returns attributed source chunks."""
     try:
         return rag.retrieve(
@@ -144,14 +151,16 @@ def get_learning_path():
 # Teacher analytics (class-level)
 # --------------------------------------------------------------------------- #
 @app.get("/analytics/class", response_model=ClassAnalytics)
-def get_class_analytics(class_id: str | None = None):
+def get_class_analytics(class_id: Optional[str] = None):
     return analytics.compute(class_id)
 
 
 @app.post("/analytics/ask", response_model=AnalyticsAnswer)
 def ask_analytics(req: AnalyticsQuery):
     data = analytics.compute(req.class_id)
-    answer, llm_available = analytics.answer_question(req.question, data, req.language)
+    answer, llm_available = analytics.answer_question(
+        req.question, data, req.language, history=req.history
+    )
     return AnalyticsAnswer(answer=answer, grounded_on=data,
                            llm_available=llm_available)
 
@@ -160,7 +169,7 @@ def ask_analytics(req: AnalyticsQuery):
 # Assignments (teacher -> class)
 # --------------------------------------------------------------------------- #
 @app.get("/assignments", response_model=list[Assignment])
-def get_assignments(class_id: str | None = None):
+def get_assignments(class_id: Optional[str] = None):
     records = assignments.list_assignments()
     return [record for record in records if not class_id or record.class_id == class_id]
 

@@ -6,6 +6,8 @@ student has given a reasoning explanation of acceptable quality. The "control"
 condition gives progressive hints without requiring an explanation. Comparing
 the two is the planned experiment.
 """
+from __future__ import annotations
+
 import logging
 import re
 from typing import Dict, List, Optional, Tuple

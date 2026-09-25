@@ -56,9 +56,7 @@ def render_assistant_panel(ss, *, ask_fn: Callable[[str], dict]) -> None:
             # of stretching the whole page.
             with st.container(height=320):
                 for msg in ss.assistant_history:
-                    teacher_avatar = "\U0001f469\u200d\U0001f3eb"
-                    avatar = teacher_avatar if msg["role"] == "user" else "\U0001f916"
-                    with st.chat_message(msg["role"], avatar=avatar):
+                    with st.chat_message(msg["role"]):
                         if msg.get("offline"):
                             st.warning(t("teacher.assistant_offline"))
                         st.markdown(msg["content"])

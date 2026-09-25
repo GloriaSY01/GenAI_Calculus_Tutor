@@ -14,10 +14,12 @@ Design notes (following the review feedback):
 
 Reads data/logs/*.jsonl, which store.py appends to per session.
 """
+from __future__ import annotations
+
 import json
 import logging
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from . import config, textbook
 from .schemas import AnalyticsInsight, ClassAnalytics, TopicStat
@@ -305,7 +307,12 @@ def build_insights(a: ClassAnalytics) -> List[AnalyticsInsight]:
     return insights
 
 
-def answer_question(question: str, a: ClassAnalytics, language: str = "en") -> Tuple[str, bool]:
+def answer_question(
+    question: str,
+    a: ClassAnalytics,
+    language: str = "en",
+    history: Optional[List[dict]] = None,
+) -> Tuple[str, bool]:
     """LLM-backed Q&A grounded on the aggregate stats.
 
     Returns (answer, llm_available). When the model can't be reached we still
@@ -314,15 +321,19 @@ def answer_question(question: str, a: ClassAnalytics, language: str = "en") -> T
     reply to every question with no hint that the model was down.
     """
     facts = _facts_block(a)
+    chat_context = _chat_context(history or [])
     try:
         from . import llm
         prompt = (
             "You are a teaching assistant helping a Calculus 1 instructor "
-            "interpret CLASS-LEVEL analytics. Use ONLY the facts provided; do "
-            "not invent numbers. Answer in 2-4 short sentences, focused on "
-            "actionable teaching advice. If the facts don't cover the question, "
-            "say so briefly.\n\n"
+            "interpret CLASS-LEVEL analytics and plan teaching actions. The "
+            "teacher may ask follow-up questions conversationally. Use ONLY "
+            "the facts provided when mentioning class data; do not invent "
+            "numbers. If the teacher asks for general teaching advice, make it "
+            "practical and label it as a suggestion rather than a measured "
+            "finding. Answer in 2-5 short sentences.\n\n"
             f"CLASS FACTS:\n{facts}\n\n"
+            f"RECENT CHAT:\n{chat_context}\n\n"
             f"TEACHER QUESTION: {question}\n\nAnswer:"
         )
         answer = llm.chat(
@@ -336,6 +347,17 @@ def answer_question(question: str, a: ClassAnalytics, language: str = "en") -> T
     except Exception as exc:  # noqa: BLE001
         log.warning("Analytics assistant falling back to rules: %s", exc)
     return _fallback_answer(a, language), False
+
+
+def _chat_context(history: List[dict], limit: int = 6) -> str:
+    rows = []
+    for msg in history[-limit:]:
+        role = msg.get("role")
+        content = (msg.get("content") or "").strip()
+        if role in {"user", "assistant"} and content:
+            speaker = "Teacher" if role == "user" else "Assistant"
+            rows.append(f"{speaker}: {content[:800]}")
+    return "\n".join(rows) if rows else "(no previous messages)"
 
 
 def _facts_block(a: ClassAnalytics) -> str:
