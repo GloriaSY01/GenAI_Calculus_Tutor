@@ -21,6 +21,13 @@ from i18n import t
 
 LEVELS = ["none", "weak", "partial", "adequate", "strong"]
 _LEVEL_COLORS = [ui.DANGER, "#F97316", ui.SECONDARY, "#65A30D", ui.SUCCESS]
+_DEMO_DISTRIBUTION = {
+    "none": 0.32,
+    "weak": 0.28,
+    "partial": 0.22,
+    "adequate": 0.13,
+    "strong": 0.05,
+}
 
 
 def _chart(df: pd.DataFrame) -> alt.Chart:
@@ -51,7 +58,13 @@ def render_reasoning_panel(distribution: dict, *,
 
         distribution = distribution or {}
         if sum(distribution.values()) <= 0:
-            ui.empty_state(t("teacher.no_reasoning_data"))
+            st.info(t("teacher.no_reasoning_data"))
+            st.caption(t("teacher.reasoning_demo_note"))
+            demo = pd.DataFrame({
+                "level": LEVELS,
+                "share": [_DEMO_DISTRIBUTION[lvl] for lvl in LEVELS],
+            })
+            st.altair_chart(_chart(demo), use_container_width=True)
             return
 
         df = pd.DataFrame({"level": LEVELS,

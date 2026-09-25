@@ -147,10 +147,11 @@ div[data-testid="column"] > div[data-testid="stVerticalBlockBorderWrapper"] {{
 
 /* --- Dashboard building blocks ------------------------------------------ */
 
-/* Section header: eyebrow + title + subtitle */
-.sec-eyebrow {{ font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
-  color: {PRIMARY}; font-weight: 700; }}
-.sec-title {{ font-family: 'Fraunces', Georgia, serif; font-size: 1.45rem;
+/* Section header: step label + title + subtitle */
+.sec-eyebrow {{ font-family: 'Fraunces', Georgia, serif; font-size: 1.45rem;
+  letter-spacing: 0; text-transform: none; color: {PRIMARY}; font-weight: 700;
+  margin: .1rem 0 .15rem; }}
+.sec-title {{ font-family: 'Fraunces', Georgia, serif; font-size: 1.12rem;
   font-weight: 700; color: {FG}; margin: .1rem 0 .15rem; }}
 .sec-sub {{ color: {MUTED}; font-size: .92rem; margin-bottom: .35rem; }}
 

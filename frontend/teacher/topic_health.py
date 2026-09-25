@@ -14,8 +14,6 @@ Data: `by_topic[]` from `GET /analytics/class`.
 """
 from __future__ import annotations
 
-import html
-
 import altair as alt
 import pandas as pd
 import streamlit as st
@@ -61,50 +59,11 @@ def _demo_rows() -> list[dict]:
     ]
 
 
-def _render_solve_rate_help() -> None:
-    label = html.escape(t("teacher.axis_solve"))
-    help_text = html.escape(t("teacher.axis_solve_help"), quote=True)
-    st.markdown(
-        f"""
-        <div class="topic-health-help" style="position:relative;display:inline-flex;align-items:center;
-             gap:8px;font-size:1rem;font-weight:600;color:{ui.FG};
-             margin:0.35rem 0 -0.1rem;">
-          {label}
-          <span style="
-            position:relative;display:inline-flex;align-items:center;
-            justify-content:center;">
-            <span style="
-            display:inline-flex;align-items:center;justify-content:center;
-            width:18px;height:18px;border-radius:999px;
-            border:1.5px solid #6B7280;color:#6B7280;font-size:12px;
-            font-weight:700;line-height:18px;vertical-align:middle;
-            cursor:default;">?</span>
-            <span style="
-              visibility:hidden;opacity:0;position:absolute;left:50%;
-              bottom:30px;transform:translateX(-50%);min-width:360px;
-              max-width:520px;background:#FFFFFF;color:{ui.FG};
-              border:1px solid {ui.BORDER};border-radius:12px;
-              padding:12px 14px;box-shadow:0 8px 24px rgba(15,23,42,.16);
-              font-size:0.9rem;font-weight:400;line-height:1.45;
-              z-index:9999;transition:opacity .12s ease;">
-              {help_text}
-            </span>
-          </span>
-        </div>
-        <style>
-        .topic-health-help > span:hover > span:last-child {{
-          visibility: visible !important;
-          opacity: 1 !important;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def _chart(df: pd.DataFrame) -> alt.LayerChart:
-    y = alt.Y("label:N", title=None, sort=alt.SortField("solve_rate", "ascending"),
-              axis=alt.Axis(labelLimit=220, labelFontSize=12, labelOverlap=False))
+    y = alt.Y("label:N", title=t("teacher.axis_topic"),
+              sort=alt.SortField("solve_rate", "ascending"),
+              axis=alt.Axis(labelLimit=260, labelFontSize=12,
+                            labelOverlap=False, titleFontSize=12))
     tooltip = [
         alt.Tooltip("label:N", title=t("teacher.axis_topic")),
         alt.Tooltip("solve_rate:Q", title=t("teacher.axis_solve"), format=".0%"),
@@ -160,14 +119,12 @@ def _render_body(by_topic: list[dict]) -> None:
         demo_df = pd.DataFrame(_demo_rows())
         demo_df["label"] = demo_df["topic"]
         demo_df["max_scale"] = 1.0
-        _render_solve_rate_help()
         st.altair_chart(_chart(demo_df), use_container_width=True)
         return
 
     df = pd.DataFrame(tied)
     df["label"] = df["topic"].map(topic_label)
     df["max_scale"] = 1.0
-    _render_solve_rate_help()
     st.altair_chart(_chart(df), use_container_width=True)
 
     if untied:

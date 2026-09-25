@@ -192,9 +192,18 @@ STRINGS = {
         "en": "Example preview only: real topic data will replace this chart once students practise from specific topics.",
         "zh": "下方为示例预览：学生从具体知识点进入练习后，会自动替换为真实图表。",
     },
-    "teacher.demo_topic_limits": {"en": "Limits", "zh": "极限"},
-    "teacher.demo_topic_derivatives": {"en": "Derivatives", "zh": "导数"},
-    "teacher.demo_topic_chain_rule": {"en": "Chain Rule", "zh": "链式法则"},
+    "teacher.demo_topic_limits": {
+        "en": "1.2 Calculus Without Limits",
+        "zh": "1.2 不用极限的微积分",
+    },
+    "teacher.demo_topic_derivatives": {
+        "en": "2.1 The Derivative of a Function",
+        "zh": "2.1 函数的导数",
+    },
+    "teacher.demo_topic_chain_rule": {
+        "en": "2.5 The Chain Rule",
+        "zh": "2.5 链式法则",
+    },
     "teacher.no_reasoning_data": {"en": "No reasoning data yet.",
                                   "zh": "暂无推理数据。"},
     "teacher.insights": {"en": "Effort & attitude", "zh": "学习态度"},
@@ -301,16 +310,11 @@ STRINGS = {
         "en": "Research view: teaching-style experiment",
         "zh": "研究视图：教学方式实验对比",
     },
-    "teacher.sec_overview": {"en": "Step 1 · Overview", "zh": "第一步 · 看整体"},
+    "teacher.sec_overview": {"en": "Step 1 · Overview", "zh": "第一步 · 总览"},
     "teacher.sec_overview_title": {"en": "How is the class doing?",
                                    "zh": "班级学得怎么样？"},
-    "teacher.sec_overview_sub": {
-        "en": "Four big numbers first, then the findings the system pulled out "
-              "of them. Need detail? Open Diagnose.",
-        "zh": "先看四个大数字，再看系统从中总结的发现。想看细节就切到"
-              "『学情诊断』。",
-    },
-    "teacher.sec_diagnose": {"en": "Step 2 · Diagnose", "zh": "第二步 · 找问题"},
+    "teacher.sec_overview_sub": {"en": "", "zh": ""},
+    "teacher.sec_diagnose": {"en": "Step 2 · Learning diagnosis", "zh": "第二步 · 学情诊断"},
     "teacher.sec_diagnose_title": {"en": "Where do students struggle?",
                                    "zh": "学生卡在哪里？"},
     "teacher.sec_diagnose_sub": {
@@ -318,7 +322,7 @@ STRINGS = {
               "thinking. Right: their actual quiz scores.",
         "zh": "左边：哪些知识点薄弱、学生会不会讲思路；右边：他们真实的做题成绩。",
     },
-    "teacher.sec_act": {"en": "Step 3 · Act", "zh": "第三步 · 布置练习"},
+    "teacher.sec_act": {"en": "Step 3 · Practice assignment", "zh": "第三步 · 布置练习"},
     "teacher.sec_act_title": {"en": "Assign targeted practice",
                               "zh": "针对性布置练习"},
     "teacher.sec_act_sub": {
@@ -408,6 +412,10 @@ STRINGS = {
     },
     "teacher.axis_share": {"en": "Share of replies", "zh": "回复占比"},
     "teacher.axis_level": {"en": "Explanation level", "zh": "讲思路的程度"},
+    "teacher.reasoning_demo_note": {
+        "en": "Example preview only: real explanation-level data will replace this chart once students reply in tutor conversations.",
+        "zh": "下方为示例预览：学生在助教对话中回复后，会自动替换为真实的讲思路分布。",
+    },
     "teacher.explain_rate": {"en": "Replied when asked to explain",
                              "zh": "被要求解释时真的解释了"},
 
@@ -514,10 +522,7 @@ STRINGS = {
     },
     "teacher.practice_topic_table": {"en": "Completion rate by topic", "zh": "按知识点看完成率"},
     "teacher.practice_topic_filter": {"en": "Choose a topic", "zh": "选择知识点"},
-    "teacher.practice_topic_filter_sub": {
-        "en": "Choose from the same textbook topics students see; topics with no submissions stay available.",
-        "zh": "从学生端同一套教材目录中选择；暂无提交的知识点也会保留。",
-    },
+    "teacher.practice_topic_filter_sub": {"en": "", "zh": ""},
     "teacher.practice_topic_no_data_value": {"en": "No data", "zh": "暂无数据"},
     "teacher.practice_topic_selected": {"en": "Selected topic", "zh": "当前查看"},
     "teacher.practice_topic_submissions": {"en": "Submissions", "zh": "提交数"},
