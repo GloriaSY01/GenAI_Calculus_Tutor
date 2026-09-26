@@ -1,8 +1,8 @@
 """Practice accuracy — graded answers, as opposed to tutor solve rate.
 
-`/grade` doesn't write an event log yet, so nothing about submitted practice
-answers reaches analytics. The panel states that plainly instead of leaving the
-teacher to assume the solve rate above covers it.
+`/grade` writes privacy-minimal practice events. This panel reads the aggregate
+practice block from `/analytics/class`, separate from AI tutor conversation
+metrics.
 
 Data:
     practice: {

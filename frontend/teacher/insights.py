@@ -110,26 +110,18 @@ def _render_attitude_body(data: dict) -> None:
 
 
 def _render_attitude_metrics(data: dict) -> None:
-    dist = data.get("reasoning_distribution") or {}
-    unclear_rate = (dist.get("none") or 0) + (dist.get("weak") or 0)
-    stuck_rate = max(unclear_rate, data.get("gaming_rate") or 0)
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2, m3 = st.columns(3)
     m1.metric(
-        t("teacher.kpi_sessions"),
-        f"{data.get('n_sessions', 0)}",
-        help=t("teacher.kpi_sessions_sub").format(n=data.get("n_turns", 0)),
+        t("teacher.kpi_help_seeking"),
+        _pct((data.get("practice") or {}).get("ai_help_rate")),
+        help=t("teacher.kpi_help_seeking_help"),
     )
     m2.metric(
-        t("teacher.kpi_stuck"),
-        _pct(stuck_rate),
-        help=t("teacher.kpi_stuck_help"),
-    )
-    m3.metric(
         t("teacher.kpi_gaming"),
         _pct(data.get("gaming_rate")),
         help=t("teacher.kpi_gaming_help"),
     )
-    m4.metric(
+    m3.metric(
         t("teacher.kpi_guardrail"),
         _pct(data.get("guardrail_rate")),
         help=t("teacher.kpi_guardrail_help"),

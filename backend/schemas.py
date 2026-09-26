@@ -189,6 +189,7 @@ class GradeRequest(BaseModel):
     question_id: str
     student_id: Optional[str] = None
     class_id: Optional[str] = None
+    ai_assisted: bool = False
     single: Optional[int] = None             # single_choice: chosen index
     multiple: Optional[List[int]] = None     # multiple_choice: chosen indices
     blanks: Optional[List[str]] = None       # fill_blank: text per blank
@@ -259,7 +260,10 @@ class AnalyticsInsight(BaseModel):
 
 
 class ClassAnalytics(BaseModel):
-    practice: List[dict] = Field(default_factory=list)
+    practice: dict = Field(default_factory=dict)
+    practice_submission_count: int = 0
+    independent_solve_rate: float = 0.0
+    ai_assisted_solve_rate: float = 0.0
     n_sessions: int
     n_students: int
     n_turns: int

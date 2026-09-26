@@ -16,6 +16,8 @@ Run the backend first, then:
 """
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
 import streamlit as st
 
 import api
@@ -34,13 +36,21 @@ from teacher import (
     topic_health,
 )
 
-st.set_page_config(page_title="Teacher Dashboard", page_icon="📊", layout="wide")
-ui.setup_page("Teacher Dashboard", "📊")
+st.set_page_config(
+    page_title="Teacher Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 
 ss = st.session_state
 ss.setdefault("assign_prefill", None)
 ss.setdefault("assistant_history", [])
 ss.setdefault("class_id", "calc1-a")
+
+requested_theme = st.query_params.get("theme")
+if requested_theme in {"light", "dark"}:
+    ss.theme = requested_theme
 
 requested_lang = st.query_params.get("lang")
 if (requested_lang in {"en", "zh"}
@@ -52,6 +62,8 @@ if (requested_lang in {"en", "zh"}
 requested_class = st.query_params.get("class_id")
 if requested_class:
     ss.class_id = requested_class
+
+ui.setup_page("Teacher Dashboard", "📊")
 
 if st.query_params.get("assistant_only") == "1":
     st.markdown(
@@ -70,49 +82,120 @@ if st.query_params.get("assistant_only") == "1":
     st.stop()
 
 
-@st.cache_data(ttl=30, show_spinner=False)
+@st.cache_data(ttl=1, show_spinner=False)
 def load_analytics(class_id: str | None) -> dict:
-    """Cached so panel-level interactions don't re-aggregate every log file."""
+    """Keep dashboard refreshes close to real time after student submissions."""
     return api.fetch_class_analytics(class_id)
 
 
-ui.language_toggle()
+class_names = {"calc1-a": "微积分 I · A 班", "calc1-b": "微积分 I · B 班"}
+class_ids = list(class_names)
+STUDENT_APP_URL = "http://127.0.0.1:5173/"
 
-with st.sidebar:
-    st.header(f"📊 {t('teacher.page_name')}")
-    st.caption(t("teacher.sidebar_caption"))
+if st.query_params.get("refresh") == "1":
+    load_analytics.clear()
+    api.fetch_topics.clear()
+    st.query_params["refresh"] = "0"
 
-    class_names = {"calc1-a": "微积分A", "calc1-b": "微积分B"}
-    class_ids = list(class_names)
-    default_class = ss.get("class_id", "calc1-a")
-    default_index = class_ids.index(default_class) if default_class in class_ids else 0
-    ss.class_id = st.selectbox(
-        t("teacher.class_label"),
-        class_ids,
-        index=default_index,
-        format_func=class_names.get,
-        key="class_select_flat_v2",
+
+def _teacher_query(**updates) -> str:
+    params = {key: value for key, value in st.query_params.items()}
+    params["lang"] = ss.get("lang", "zh")
+    params["class_id"] = ss.get("class_id", "calc1-a")
+    params["theme"] = ss.get("theme", "light")
+    params.update(updates)
+    clean = {key: value for key, value in params.items() if value is not None}
+    return "?" + urlencode(clean)
+
+
+def _settings_panel_html() -> str:
+    lang = ss.get("lang", "zh")
+    theme = ss.get("theme", "light")
+    next_theme = "dark" if theme == "light" else "light"
+    theme_label = t("teacher.theme_light") if theme == "light" else t("teacher.theme_dark")
+    zh_active = " active" if lang == "zh" else ""
+    en_active = " active" if lang == "en" else ""
+    switch_on = " on" if theme == "dark" else ""
+    return (
+        '<div class="teacher-settings-panel">'
+        '<div class="teacher-settings-divider"></div>'
+        '<div class="teacher-role-switch">'
+        f'<span class="teacher-setting-pill active">🧑‍🏫 {t("teacher.role_teacher")}</span>'
+        f'<a class="teacher-setting-pill" href="{STUDENT_APP_URL}" target="_self">'
+        f'🎓 {t("teacher.role_student")}</a>'
+        '</div>'
+        f'<a class="teacher-theme-row" href="{_teacher_query(theme=next_theme)}" target="_self">'
+        f'<span>{theme_label}</span>'
+        f'<span class="teacher-switch{switch_on}"><span></span></span>'
+        '</a>'
+        '<div class="teacher-lang-row">'
+        f'<a class="teacher-lang-pill{zh_active}" href="{_teacher_query(lang="zh")}" target="_self">中文</a>'
+        f'<a class="teacher-lang-pill{en_active}" href="{_teacher_query(lang="en")}" target="_self">EN</a>'
+        '</div>'
+        '</div>'
     )
 
-    if st.button(t("teacher.refresh"), use_container_width=True, type="primary"):
-        load_analytics.clear()
-        api.fetch_topics.clear()
-        st.toast(t("teacher.refreshed"), icon="🔄")
-        st.rerun()
+
+def _class_menu_html() -> str:
+    current_class = ss.get("class_id", "calc1-a")
+    options = "\n".join(
+        f'<option value="{_teacher_query(class_id=class_id)}"'
+        f'{" selected" if class_id == current_class else ""}>{label}</option>'
+        for class_id, label in class_names.items()
+    )
+    return (
+        '<select class="inp" '
+        'aria-label="班级" '
+        'onchange="window.location.href=this.value">'
+        f'{options}'
+        '</select>'
+    )
+
+
+def _render_topbar() -> None:
+    name_placeholder = (
+        "填写教师账号"
+        if ss.get("lang", "zh") == "zh"
+        else "Enter teacher account"
+    )
+    st.markdown(
+        (
+            '<header class="sw-header">'
+            '<button class="sw-brand">'
+            '<span>∫</span>'
+            '<div>'
+            f'{t("teacher.shell_brand")}'
+            f'<small>{t("teacher.shell_sub")}</small>'
+            '</div>'
+            '</button>'
+            '<div class="sw-account">'
+            f'<input class="inp" aria-label="{name_placeholder}" '
+            f'placeholder="{name_placeholder}" />'
+            f'{_class_menu_html()}'
+            '<details class="sw-preferences">'
+            f'<summary>{t("teacher.settings")}</summary>'
+            f'<div>{_settings_panel_html()}</div>'
+            '</details>'
+            '</div>'
+            '</header>'
+            '<div class="sw-main-spacer"></div>'
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+_render_topbar()
 
 try:
+    if ss.get("class_id") not in class_ids:
+        ss.class_id = class_ids[0]
+    default_class = ss.get("class_id", "calc1-a")
     topics = api.fetch_topics()
     catalog = fetch_catalog(api.BACKEND_URL)
-    data = load_analytics(ss.get("class_id"))
+    data = load_analytics(default_class)
 except Exception as exc:  # noqa: BLE001
     st.error(f"{t('common.backend_error')} {api.BACKEND_URL}\n\n{exc}")
     st.stop()
-
-with st.sidebar:
-    st.divider()
-    st.caption(f"**{t('teacher.data_scope')}** · {t('teacher.scope_all_time')}")
-    st.caption(t("teacher.sidebar_stats").format(s=data.get("n_sessions", 0),
-                                                 m=data.get("n_turns", 0)))
 
 
 def _usable_topic_rows(data: dict) -> list[dict]:
@@ -168,9 +251,6 @@ def _render_decision_brief(data: dict) -> None:
 
 
 def _render_dashboard() -> None:
-    st.title(f"📊 {t('teacher.page_name')}")
-    st.caption(t("teacher.subtitle"))
-
     _render_decision_brief(data)
 
     st.write("")
@@ -181,7 +261,7 @@ def _render_dashboard() -> None:
     with st.container(border=True):
         ui.panel_header("📝", t("teacher.practice_overview"),
                         t("teacher.practice_overview_sub"))
-        practice_stats.render_practice_stats_panel(data, embedded=True,
+        practice_stats.render_practice_stats_panel(data.get("practice"), embedded=True,
                                                    catalog=catalog)
         st.divider()
         insights.render_insights_panel(data, embedded=True)

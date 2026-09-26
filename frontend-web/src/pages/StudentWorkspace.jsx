@@ -115,7 +115,7 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
     })
   }
   async function grade(x) {
-    const result = await api.gradeAnswer({ question_id: x.q.id, student_id: student || 'anon', class_id: classId, ...x.answer,
+    const result = await api.gradeAnswer({ question_id: x.q.id, student_id: student || 'anon', class_id: classId, ai_assisted: !!x.assisted, ...x.answer,
       ...(x.q.type === 'drag_order' ? { order: x.answer.order } : {}) })
     if (result._mock) throw new Error(text('批改暂不可用，答案已保留。若后端已重启，请开始新一轮。', 'Grading unavailable. Answers are saved. Start a new round if the backend restarted.'))
     return result

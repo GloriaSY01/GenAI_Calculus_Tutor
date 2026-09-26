@@ -1,20 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import { useLang } from './i18n.jsx'
-import Overview from './pages/Overview.jsx'
-import Diagnose from './pages/Diagnose.jsx'
-import Assign from './pages/Assign.jsx'
-import Assistant from './pages/Assistant.jsx'
 import StudentApp from './pages/StudentWorkspace.jsx'
-import { api } from './api.js'
-import { TeacherClassContext } from './components/TeacherClass.jsx'
-
-const NAV = [
-  { to: '/overview',  key: 'nav_overview',  ic: '📊', group: 'main' },
-  { to: '/diagnose',  key: 'nav_diagnose',  ic: '🔬', group: 'main' },
-  { to: '/assign',    key: 'nav_assign',    ic: '📝', group: 'tools' },
-  { to: '/assistant', key: 'nav_assistant', ic: '💬', group: 'tools' },
-]
 
 function useTheme() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
@@ -25,11 +11,12 @@ function useTheme() {
   return [theme, setTheme]
 }
 
-const TITLES = {
-  '/overview': 'overview_title',
-  '/diagnose': 'diagnose_title',
-  '/assign': 'assign_title',
-  '/assistant': 'assistant_title',
+const TEACHER_DASHBOARD_URL = import.meta.env.VITE_TEACHER_DASHBOARD_URL || 'http://127.0.0.1:8502/'
+
+function teacherDashboardUrl(lang) {
+  const url = new URL(TEACHER_DASHBOARD_URL)
+  url.searchParams.set('lang', lang || 'zh')
+  return url.toString()
 }
 
 /* Shared footer controls: role switch + theme + language. */
@@ -39,7 +26,7 @@ function ShellControls({ role, setRole, theme, setTheme }) {
     <>
       <div className="divider" />
       <div className="role-switch">
-        <button className={'role-btn' + (role === 'teacher' ? ' active' : '')} onClick={() => setRole('teacher')}>
+        <button className="role-btn" onClick={() => setRole('teacher', lang)}>
           🧑‍🏫 {t('role_teacher')}
         </button>
         <button className={'role-btn' + (role === 'student' ? ' active' : '')} onClick={() => setRole('student')}>
@@ -66,81 +53,18 @@ function ShellControls({ role, setRole, theme, setTheme }) {
 }
 
 export default function App() {
-  const [role, setRole] = useState(() => localStorage.getItem('role') || 'teacher')
+  const [role, setRole] = useState('student')
   const [theme, setTheme] = useTheme()
-  const setRoleP = (r) => { setRole(r); localStorage.setItem('role', r) }
+  const setRoleP = (r, lang) => {
+    localStorage.setItem('role', r)
+    if (r === 'teacher') {
+      window.location.href = teacherDashboardUrl(lang)
+      return
+    }
+    setRole(r)
+  }
 
   const controls = <ShellControls role={role} setRole={setRoleP} theme={theme} setTheme={setTheme} />
 
-  if (role === 'student') return <StudentApp topbar={controls} />
-  return <TeacherApp controls={controls} />
-}
-
-function TeacherApp({ controls }) {
-  const { t, lang } = useLang()
-  const [classId, setClassId] = useState('')
-  const [classes, setClasses] = useState([])
-  useEffect(() => { api.getClasses().then(res => setClasses(Array.isArray(res) ? res : res.classes || [])) }, [])
-  const loc = useLocation()
-  const titleKey = TITLES[loc.pathname] || 'app_title'
-
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-logo">∫</div>
-          <div>
-            <div className="brand-name">{t('app_title')}</div>
-            <div className="brand-sub">{t('app_sub')}</div>
-          </div>
-        </div>
-
-        <div className="nav-group-label">{t('nav_group_main')}</div>
-        <label style={{ display: 'block', marginBottom: 16 }}>
-          <span className="ctrl-label">{lang === 'zh' ? '当前班级' : 'Current class'}</span>
-          <select className="inp" value={classId} onChange={e => setClassId(e.target.value)}>
-            <option value="">{lang === 'zh' ? '全部记录（含未分班）' : 'All records (including unassigned)'}</option>
-            {classes.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-          </select>
-        </label>
-        {NAV.filter((n) => n.group === 'main').map((n) => (
-          <NavLink key={n.to} to={n.to} className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
-            <span className="ic">{n.ic}</span>{t(n.key)}
-          </NavLink>
-        ))}
-
-        <div className="nav-group-label">{t('nav_group_tools')}</div>
-        {NAV.filter((n) => n.group === 'tools').map((n) => (
-          <NavLink key={n.to} to={n.to} className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
-            <span className="ic">{n.ic}</span>{t(n.key)}
-          </NavLink>
-        ))}
-
-        <div className="sidebar-foot">{controls}</div>
-      </aside>
-
-      <main className="main">
-        <header className="topbar">
-          <div>
-            <div className="crumb">{t('app_sub')}</div>
-            <h1>{t(titleKey)}</h1>
-          </div>
-          <div className="topbar-spacer" />
-        </header>
-
-        <TeacherClassContext.Provider value={classId}>
-        <div className="content" key={loc.pathname + classId}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/overview" replace />} />
-            <Route path="/overview" element={<Overview />} />
-            <Route path="/diagnose" element={<Diagnose />} />
-            <Route path="/assign" element={<Assign />} />
-            <Route path="/assistant" element={<Assistant />} />
-            <Route path="*" element={<Navigate to="/overview" replace />} />
-          </Routes>
-        </div>
-        </TeacherClassContext.Provider>
-      </main>
-    </div>
-  )
+  return <StudentApp topbar={controls} />
 }

@@ -99,6 +99,18 @@ STRINGS = {
     "student.send": {"en": "Send", "zh": "发送"},
 
     # ---- teacher ----
+    "teacher.shell_brand": {"en": "Teacher Dashboard", "zh": "教师仪表盘"},
+    "teacher.shell_sub": {
+        "en": "Switch sections with the bar below: overview, diagnosis, assignments, and the data assistant.",
+        "zh": "用下方导航切换：总览、学情诊断、布置练习、数据助手。",
+    },
+    "teacher.settings": {"en": "Settings", "zh": "设置"},
+    "teacher.role": {"en": "Role", "zh": "身份"},
+    "teacher.role_teacher": {"en": "Teacher", "zh": "教师"},
+    "teacher.role_student": {"en": "Student", "zh": "学生"},
+    "teacher.theme": {"en": "Theme", "zh": "深浅色"},
+    "teacher.theme_light": {"en": "Light", "zh": "浅色"},
+    "teacher.theme_dark": {"en": "Dark", "zh": "深色"},
     "teacher.page_name": {"en": "Teacher Dashboard", "zh": "教师仪表盘"},
     "teacher.sidebar_caption": {
         "en": "Class-level view of how students are learning. No individual "
@@ -140,25 +152,24 @@ STRINGS = {
     "teacher.kpi_practice_submissions": {"en": "Practice submitted", "zh": "练习提交数"},
     "teacher.kpi_independent_solve": {"en": "Solved independently", "zh": "自主做出"},
     "teacher.kpi_ai_assisted_solve": {"en": "Solved with AI help", "zh": "AI辅助完成"},
-    "teacher.kpi_stuck": {"en": "Stuck rate", "zh": "卡住比例"},
-    "teacher.kpi_stuck_help": {
-        "en": "Estimated share of students who did not solve, gave weak explanations, or showed low-effort behaviour.",
-        "zh": "根据未做出、解释较弱或应付行为估算出的卡住比例。",
+    "teacher.kpi_help_seeking": {"en": "Help-seeking rate", "zh": "主动求助率"},
+    "teacher.kpi_help_seeking_help": {
+        "en": "Share of student submissions where the student used the AI Companion for help.",
+        "zh": "学生提交中，曾主动使用 AI Companion 求助的占比。",
     },
     "teacher.kpi_reasoning": {"en": "Explains why", "zh": "讲思路"},
     "teacher.kpi_mastery": {"en": "Mastery", "zh": "掌握度"},
     "teacher.kpi_turns": {"en": "Replies per conversation", "zh": "平均对话轮数"},
     "teacher.kpi_gaming": {"en": "Low effort", "zh": "应付行为"},
     "teacher.kpi_gaming_help": {
-        "en": "Share of conversations where students rushed, replied with "
-              "nothing, or demanded the answer.",
-        "zh": "学生乱答、秒答或直接催答案的对话占比。",
+        "en": "Share of conversations where students gave random answers or replied too quickly.",
+        "zh": "学生乱答、秒答的对话占比。",
     },
     "teacher.kpi_guardrail": {"en": "Asked for the answer", "zh": "催答案被拦"},
     "teacher.kpi_guardrail_help": {
         "en": "Share of replies where a student demanded the answer and the "
               "tutor refused.",
-        "zh": "学生直接要答案、被助教拦下的回复占比。",
+        "zh": "学生直接要答案、被AI拦下的回复占比。",
     },
     "teacher.by_topic": {"en": "By topic", "zh": "按知识点"},
     "teacher.solve_per_topic": {
@@ -222,7 +233,7 @@ STRINGS = {
     "teacher.ex1": {"en": "Which topic should I review next?",
                     "zh": "接下来应该复习哪个知识点？"},
     "teacher.ex2": {"en": "Are students gaming the tutor?",
-                    "zh": "学生是否在应付/糊弄助教？"},
+                    "zh": "学生是否在应付/糊弄 AI Companion？"},
     "teacher.ex3": {"en": "How engaged is the class overall?",
                     "zh": "全班整体的参与度如何？"},
     "teacher.your_question": {"en": "Your question", "zh": "你的问题"},
@@ -262,7 +273,7 @@ STRINGS = {
               "支撑判断的数据，以及老师下一步可以做什么。",
     },
     "teacher.flat_focus": {"en": "Teaching focus", "zh": "教学重点"},
-    "teacher.flat_evidence": {"en": "Evidence", "zh": "依据"},
+    "teacher.flat_evidence": {"en": "Why this matters", "zh": "为什么关注"},
     "teacher.flat_next_action": {"en": "Next action", "zh": "下一步"},
     "teacher.flat_focus_help": {
         "en": "The topic or issue the teacher should look at first.",
@@ -340,16 +351,18 @@ STRINGS = {
     "teacher.more_metrics": {"en": "Effort & attitude", "zh": "学习态度"},
     "teacher.kpi_solve_sub": {
         "en": "solved it themselves with tutor guidance",
-        "zh": "在助教引导下自己算出答案的比例",
+        "zh": "在 AI Companion 引导下自己算出答案的比例",
     },
     "teacher.kpi_mastery_sub": {
         "en": "0-100, estimated from tutor conversations",
         "zh": "0–100 分，根据对话情况估计",
     },
-    "teacher.kpi_students_sub": {"en": "students with tutoring records",
-                                 "zh": "有辅导记录的学生人数"},
-    "teacher.kpi_sessions_sub": {"en": "conversations, {n} messages in total",
-                                 "zh": "次师生对话，共 {n} 条消息"},
+    "teacher.kpi_students_sub": {"en": "unique student accounts with learning records",
+                                 "zh": "有学习记录的学生账号数，按账号去重"},
+    "teacher.kpi_sessions_sub": {
+        "en": "How many times students asked the AI Companion for help or entered the tutoring flow; {n} messages in total",
+        "zh": "有多少次学生向 AI Companion 求助/进入辅导流程，共 {n} 条消息",
+    },
     "teacher.kpi_turns_word": {"en": "turns logged", "zh": "个回合"},
     "teacher.kpi_reasoning_help": {
         "en": "How well students explain WHY they take each step: 0 = never, "
@@ -357,16 +370,16 @@ STRINGS = {
         "zh": "学生能不能讲清『为什么这么做』：0 分完全不解释，4 分解释充分。",
     },
     "teacher.kpi_practice_submissions_help": {
-        "en": "Number of generated practice questions submitted by students.",
-        "zh": "学生在练习区提交答案的次数。",
+        "en": "Number of successful student submissions, regardless of where they were submitted.",
+        "zh": "学生成功提交次数，不区分在哪个入口提交。",
     },
     "teacher.kpi_independent_solve_help": {
-        "en": "Share of generated practice questions answered correctly before the tutor was opened for that question.",
-        "zh": "学生生成题目后，在没有打开该题助教前就答对的比例。",
+        "en": "Share of submitted questions answered correctly without help from the AI Companion.",
+        "zh": "没有借助 AI Companion 就答对的提交占比。",
     },
     "teacher.kpi_ai_assisted_solve_help": {
-        "en": "Share of generated practice questions answered correctly after the tutor was opened for that question.",
-        "zh": "学生生成题目后，打开该题助教并答对的比例。",
+        "en": "Share of submitted questions answered correctly after using the AI Companion.",
+        "zh": "借助 AI Companion 后答对的提交占比。",
     },
     "teacher.badge_sim": {"en": "includes {n} simulated sessions",
                           "zh": "含 {n} 条模拟数据"},
@@ -414,7 +427,7 @@ STRINGS = {
     "teacher.axis_level": {"en": "Explanation level", "zh": "讲思路的程度"},
     "teacher.reasoning_demo_note": {
         "en": "Example preview only: real explanation-level data will replace this chart once students reply in tutor conversations.",
-        "zh": "下方为示例预览：学生在助教对话中回复后，会自动替换为真实的讲思路分布。",
+        "zh": "下方为示例预览：学生在 AI Companion 对话中回复后，会自动替换为真实的讲思路分布。",
     },
     "teacher.explain_rate": {"en": "Replied when asked to explain",
                              "zh": "被要求解释时真的解释了"},
@@ -500,7 +513,7 @@ STRINGS = {
               "quiz scores.",
         "zh": "尚未接通：学生做题的对错还没有被记录，这里暂时是空的。"
               "接通后，第三步布置任务的完成情况也会在这里体现。"
-              "注意上面『会做的比例』说的是助教对话，不是做题成绩。",
+              "注意上面『会做的比例』说的是 AI Companion 对话，不是做题成绩。",
     },
     "teacher.practice_overview": {"en": "Practice results", "zh": "做题成绩"},
     "teacher.practice_overview_sub": {
@@ -517,8 +530,8 @@ STRINGS = {
     "teacher.practice_complete_mode": {"en": "Completion mode", "zh": "完成方式"},
     "teacher.practice_difficulty_chart": {"en": "Completion rate by difficulty", "zh": "按难度对比做出完成率"},
     "teacher.practice_difficulty_chart_sub": {
-        "en": "For each difficulty level, compare questions solved independently and questions solved after AI help.",
-        "zh": "按简单、中等、困难分别比较：学生自己做出的题目比例，以及借助 AI 后完成的题目比例。",
+        "en": "For each difficulty level, compare questions solved without the AI Companion and after using the AI Companion.",
+        "zh": "按简单、中等、困难分别比较：没借助 AI Companion 做出的题目比例，以及借助 AI Companion 后完成的题目比例。",
     },
     "teacher.practice_topic_table": {"en": "Completion rate by topic", "zh": "按知识点看完成率"},
     "teacher.practice_topic_filter": {"en": "Choose a topic", "zh": "选择知识点"},
@@ -532,8 +545,8 @@ STRINGS = {
     "teacher.practice_topic_ai_assisted_count": {"en": "Solved with AI help", "zh": "AI辅助完成次数"},
     "teacher.practice_topic_not_correct_count": {"en": "Not correct", "zh": "未答对次数"},
     "teacher.practice_topic_submissions_help": {
-        "en": "Number of submitted practice answers for the selected topic.",
-        "zh": "当前知识点下学生提交练习答案的总次数。",
+        "en": "Number of successfully submitted questions for the selected topic, regardless of submission entry point.",
+        "zh": "当前知识点下学生成功提交题目的总次数，不区分提交入口。",
     },
     "teacher.practice_topic_correct_count_help": {
         "en": "Number of submitted answers marked correct for the selected topic.",
@@ -544,12 +557,12 @@ STRINGS = {
         "zh": "当前知识点答对次数占全部提交次数的比例。",
     },
     "teacher.practice_topic_independent_count_help": {
-        "en": "Correct submissions completed before opening the tutor for that question.",
-        "zh": "学生在打开该题助教前就答对的次数。",
+        "en": "Correct submissions completed without help from the AI Companion.",
+        "zh": "没有借助 AI Companion 就答对的次数。",
     },
     "teacher.practice_topic_ai_assisted_count_help": {
-        "en": "Correct submissions completed after opening the tutor for that question.",
-        "zh": "学生打开该题助教后答对的次数。",
+        "en": "Correct submissions completed after using the AI Companion.",
+        "zh": "借助 AI Companion 后答对的次数。",
     },
     "teacher.practice_topic_not_correct_count_help": {
         "en": "Submitted answers that were not marked correct for the selected topic.",

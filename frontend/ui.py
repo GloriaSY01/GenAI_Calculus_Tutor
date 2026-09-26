@@ -9,17 +9,17 @@ import streamlit as st
 import i18n
 
 # --- Design tokens (education / learning) --------------------------------- #
-PRIMARY = "#2563EB"        # learning blue
-PRIMARY_DARK = "#1D4ED8"
+PRIMARY = "#2A4ED6"        # aligned with the React student shell
+PRIMARY_DARK = "#233FAE"
 SECONDARY = "#F59E0B"      # amber (accents)
 SUCCESS = "#16A34A"
 WARNING = "#D97706"
 DANGER = "#DC2626"
-BG = "#F4F7FE"             # soft blue-tinted background
+BG = "#F6F8FC"
 SURFACE = "#FFFFFF"
-FG = "#0F172A"
-MUTED = "#64748B"
-BORDER = "#E4ECFC"
+FG = "#141A2E"
+MUTED = "#7B849C"
+BORDER = "#E6E9F2"
 
 _CSS = f"""
 <style>
@@ -46,13 +46,39 @@ html, body, [class*="css"] {{ font-family: 'Inter', system-ui, sans-serif; }}
   background: {BG} !important;
   color: {FG};
 }}
-.block-container, [data-testid="stMainBlockContainer"] {{
-  padding-top: 2.2rem;
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stMain"] > div,
+.main,
+.main > div,
+section.main,
+section.main > div {{
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}}
+.block-container,
+[data-testid="stMainBlockContainer"],
+[data-testid="stAppViewBlockContainer"] {{
+  padding-top: 0 !important;
+  margin-top: 0 !important;
   max-width: 100% !important;
-  padding-left: 3rem; padding-right: 3rem;
+  padding-left: 4vw; padding-right: 4vw;
+}}
+[data-testid="stMainBlockContainer"] > div:first-child,
+[data-testid="stAppViewBlockContainer"] > div:first-child,
+.element-container:has(.sw-header),
+.stMarkdown:has(.sw-header) {{
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }}
 /* Hide Streamlit's rainbow top bar; it clashes with the theme. */
 [data-testid="stDecoration"] {{ display: none; }}
+[data-testid="stHeader"], [data-testid="stToolbar"] {{
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+}}
 
 /* Headings */
 h1, h2 {{ font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.01em; color: {FG}; }}
@@ -133,6 +159,223 @@ section[data-testid="stSidebar"] {{ background: {SURFACE}; border-right: 1px sol
 
 /* Language toggle row (top-right) */
 .lang-row {{ display: flex; justify-content: flex-end; margin-top: -0.6rem; }}
+
+/* Student header rules copied for the teacher shell. */
+.sw-header {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100vw;
+  padding: 20px 4vw;
+  background: {SURFACE};
+  border-bottom: 1px solid {BORDER};
+  box-sizing: border-box;
+}}
+.sw-brand {{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: none;
+  color: {FG};
+  text-align: left;
+  font-size: 17px;
+  font-weight: 750;
+  cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif;
+}}
+.sw-brand > span {{
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: {PRIMARY};
+  color: white;
+  font: 32px Georgia, serif;
+}}
+.sw-brand small {{
+  display: block;
+  margin-top: 4px;
+  font-weight: 400;
+  font-size: 12px;
+  color: {MUTED};
+}}
+.sw-account {{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}}
+.sw-account > .inp {{
+  width: 160px;
+}}
+.sw-account > select.inp {{
+  width: 195px;
+}}
+.sw-preferences {{
+  position: relative;
+}}
+.sw-preferences summary {{
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 10px;
+}}
+.sw-preferences > div {{
+  position: absolute;
+  right: 0;
+  top: 42px;
+  z-index: 30;
+  padding: 20px;
+  width: 240px;
+  background: {SURFACE};
+  border: 1px solid {BORDER};
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(20,26,46,.12), 0 6px 14px rgba(20,26,46,.06);
+}}
+.inp {{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #D9DEEC;
+  background: #FBFCFE;
+  color: {FG};
+  font-size: 14px;
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: border-color .15s, box-shadow .15s;
+}}
+.inp:focus {{
+  outline: none;
+  border-color: #5D89FB;
+  box-shadow: 0 0 0 3px #EEF4FF;
+}}
+select.inp {{
+  cursor: pointer;
+}}
+
+/* Streamlit wrapper compensation; the copied header itself stays identical. */
+.element-container:has(.sw-header),
+.stMarkdown:has(.sw-header) {{
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  margin-top: -12px !important;
+  width: 100vw !important;
+}}
+.sw-main-spacer {{
+  height: 28px;
+  background: transparent;
+  margin: 0;
+}}
+.sw-account > .inp::placeholder {{
+  color: #7B849C;
+}}
+.sw-preferences > summary {{
+  color: {FG} !important;
+}}
+.sw-preferences > summary::-webkit-details-marker {{
+  display: inline-block;
+}}
+.teacher-settings-panel {{
+  padding: 0;
+}}
+.teacher-settings-divider {{
+  height: 1px;
+  background: #E6E9F2;
+  margin: 4px 0;
+}}
+.teacher-role-switch {{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 12px 0;
+}}
+.teacher-setting-pill,
+.teacher-lang-pill {{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #D9DEEC;
+  border-radius: 12px;
+  background: #FBFCFE;
+  color: #4A5570 !important;
+  text-decoration: none !important;
+  font-size: 12.5px;
+  font-weight: 400;
+  box-shadow: none;
+  cursor: pointer;
+  transition: all .15s;
+}}
+.teacher-setting-pill {{
+  padding: 8px 6px;
+}}
+.teacher-setting-pill.active {{
+  background: linear-gradient(135deg, #3b66f0, #2a4ed6);
+  border-color: transparent;
+  color: #FFFFFF !important;
+  box-shadow: 0 1px 2px rgba(20,26,46,.06), 0 1px 3px rgba(20,26,46,.05);
+}}
+.teacher-theme-row {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  color: #7B849C !important;
+  text-decoration: none !important;
+  font-size: 13px;
+  font-weight: 400;
+}}
+.teacher-switch {{
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: #D9DEEC;
+  flex: 0 0 auto;
+}}
+.teacher-switch > span {{
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(20,26,46,.06), 0 1px 3px rgba(20,26,46,.05);
+  transition: transform .2s ease;
+}}
+.teacher-switch.on {{
+  background: #3b66f0;
+}}
+.teacher-switch.on > span {{
+  transform: translateX(20px);
+}}
+.teacher-lang-row {{
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}}
+.teacher-lang-pill {{
+  padding: 8px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+}}
+.teacher-lang-pill.active {{
+  background: #EEF4FF;
+  border-color: #8FB2FF;
+  color: #233FAE !important;
+}}
+@media (max-width: 760px) {{
+  .block-container, [data-testid="stMainBlockContainer"] {{
+    padding-left: 18px;
+    padding-right: 18px;
+  }}
+  .sw-brand {{
+    font-size: 15px;
+  }}
+}}
 
 /* Insight cards accent bar */
 .insight-info {{ border-left: 4px solid {SUCCESS} !important; }}
@@ -227,11 +470,86 @@ div[data-testid="column"] > div[data-testid="stVerticalBlockBorderWrapper"] {{
 </style>
 """
 
+_DARK_CSS = """
+<style>
+:root {
+  --bg: #0b0f1a;
+  --surface: #141a2b;
+  --fg: #eef1f9;
+  --muted: #8791ab;
+  --border: #242c44;
+}
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"],
+[data-testid="stMain"], .main, section.main {
+  background: #0b0f1a !important;
+  color: #eef1f9 !important;
+}
+h1, h2, h3, h4, .teacher-brand-name, .sec-title, .panel-title,
+.kpi-value, .stat-value, .mini-head, .insight-title {
+  color: #eef1f9 !important;
+}
+.teacher-brand-sub, .sec-sub, .panel-sub, .ph-desc, .kpi-label,
+.kpi-sub, .stat-label, .insight-detail, .mini-row span:first-child,
+.guide-hint, .empty {
+  color: #8791ab !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:not(.st-emotion-cache-0),
+div[data-testid="stMetric"], .kpi-card, .stat-item, .mini-card, .insight,
+div[data-testid="stChatMessage"] {
+  background: #141a2b !important;
+  border-color: #242c44 !important;
+}
+div[data-baseweb="select"] > div,
+.stTextInput input,
+.stTextArea textarea {
+  background: #141a2b !important;
+  border-color: #242c44 !important;
+  color: #eef1f9 !important;
+}
+.sw-main-spacer {
+  background: transparent !important;
+}
+.sw-preferences > div,
+.sw-account > .inp,
+.teacher-setting-pill,
+.teacher-lang-pill {
+  background: #141a2b !important;
+  border-color: #242c44 !important;
+  color: #eef1f9 !important;
+}
+.sw-account > .inp::placeholder {
+  color: #8791ab !important;
+}
+.sw-preferences > summary {
+  color: #eef1f9 !important;
+}
+.teacher-settings-divider {
+  background: #242c44 !important;
+}
+.teacher-setting-pill.active {
+  background: #2F55E7 !important;
+  border-color: #2F55E7 !important;
+  color: #FFFFFF !important;
+}
+.teacher-lang-pill.active {
+  background: #12203f !important;
+  border-color: #8FB2FF !important;
+  color: #8FB2FF !important;
+}
+.empty {
+  background: #101524 !important;
+}
+</style>
+"""
+
 
 def setup_page(title: str, icon: str):
     """Call once per page (after set_page_config) to apply theme + lang state."""
     st.session_state.setdefault("lang", "en")
+    st.session_state.setdefault("theme", "light")
     st.markdown(_CSS, unsafe_allow_html=True)
+    if st.session_state.get("theme") == "dark":
+        st.markdown(_DARK_CSS, unsafe_allow_html=True)
 
 
 def section(eyebrow: str, title: str, subtitle: str = "") -> None:

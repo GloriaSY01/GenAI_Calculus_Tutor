@@ -559,6 +559,7 @@ elif stage == STAGE_PRACTICE:
                         **practice_payload,
                         "student_id": student_id or "anon",
                         "class_id": class_id,
+                        "ai_assisted": bool(ss.get("session_id") and ss.get("tutor_entry") == STAGE_PRACTICE),
                     })
                     st.rerun()
                 except Exception as exc:  # noqa: BLE001
