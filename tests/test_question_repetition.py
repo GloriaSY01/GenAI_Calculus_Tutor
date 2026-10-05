@@ -21,7 +21,14 @@ def test_duplicate_model_question_is_retried(monkeypatch):
     setup_generation(monkeypatch)
     responses = iter([
         {"stem": "Known question"},
-        {"stem": "Find the slope of $4t$", "options": ["4", "2", "1", "0"], "correct_index": 0},
+        {
+            "stem": "Find the slope of $4t$",
+            "options": ["4", "2", "1", "0"],
+            "correct_index": 0,
+            "explanation": "The coefficient of t is 4.",
+            "key_idea": "Slope of a linear function",
+            "solution_steps": ["Identify the coefficient of t."],
+        },
     ])
     monkeypatch.setattr(generator.llm, "chat_to_json", lambda *a: next(responses))
     result = generator.generate_question("single_choice", TOPIC, exclude_stems=["Known question"])

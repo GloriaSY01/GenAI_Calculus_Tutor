@@ -10,6 +10,7 @@ DATA_DIR = ROOT_DIR / "data"
 LOG_DIR = DATA_DIR / "logs"
 PROBLEMS_FILE = DATA_DIR / "problems.json"
 FAVORITES_FILE = DATA_DIR / "favorites.json"
+GENERATED_QUESTIONS_FILE = DATA_DIR / "generated_questions.json"
 TEXTBOOK_DIR = DATA_DIR / "textbook" / "mit-calculus"
 TEXTBOOK_MANIFEST_FILE = TEXTBOOK_DIR / "manifest.json"
 TEXTBOOK_TOC_FILE = TEXTBOOK_DIR / "toc.json"
@@ -36,6 +37,12 @@ load_dotenv(ROOT_DIR / ".env")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.openlux.ai/v1")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
+QUESTION_REVIEW_ENABLED = os.getenv("QUESTION_REVIEW_ENABLED", "true").lower() in {
+    "1", "true", "yes", "on"
+}
+TUTOR_REVIEW_ENABLED = os.getenv("TUTOR_REVIEW_ENABLED", "true").lower() in {
+    "1", "true", "yes", "on"
+}
 
 _chroma_dir = Path(os.getenv("CHROMA_DIR", str(DATA_DIR / "chroma")))
 CHROMA_DIR = _chroma_dir if _chroma_dir.is_absolute() else ROOT_DIR / _chroma_dir

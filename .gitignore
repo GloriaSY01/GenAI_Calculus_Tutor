@@ -20,6 +20,8 @@ frontend-web/.vite-dev.log
 data/logs/*.jsonl
 data/favorites.json
 data/favorites.json.tmp
+data/generated_questions.json
+data/generated_questions.json.tmp
 data/chroma/
 data/models/
 data/exercises/raw/

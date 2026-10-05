@@ -196,6 +196,16 @@ def generate(req: GenerateRequest):
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Unknown section") from exc
+    except ValueError as exc:
+        if "No new question" in str(exc):
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "QUESTION_GENERATION_EXHAUSTED",
+                    "message": "No new question is available for the current settings.",
+                },
+            ) from exc
+        raise HTTPException(status_code=502, detail=f"Generation failed: {exc}") from exc
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502,
                             detail=f"Generation failed: {exc}") from exc
@@ -241,7 +251,13 @@ def grade(req: GradeRequest):
         })
         return result
     except KeyError:
-        raise HTTPException(status_code=404, detail="Unknown question_id")
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "QUESTION_EXPIRED",
+                "message": "This question no longer has a grading record. Please generate a new question.",
+            },
+        )
 
 
 @app.post("/session/start", response_model=StartSessionResponse)
@@ -375,6 +391,7 @@ def create_favorite(req: FavoriteCreate):
             len(question.get("blank_answers", []))
             if question["type"] == "fill_blank" else None
         ),
+        "language": question.get("language", "en"),
         "saved_at": time.time(),
     }
     return store.add_favorite(snapshot)

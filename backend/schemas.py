@@ -183,6 +183,8 @@ class GeneratedQuestionPublic(BaseModel):
     instructions: str = ""
     source: Literal["textbook", "generated"] = "generated"
     citations: List[Citation] = Field(default_factory=list)
+    quality_version: int = 2
+    language: Language = "en"
 
 
 class GradeRequest(BaseModel):
@@ -223,6 +225,7 @@ class Favorite(BaseModel):
     steps: Optional[List[str]] = None
     n_blanks: Optional[int] = None
     saved_at: float
+    language: Language = "en"
 
 
 # --------------------------------------------------------------------------- #

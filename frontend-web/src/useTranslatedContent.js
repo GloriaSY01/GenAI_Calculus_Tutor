@@ -4,14 +4,15 @@ import textbookLabels from './textbook-labels.json'
 import textbookChinese from './textbook-zh.json'
 const cache = new Map()
 const pending = new Map()
-export function useTranslatedContent(texts, lang) {
+export function useTranslatedContent(texts, lang, sourceLang = null) {
   const values = [...new Set(texts.filter(v => typeof v === 'string' && v.trim()))]
-  const key = JSON.stringify([lang, values])
+  const key = JSON.stringify([lang, sourceLang, values])
   const [, setRevision] = useState(0)
   const [failed, setFailed] = useState('')
   const [attempt, setAttempt] = useState(0)
   const known = value => {
     if (!value) return value
+    if (sourceLang === lang) return value
     if (lang === 'en' && !/[\u4e00-\u9fff]/.test(value)) return value
     if (lang === 'zh' && (textbookLabels[value] || textbookChinese[value])) return textbookLabels[value] || textbookChinese[value]
     const prose = value.replace(/\$\$[\s\S]*?\$\$|\$(?:\\.|[^$])*?\$/g, '')
@@ -39,7 +40,7 @@ export function useTranslatedContent(texts, lang) {
     pending.get(key).then(() => { if (active) setRevision(n => n + 1) }).catch(() => { if (active) setFailed(key) })
     return () => { active = false }
   }, [key, attempt])
-  return { translate: value => known(value) ?? (lang === 'zh' ? '正在翻译…' : 'Translating…'), loading: missing.length > 0 && failed !== key, error: failed === key, retry: () => setAttempt(n => n + 1) }
+  return { translate: value => known(value) ?? value, loading: missing.length > 0 && failed !== key, error: failed === key, retry: () => setAttempt(n => n + 1) }
 }
 export function conceptTexts(card) {
   if (!card) return []

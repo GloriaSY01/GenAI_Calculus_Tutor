@@ -5,7 +5,11 @@ import { Card, Badge, Empty } from '../../components/ui.jsx'
 
 export default function Favorites({ favorites, onRemove, onPractice, onBack }) {
   const { t, lang } = useLang()
-  const translated = useTranslatedContent(favorites.map(f => f.stem), lang)
+  const translated = useTranslatedContent(
+    favorites.map(f => f.stem),
+    lang,
+    favorites.every(f => f.language === lang) ? lang : null,
+  )
   const diffLabel = (d) => t('diff_' + d)
   const qtypeLabel = (x) => t('qtype_' + x)
 

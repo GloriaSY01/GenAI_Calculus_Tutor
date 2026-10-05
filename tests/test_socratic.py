@@ -118,3 +118,48 @@ def test_chinese_tutor_language_is_enforced(monkeypatch):
     assert opening.startswith("你好")
     assert "Simplified Chinese" in captured["system"]
     assert turn.tutor_message.startswith("斜率")
+
+
+def test_tutor_repairs_translated_function_notation(monkeypatch):
+    _mock_retrieval(monkeypatch)
+    monkeypatch.setattr(
+        socratic.llm,
+        "chat",
+        lambda *args, **kwargs: (
+            "ASSESSMENT: partial\nACTION: hint\nASKS_EXPLANATION: no\n"
+            "SOLVED: no\nMASTERY_GAIN: no\nMESSAGE: 你记得正弦(x)的导数规则吗？"
+        ),
+    )
+
+    turn = socratic.process_turn(
+        None, "control", [], 0, 0, "我不确定", language="zh"
+    )
+
+    assert "sin(x)" in turn.tutor_message
+    assert "正弦(x)" not in turn.tutor_message
+
+
+def test_tutor_factual_review_fails_closed(monkeypatch):
+    _mock_retrieval(monkeypatch)
+    monkeypatch.setattr(socratic.config, "TUTOR_REVIEW_ENABLED", True)
+    monkeypatch.setattr(
+        socratic.llm,
+        "chat",
+        lambda *args, **kwargs: (
+            "ASSESSMENT: partial\nACTION: hint\nASKS_EXPLANATION: no\n"
+            "SOLVED: no\nMASTERY_GAIN: no\nMESSAGE: Use the product rule."
+        ),
+    )
+    monkeypatch.setattr(
+        socratic.llm,
+        "chat_json",
+        lambda *args, **kwargs: {"valid": False, "issues": ["wrong rule"]},
+    )
+
+    turn = socratic.process_turn(
+        PROBLEM, "control", [], 0, 0, "I am unsure."
+    )
+
+    assert turn.action == "probe"
+    assert turn.safety_event == "factual_review"
+    assert "return to the givens" in turn.tutor_message

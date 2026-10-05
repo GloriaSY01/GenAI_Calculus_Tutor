@@ -18,8 +18,17 @@ async function req(path, opts = {}) {
     headers: { 'Content-Type': 'application/json' },
     ...opts,
   })
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-  return res.json()
+  const data = await res.json().catch(() => null)
+  if (!res.ok) {
+    const detail = data?.detail
+    const error = new Error(
+      (typeof detail === 'object' ? detail?.message : detail) || `${res.status} ${res.statusText}`,
+    )
+    error.status = res.status
+    error.code = typeof detail === 'object' ? detail?.code : undefined
+    throw error
+  }
+  return data
 }
 
 /* ------------------------------------------------------------------ *
@@ -203,8 +212,8 @@ export const api = {
     req(`/assignments/${id}`, { method: 'DELETE' }).catch(() => ({ ok: true, _mock: true })),
 
   // backend: POST /analytics/ask { question } -> { answer, llm_available, grounded_on }
-  ask: (question, language = 'en', class_id = '') =>
-    req('/analytics/ask', { method: 'POST', body: JSON.stringify({ question, language, class_id: class_id || null }) })
+  ask: (question, language = 'en', class_id = '', history = []) =>
+    req('/analytics/ask', { method: 'POST', body: JSON.stringify({ question, language, class_id: class_id || null, history }) })
       .then((r) => ({ answer: r.answer, llm_available: r.llm_available !== false }))
       .catch(() => ({ answer: MOCK.askAnswer(question, language), _mock: true, llm_available: false })),
 
@@ -227,11 +236,10 @@ export const api = {
     req('/generate', { method: 'POST', body: JSON.stringify({ type, topic, difficulty, language, exclude_stems }) }),
 
   // POST /grade { question_id, single|multiple|blanks|order, student_id, class_id } -> GradeResponse
+  // Never replace a real grading failure with a simulated result. Students
+  // must either receive an authoritative grade or a visible recovery action.
   gradeAnswer: (payload) =>
-    withFallback(
-      async () => await req('/grade', { method: 'POST', body: JSON.stringify(payload) }),
-      MOCK.grade(payload),
-    ),
+    req('/grade', { method: 'POST', body: JSON.stringify(payload) }),
 
   // POST /session/start -> { session_id, problem, condition, opening_message }
   startSession: (body) =>

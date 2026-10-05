@@ -28,3 +28,18 @@ def test_formula_and_english_original_need_no_model(monkeypatch):
     monkeypatch.setattr(localization.llm, 'chat_json', fail)
     assert localization.translate_texts(['$x+1$'], 'zh') == {'$x+1$':'$x+1$'}
     assert localization.translate_texts(['Velocity and Distance'], 'en') == {'Velocity and Distance':'Velocity and Distance'}
+
+
+def test_preserves_bare_function_notation(monkeypatch):
+    def reply(*args, **kwargs):
+        raise AssertionError('Pure function notation must not be sent for translation')
+
+    monkeypatch.setattr(localization.llm, 'chat_json', reply)
+    translated = localization.translate_texts(['cos(x)', '-sin(x)'], 'zh')
+
+    assert translated == {'cos(x)': 'cos(x)', '-sin(x)': '-sin(x)'}
+
+
+def test_repairs_cached_chinese_function_notation(monkeypatch):
+    monkeypatch.setattr(localization, '_cache', {'zh': {'cos(x)': '余弦(x)'}})
+    assert localization.translate_texts(['cos(x)'], 'zh') == {'cos(x)': 'cos(x)'}

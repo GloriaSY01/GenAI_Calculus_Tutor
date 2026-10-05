@@ -12,7 +12,8 @@ import logging
 import re
 from typing import Dict, List, Optional, Tuple
 
-from . import guardrail, llm, rag, textbook
+from . import config, guardrail, llm, rag, textbook
+from .math_quality import normalize_math_notation
 from .schemas import Condition, Language, Problem, TutorTurn
 
 log = logging.getLogger(__name__)
@@ -33,6 +34,8 @@ Hard rules (never break these):
 - Be warm, encouraging and concise (2-4 sentences).
 - Write all mathematics in LaTeX using $...$ for inline and $$...$$ for block
   math, so it renders correctly.
+- Keep standard function names symbolic in every language: write $sin(x)$,
+  $cos(x)$, $tan(x)$, $ln(x)$ and never translate them into words inside formulas.
 - If the student is clearly stuck after several attempts, you may give a more
   concrete hint, but still stop short of the final answer.
 """
@@ -291,6 +294,7 @@ def process_turn(
             if language == "zh"
             else "Let's keep going — what's your next step, and why?"
         )
+    message = normalize_math_notation(message)
 
     # 5. Enforce the experimental policy server-side.
     if (
@@ -364,8 +368,58 @@ def process_turn(
                         "would you apply to the current expression, and why?"
                     )
                 )
+            message = normalize_math_notation(message)
 
-    # 7. Update bookkeeping.
+    # 7. Independently review mathematical claims against the private solution.
+    if problem and config.TUTOR_REVIEW_ENABLED:
+        try:
+            review = llm.chat_json(
+                [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a strict Calculus 1 tutor-response reviewer. "
+                            "Check only mathematical correctness and consistency with "
+                            "the private reference. Also reject any reply that reveals "
+                            "the final answer or a complete solution. Return JSON only: "
+                            "{\"valid\": true|false, \"issues\": [\"...\"]}."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Problem: {problem.statement}\n"
+                            f"Private final answer: {problem.final_answer}\n"
+                            f"Private steps: {problem.solution_steps}\n"
+                            f"Proposed tutor reply: {message}"
+                        ),
+                    },
+                ],
+                temperature=0,
+                max_tokens=400,
+            )
+            reply_valid = review.get("valid") is True
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Tutor reply review failed closed: %s", exc)
+            reply_valid = False
+        if not reply_valid:
+            action = "probe"
+            is_solved = False
+            mastery_gain = False
+            asks_for_explanation = True
+            safety_event = safety_event or "factual_review"
+            message = (
+                "为了避免给你错误提示，我们先回到已知条件：你能指出题目给出的量，"
+                "以及你准备使用的第一条规则吗？"
+                if language == "zh"
+                else (
+                    "To avoid giving you a misleading hint, let's return to the "
+                    "givens. Which quantities are provided, and what first rule "
+                    "would you apply?"
+                )
+            )
+
+    # 8. Update bookkeeping.
     new_hint_level = hint_level
     if action in ("hint", "advance", "correct"):
         new_hint_level = hint_level + 1

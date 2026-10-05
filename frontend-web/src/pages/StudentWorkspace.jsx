@@ -8,14 +8,35 @@ import { displayLabel } from '../localization.js'
 import { AnswerControls } from './student/Practice.jsx'
 import Concept from './student/Concept.jsx'
 import Favorites from './student/Favorites.jsx'
+import StudentAgent from './StudentAgent.jsx'
 import { hasAnswer, challengePlan, roundSummary } from './student/study.js'
 import './student/workspace.css'
 
 const TYPES = ['single_choice', 'multiple_choice', 'fill_blank', 'drag_order']
 const DIFFS = ['easy', 'medium', 'hard']
+const STUDY_STATE_VERSION = 3
+function browserGuestId() {
+  const key = 'calculus-browser-guest-id'
+  let value = localStorage.getItem(key)
+  if (!value) {
+    value = 'guest-' + (crypto.randomUUID?.() || Math.random().toString(36).slice(2))
+    localStorage.setItem(key, value)
+  }
+  return value
+}
 const fresh = () => ({ chapter: '', section: '', view: 'home', active: '', rounds: {}, difficulty: 'easy', type: 'mixed' })
+function sanitizeSavedState(savedState) {
+  const rounds = Object.fromEntries(
+    Object.entries(savedState.rounds || {}).filter(([, round]) =>
+      (round.items || []).every(item => item.q?.quality_version >= 2),
+    ),
+  )
+  const active = rounds[savedState.active] ? savedState.active : ''
+  const view = savedState.active && !active ? 'home' : savedState.view
+  return { ...savedState, rounds, active, view }
+}
 function read(key) {
-  try { const saved = JSON.parse(localStorage.getItem(key)); return saved?.version === 2 && saved.state?.rounds ? { ...fresh(), ...saved.state } : fresh() }
+  try { const saved = JSON.parse(localStorage.getItem(key)); return saved?.version === STUDY_STATE_VERSION && saved.state?.rounds ? { ...fresh(), ...sanitizeSavedState(saved.state) } : fresh() }
   catch { return fresh() }
 }
 export default function StudentWorkspace({ topbar }) {
@@ -34,27 +55,31 @@ export default function StudentWorkspace({ topbar }) {
 }
 function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope, onStudent, onClass }) {
   const text = (zh, en) => lang === 'zh' ? zh : en
-  const storageKey = 'calculus-study-v2:' + scope
+  const storageKey = 'calculus-study-v3:' + scope
   const [state, setState] = useState(() => read(storageKey))
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [storageError, setStorageError] = useState(false)
   const [favorites, setFavorites] = useState([])
+  const [guestId] = useState(browserGuestId)
+  const favoriteOwner = student || guestId
   const lock = useRef(false)
+  const prefetched = useRef(null)
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
   useEffect(() => {
-    try { localStorage.setItem(storageKey, JSON.stringify({ version: 2, state })); setStorageError(false) }
+    try { localStorage.setItem(storageKey, JSON.stringify({ version: STUDY_STATE_VERSION, state })); setStorageError(false) }
     catch { setStorageError(true) }
   }, [state, storageKey])
-  useEffect(() => { let current = true; if (student) api.getFavorites(student).then(r => { if (current) setFavorites(r.favorites || []) }); return () => { current = false } }, [student])
+  useEffect(() => { let current = true; api.getFavorites(favoriteOwner).then(r => { if (current) setFavorites(r.favorites || []) }); return () => { current = false } }, [favoriteOwner])
   const chapters = catalog?.chapters || []
   const chapter = chapters.find(c => c.id === state.chapter) || chapters[0]
   const sections = chapter?.sections || []
   const selected = sections.find(s => s.id === state.section) || (state.section === 'all' ? null : sections[0])
   const activeRound = chapter && state.active.startsWith(chapter.id + ':') ? state.rounds[state.active] : null
   const studyKey = chapter?.id + ':free:' + (selected?.id || 'all')
+  const prefetchKey = studyKey + ':' + state.difficulty + ':' + state.type + ':' + lang
   const challengeKey = chapter?.id + ':challenge'
   const roundKey = state.view === 'study' ? studyKey : state.active
   const round = state.view === 'study' ? state.rounds[studyKey] : activeRound
@@ -67,7 +92,11 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   async function task(fn) {
     if (lock.current) return
     lock.current = true; setBusy(true); setError('')
-    try { await fn() } catch (e) { if (alive.current) setError(e.message) }
+    try { await fn() } catch (e) { if (alive.current) setError(
+      e.code === 'QUESTION_GENERATION_EXHAUSTED'
+        ? text('当前设置暂时没有更多新题，请重试或切换题型、难度。', 'No more new questions are available for these settings. Retry or change the type or difficulty.')
+        : e.message
+    ) }
     finally { lock.current = false; if (alive.current) { setBusy(false); setStatus('') } }
   }
   const home = () => { patch({ view: 'home' }); setError('') }
@@ -89,7 +118,12 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
       const base = !restart && round ? round : { mode: 'free', section: selected?.id || '', title: selected?.title || chapter.title, items: [], cursor: 0 }
       if (!restart && base.cursor < base.items.length - 1) { updateRound(roundKey, r => ({ ...r, cursor: r.cursor + 1 })); return }
       const next = { ...base, difficulty: state.difficulty, type: state.type }
-      const added = await generate(next)
+      let added = null
+      if (!restart && prefetched.current?.key === prefetchKey) {
+        added = await prefetched.current.promise
+        prefetched.current = null
+      }
+      if (!added) added = await generate(next)
       if (alive.current) setState(s => ({ ...s, active: studyKey, rounds: { ...s.rounds, [studyKey]: { ...next, items: [...next.items, added], cursor: next.items.length } } }))
     })
   }
@@ -117,13 +151,47 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   async function grade(x) {
     const result = await api.gradeAnswer({ question_id: x.q.id, student_id: student || 'anon', class_id: classId, ai_assisted: !!x.assisted, ...x.answer,
       ...(x.q.type === 'drag_order' ? { order: x.answer.order } : {}) })
-    if (result._mock) throw new Error(text('批改暂不可用，答案已保留。若后端已重启，请开始新一轮。', 'Grading unavailable. Answers are saved. Start a new round if the backend restarted.'))
     return result
   }
   function submitFree() {
+    if (lock.current) return
+    lock.current = true; setBusy(true); setError('')
+    grade(item).then(result => {
+      if (alive.current) updateItem(roundKey, round.cursor, { grade: result, gradeError: null, first: item.first ?? { correct: result.correct, assisted: item.assisted } })
+      if (result.correct && !challenge) {
+        const nextRound = { ...round, items: round.items.map((entry, index) => index === round.cursor ? { ...entry, grade: result } : entry) }
+        prefetched.current = {
+          key: prefetchKey,
+          promise: generate(nextRound).catch(() => null),
+        }
+      }
+    }).catch(e => {
+      if (!alive.current) return
+      if (e.status === 404 || e.code === 'QUESTION_EXPIRED') {
+        updateItem(roundKey, round.cursor, { gradeError: 'expired' })
+      } else {
+        updateItem(roundKey, round.cursor, { gradeError: 'unavailable' })
+      }
+    }).finally(() => {
+      lock.current = false
+      if (alive.current) { setBusy(false); setStatus('') }
+    })
+  }
+  function replaceCurrentQuestion() {
     task(async () => {
-      const result = await grade(item)
-      if (alive.current) updateItem(roundKey, round.cursor, { grade: result, first: item.first ?? { correct: result.correct, assisted: item.assisted } })
+      const previousStem = item.q.stem
+      const base = {
+        ...round,
+        items: round.items.filter((_, index) => index !== round.cursor),
+        previousStems: [...(round.previousStems || []), previousStem],
+      }
+      const replacement = await generate(base)
+      if (!alive.current) return
+      updateRound(roundKey, current => ({
+        ...current,
+        previousStems: base.previousStems,
+        items: current.items.map((entry, index) => index === current.cursor ? replacement : entry),
+      }))
     })
   }
   function finishChallenge() {
@@ -146,37 +214,36 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   async function favorite() {
     task(async () => {
       const saved = favorites.find(f => f.question_id === item.q.id)
-      const result = saved ? await api.deleteFavorite(item.q.id, student) : await api.addFavorite({ question_id: item.q.id, student_id: student, class_id: classId })
+      const result = saved ? await api.deleteFavorite(item.q.id, favoriteOwner) : await api.addFavorite({ question_id: item.q.id, student_id: favoriteOwner, class_id: classId })
       if (result._mock) throw new Error(text('收藏失败，请重试。', 'Could not save favorite.'))
       setFavorites(f => saved ? f.filter(x => x.question_id !== item.q.id) : [...f, { ...item.q, question_id: item.q.id }])
     })
   }
   const savedChallenge = state.rounds[challengeKey]
   const summary = roundSummary(round)
-  const localized = useTranslatedContent(item ? [item.q.stem, item.q.instructions, ...(item.q.options || []), ...(item.q.steps || []), item.grade?.feedback, item.grade?.correct_answer, ...(item.q.citations || []).map(c => c.title)] : [], lang)
+  const localized = useTranslatedContent(item ? [item.q.stem, item.q.instructions, ...(item.q.options || []), ...(item.q.steps || []), item.grade?.feedback, item.grade?.correct_answer, ...(item.q.citations || []).map(c => c.title)] : [], lang, item?.q?.language)
   const tr = localized.translate
   const questionPanel = item && <>
     {localized.error && <p role="alert" className="note-tip">{text('翻译暂不可用，答案已保留。', 'Translation unavailable. Your answer is saved.')} <button className="btn sm" onClick={localized.retry}>{text('重试', 'Retry')}</button></p>}
-    {localized.loading && <p role="status">{text('正在切换题目语言，答案保持不变…', 'Updating question language; your answer is unchanged…')}</p>}
     <div className="sw-questionnav" aria-label={text('本轮题目', 'Questions')}>{round.items.map((x, i) => <button key={x.q.id} disabled={busy} aria-current={i === round.cursor ? 'step' : undefined} className={i === round.cursor ? 'active' : ''} onClick={() => updateRound(roundKey, r => ({ ...r, cursor: i }))}>{i + 1}{hasAnswer(x) ? ' ·' : ''}</button>)}</div>
     <section className="sw-panel sw-question">
       <div className="sw-questionmeta"><span className="badge neutral">{t('diff_' + item.q.difficulty)}</span><span className="badge neutral">{t('qtype_' + item.q.type)}</span>
         <strong>{text('本题小节：', 'Section: ')}{displayLabel(item.q.topic, lang)}</strong>
-        {(!challenge || reviewing) && <button className="btn sm ghost" disabled={busy || !student} onClick={favorite}>{favorites.some(f => f.question_id === item.q.id) ? t('practice_unfavorite') : t('practice_favorite')}</button>}</div>
+        {(!challenge || reviewing) && <button className="btn sm ghost" disabled={busy} onClick={favorite}>{favorites.some(f => f.question_id === item.q.id) ? t('practice_unfavorite') : t('practice_favorite')}</button>}</div>
       <MathText as="div" className="sw-stem">{tr(item.q.stem)}</MathText>
       {item.q.instructions && <MathText as="p" className="muted">{tr(item.q.instructions)}</MathText>}
-      <div className="sw-answer"><h3>{t('practice_your_answer')}</h3><AnswerControls q={item.q} displayText={tr} answer={item.answer} disabled={localized.loading || localized.error || busy || reviewing || round.grading || (!challenge && item.grade?.correct)} setAnswer={answer => updateItem(roundKey, round.cursor, { answer, grade: null })} />
+      <div className="sw-answer"><h3>{t('practice_your_answer')}</h3><AnswerControls q={item.q} displayText={tr} answer={item.answer} disabled={busy || reviewing || round.grading || (!challenge && item.grade?.correct)} setAnswer={answer => updateItem(roundKey, round.cursor, { answer, grade: null, gradeError: null })} />
         {item.q.type === 'drag_order' && !hasAnswer(item) && !reviewing && <button className="btn sm" disabled={busy || round.grading} onClick={() => updateItem(roundKey, round.cursor, { answer: { order: [...item.q.steps] } })}>{text('确认当前顺序', 'Use this order')}</button>}</div>
       {item.grade && (!challenge || reviewing) && <div role="status" className={'grade-box ' + (item.grade.correct ? 'ok' : 'bad')}><MathText>{tr(item.grade.feedback)}</MathText>{item.grade.correct_answer && <MathText as="p">{tr(item.grade.correct_answer)}</MathText>}</div>}
+      {item.gradeError && <div role="alert" className="grade-box bad sw-grade-error"><strong>{item.gradeError === 'expired' ? text('这道旧题的判分记录已失效', 'This saved question has expired') : text('暂时无法批改', 'Grading is temporarily unavailable')}</strong><p>{item.gradeError === 'expired' ? text('服务更新前保存的题目无法安全判分。你的选择仍保留，请换一道新题。', 'Questions saved before the service update cannot be graded safely. Your answer is preserved; replace this question to continue.') : text('你的答案已保留，请稍后重新提交。', 'Your answer is saved. Please submit again shortly.')}</p>{item.gradeError === 'expired' && !challenge && <button className="btn sm" disabled={busy} onClick={replaceCurrentQuestion}>{text('换一道新题', 'Replace question')}</button>}</div>}
       {reviewing && !hasAnswer(item) && <p className="note-tip">{text('本题未作答。可以向导师询问解题思路。', 'Unanswered. Ask your tutor how to approach it.')}</p>}
-      <div className="sw-actions">{!challenge ? <><button className="btn" disabled={busy} onClick={() => nextFree()}>{text('下一题', 'Next question')}</button><button className="btn primary" disabled={localized.loading || localized.error || busy || !hasAnswer(item) || item.grade?.correct} onClick={submitFree}>{item.grade?.correct ? text('已答对', 'Correct') : t('practice_submit')}</button></> : <>
+      <div className="sw-actions">{!challenge ? <><button className="btn" disabled={busy} onClick={() => nextFree()}>{text('下一题', 'Next question')}</button><button className="btn primary" disabled={busy || !hasAnswer(item) || item.grade?.correct} onClick={submitFree}>{item.grade?.correct ? text('已答对', 'Correct') : t('practice_submit')}</button></> : <>
         <button className="btn" disabled={busy || round.cursor === 0} onClick={() => updateRound(roundKey, r => ({ ...r, cursor: r.cursor - 1 }))}>{text('上一题', 'Previous')}</button>
         {round.cursor < round.items.length - 1 && <button className="btn primary" disabled={busy} onClick={() => updateRound(roundKey, r => ({ ...r, cursor: r.cursor + 1 }))}>{text('下一题', 'Next question')}</button>}
         {reviewing ? <button className="btn" onClick={() => patch({ view: 'result' })}>{text('返回结果', 'Back to results')}</button> : <button className="btn" disabled={busy} onClick={finishChallenge}>{round.grading ? text('继续批改', 'Retry grading') : text('交卷', 'Submit challenge')}</button>}
       </>}</div>
       {(!challenge || reviewing) && item.q.citations?.length > 0 && <details className="sw-sources"><summary>{t('practice_citations')}</summary>{item.q.citations.map((c, i) => <p key={i}>{tr(c.title)} {c.page != null ? ' · p.' + c.page : ''}</p>)}</details>}
     </section>
-    {(!challenge || reviewing) && <details className="sw-tutor-toggle" key={item.q.id}><summary>{text('问导师 · 卡住时在这里提问', 'Ask your tutor · get help with this question')}</summary><QuestionHelp {...{ item, lang, student, classId, busy, task }} onChange={fields => updateItem(roundKey, round.cursor, fields)} /></details>}
     {reviewing && <button className="btn sw-start" onClick={() => learn(sections.find(s => s.id === item.section))}>{text('去这个小节学习与练习', 'Learn and practice this section')}</button>}
   </>
   return <div className="sw">
@@ -214,7 +281,7 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
         <details className="sw-settings"><summary>{text('练习设置', 'Practice settings')}</summary><label>{t('practice_qtype')} <select className="inp" disabled={busy} value={state.type} onChange={e => patch({ type: e.target.value })}><option value="mixed">{text('混合题型', 'Mixed formats')}</option>{TYPES.map(type => <option key={type} value={type}>{t('qtype_' + type)}</option>)}</select></label><p className="sw-small">{text('设置应用于下一道新题，当前答案保留。', 'Settings apply to the next new question. Your current answer is kept.')}</p>{round && <button className="btn sm" disabled={busy} onClick={() => nextFree(true)}>{text('重新开始本范围练习', 'Start this practice over')}</button>}</details>
         {item ? questionPanel : <section className="sw-panel sw-empty"><h3>{text('准备好，练一道？', 'Ready to try a question?')}</h3><p className="muted">{text('可以直接做题，也可以先看看上面的概念。', 'Start now, or explore the concept above first.')}</p><button className="btn primary" disabled={busy || catalog?._mock} onClick={() => nextFree()}>{text('开始练习', 'Start practicing')}</button></section>}
       </div></div> : state.view === 'challenge-intro' ? <section className="sw-panel sw-focus"><span className="sw-eyebrow">{text('章节挑战', 'CHAPTER CHALLENGE')}</span><h2>{displayLabel(chapter.title, lang)}</h2><p>{text(`共 ${sections.length} 道题，每小节抽取一道，中等难度、混合题型。`, `${sections.length} questions, one per section, at medium difficulty with mixed formats.`)}</p><p>{text('独立作答，可以跳过和返回修改；交卷后开放反馈、教材和导师。可以随时返回学习，挑战进度会保留。', 'Work independently. Skip and revisit questions before submitting. Feedback, textbook and tutor become available after submission. You can leave to study and resume later.')}</p><p className="note-tip">{text('这是一次学习自检，不代表整章掌握程度。当前不设通过分数。', 'This is a learning check, not a certification of chapter mastery. No pass threshold is set.')}</p><div className="sw-actions"><button className="btn" onClick={home}>{text('返回学习', 'Back to learning')}</button><button className="btn primary" disabled={busy || !sections.length || catalog?._mock} onClick={() => startChallenge()}>{savedChallenge?.submitted ? text('查看结果', 'View results') : savedChallenge ? text('继续挑战', 'Resume challenge') : text('开始挑战', 'Start challenge')}</button></div></section>
-      : state.view === 'favorites' ? <Favorites favorites={favorites} onBack={home} onRemove={id => task(async () => { const r = await api.deleteFavorite(id, student); if (r._mock) throw new Error(text('删除失败，请重试。', 'Could not remove favorite.')); setFavorites(f => f.filter(x => x.question_id !== id)) })} onPractice={f => {
+      : state.view === 'favorites' ? <Favorites favorites={favorites} onBack={home} onRemove={id => task(async () => { const r = await api.deleteFavorite(id, favoriteOwner); if (r._mock) throw new Error(text('删除失败，请重试。', 'Could not remove favorite.')); setFavorites(f => f.filter(x => x.question_id !== id)) })} onPractice={f => {
         const ch = chapters.find(c => c.sections.some(s => s.title === f.topic)); const sec = ch?.sections.find(s => s.title === f.topic)
         if (!ch || !sec) { setError(text('未找到此题对应的小节。', 'The section for this question was not found.')); return }
         const key = ch.id + ':free:' + sec.id
@@ -225,6 +292,12 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
         : <>{!reviewing && <p className="note-tip">{text(`已作答 ${round.items.filter(hasAnswer).length} / ${round.items.length}。可以返回修改；交卷后再看反馈和询问导师。`, `${round.items.filter(hasAnswer).length} / ${round.items.length} answered. Revisit before submitting; feedback and tutor follow submission.`)}</p>}{questionPanel}{round.grading && <p role="alert">{text('已确认交卷，答案已锁定。若批改中断，请点击“继续批改”。', 'Submission confirmed; answers are locked. If interrupted, use Retry grading.')}</p>}{!reviewing && <button className="btn ghost" disabled={busy} onClick={() => startChallenge(true)}>{text('放弃本轮并重新开始', 'Discard this attempt and restart')}</button>}</>}
       </div> : <button className="btn" onClick={home}>{text('返回章节首页', 'Back to chapter')}</button>}
     </main>
+    <StudentAgent
+      topic={item?.q?.topic || selected?.title || chapter?.title}
+      problem={item?.q || null}
+      studentId={student}
+      classId={classId}
+    />
   </div>
 }
 function StudyNotes({ topic, lang }) {
