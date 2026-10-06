@@ -119,58 +119,76 @@ def _compute_practice(events: List[dict]) -> dict:
         lambda: {
             "attempts": 0,
             "correct": 0,
-            "independent_count": 0,
-            "ai_assisted_count": 0,
+            "independent_submissions": 0,
+            "independent_correct_count": 0,
+            "ai_assisted_submissions": 0,
+            "ai_assisted_correct_count": 0,
             "not_correct_count": 0,
         }
     )
     by_difficulty: Dict[str, dict] = defaultdict(
         lambda: {
             "attempts": 0,
-            "independent_count": 0,
-            "ai_assisted_count": 0,
+            "correct": 0,
+            "independent_submissions": 0,
+            "independent_correct_count": 0,
+            "ai_assisted_submissions": 0,
+            "ai_assisted_correct_count": 0,
             "not_correct_count": 0,
         }
     )
 
-    for e in rows:
-        student_id = _student_account(e.get("student_id")) or "anon"
-        key = (e.get("class_id"), student_id, e.get("question_id"))
+    for event in rows:
+        student_id = _student_account(event.get("student_id")) or "anon"
+        key = (event.get("class_id"), student_id, event.get("question_id"))
         assisted = (
-            bool(e.get("ai_assisted"))
-            or e.get("hint_usage") == "ai_assisted"
+            bool(event.get("ai_assisted"))
+            or event.get("hint_usage") == "ai_assisted"
             or key in assisted_keys
         )
-        correct = bool(e.get("correct"))
-        topic = e.get("topic") or "General / Free chat"
-        difficulty = e.get("difficulty") or "unknown"
+        correct = bool(event.get("correct"))
+        topic = event.get("topic") or "General / Free chat"
+        difficulty = event.get("difficulty") or "unknown"
 
         for bucket in (by_topic[topic], by_difficulty[difficulty]):
             bucket["attempts"] += 1
             if assisted:
-                bucket["ai_help_count"] = bucket.get("ai_help_count", 0) + 1
+                bucket["ai_assisted_submissions"] += 1
+                if correct:
+                    bucket["ai_assisted_correct_count"] += 1
+            else:
+                bucket["independent_submissions"] += 1
+                if correct:
+                    bucket["independent_correct_count"] += 1
             if correct:
-                bucket["correct"] = bucket.get("correct", 0) + 1
-                if assisted:
-                    bucket["ai_assisted_count"] += 1
-                else:
-                    bucket["independent_count"] += 1
+                bucket["correct"] += 1
             else:
                 bucket["not_correct_count"] += 1
 
     def enrich(bucket: dict) -> dict:
         attempts = bucket["attempts"]
-        independent_count = bucket["independent_count"]
-        ai_assisted_count = bucket["ai_assisted_count"]
+        independent_submissions = bucket["independent_submissions"]
+        independent_correct = bucket["independent_correct_count"]
+        ai_assisted_submissions = bucket["ai_assisted_submissions"]
+        ai_assisted_correct = bucket["ai_assisted_correct_count"]
         not_correct_count = bucket["not_correct_count"]
-        ai_help_count = bucket.get("ai_help_count", 0)
-        correct_count = independent_count + ai_assisted_count
+        correct_count = bucket["correct"]
         return {
             **bucket,
+            # Compatibility aliases retained for existing consumers.
+            "independent_count": independent_correct,
+            "ai_assisted_count": ai_assisted_correct,
             "correct_rate": round(correct_count / attempts, 3) if attempts else 0.0,
-            "ai_help_rate": round(ai_help_count / attempts, 3) if attempts else 0.0,
-            "independent_rate": round(independent_count / attempts, 3) if attempts else 0.0,
-            "ai_assisted_rate": round(ai_assisted_count / attempts, 3) if attempts else 0.0,
+            "ai_help_count": ai_assisted_submissions,
+            "ai_help_rate": round(ai_assisted_submissions / attempts, 3) if attempts else 0.0,
+            "independent_rate": (
+                round(independent_correct / independent_submissions, 3)
+                if independent_submissions else 0.0
+            ),
+            "ai_assisted_rate": (
+                round(ai_assisted_correct / ai_assisted_submissions, 3)
+                if ai_assisted_submissions else 0.0
+            ),
             "not_correct_rate": round(not_correct_count / attempts, 3) if attempts else 0.0,
         }
 
@@ -184,24 +202,31 @@ def _compute_practice(events: List[dict]) -> dict:
     ]
 
     n_answers = len(rows)
-    independent_correct = sum(row["independent_count"] for row in topic_rows)
-    ai_assisted_correct = sum(row["ai_assisted_count"] for row in topic_rows)
-    ai_help_count = sum(row.get("ai_help_count", 0) for row in topic_rows)
+    independent_submissions = sum(row["independent_submissions"] for row in topic_rows)
+    independent_correct = sum(row["independent_correct_count"] for row in topic_rows)
+    ai_assisted_submissions = sum(row["ai_assisted_submissions"] for row in topic_rows)
+    ai_assisted_correct = sum(row["ai_assisted_correct_count"] for row in topic_rows)
     not_correct = sum(row["not_correct_count"] for row in topic_rows)
-    correct_total = independent_correct + ai_assisted_correct
+    correct_total = sum(row["correct"] for row in topic_rows)
 
     return {
         "n_answers": n_answers,
         "correct_rate": round(correct_total / n_answers, 3) if n_answers else 0.0,
-        "ai_help_count": ai_help_count,
-        "ai_help_rate": round(ai_help_count / n_answers, 3) if n_answers else 0.0,
-        "independent_solve_rate": round(independent_correct / n_answers, 3) if n_answers else 0.0,
-        "ai_assisted_solve_rate": round(ai_assisted_correct / n_answers, 3) if n_answers else 0.0,
+        "ai_help_count": ai_assisted_submissions,
+        "ai_help_rate": round(ai_assisted_submissions / n_answers, 3) if n_answers else 0.0,
+        "independent_solve_rate": (
+            round(independent_correct / independent_submissions, 3)
+            if independent_submissions else 0.0
+        ),
+        "ai_assisted_solve_rate": (
+            round(ai_assisted_correct / ai_assisted_submissions, 3)
+            if ai_assisted_submissions else 0.0
+        ),
         "practice_completion_modes": [
-            {"mode": "independent", "count": independent_correct},
-            {"mode": "ai_assisted", "count": ai_assisted_correct},
-            {"mode": "not_correct", "count": not_correct},
+            {"mode": "independent", "count": independent_submissions},
+            {"mode": "ai_assisted", "count": ai_assisted_submissions},
         ],
+        "not_correct_count": not_correct,
         "by_difficulty_completion": difficulty_rows,
         "practice_by_topic": topic_rows,
     }
@@ -425,6 +450,7 @@ def answer_question(
     a: ClassAnalytics,
     language: str = "en",
     history: Optional[List[dict]] = None,
+    selected_topic: Optional[str] = None,
 ) -> Tuple[str, bool]:
     """LLM-backed Q&A grounded on the aggregate stats.
 
@@ -433,7 +459,7 @@ def answer_question(
     passing a canned line off as a real answer -- teachers were seeing the same
     reply to every question with no hint that the model was down.
     """
-    facts = _facts_block(a)
+    facts = _facts_block(a, selected_topic)
     chat_context = _chat_context(history or [])
     try:
         from . import llm
@@ -444,7 +470,11 @@ def answer_question(
             "the facts provided when mentioning class data; do not invent "
             "numbers. If the teacher asks for general teaching advice, make it "
             "practical and label it as a suggestion rather than a measured "
-            "finding. Answer in 2-5 short sentences.\n\n"
+            "finding. You cannot see the teacher's dashboard unless they "
+            "provide a screenshot or describe the chart. When a chart "
+            "interpretation request lacks a screenshot or the chart's title, "
+            "metrics, and values, ask the teacher to provide those details "
+            "before interpreting the visual. Answer in 2-5 short sentences.\n\n"
             f"CLASS FACTS:\n{facts}\n\n"
             f"RECENT CHAT:\n{chat_context}\n\n"
             f"TEACHER QUESTION: {question}\n\nAnswer:"
@@ -473,11 +503,10 @@ def _chat_context(history: List[dict], limit: int = 6) -> str:
     return "\n".join(rows) if rows else "(no previous messages)"
 
 
-def _facts_block(a: ClassAnalytics) -> str:
+def _facts_block(a: ClassAnalytics, selected_topic: Optional[str] = None) -> str:
     lines = [
         f"- sessions: {a.n_sessions}, students: {a.n_students}, turns: {a.n_turns}",
-        f"- solve_rate: {a.solve_rate}, avg_reasoning(0-4): {a.avg_reasoning}, "
-        f"avg_final_mastery(0-100): {a.avg_final_mastery}",
+        f"- solve_rate: {a.solve_rate}, avg_reasoning(0-4): {a.avg_reasoning}",
         f"- avg_turns_per_session: {a.avg_turns_per_session}, "
         f"gaming_rate: {a.gaming_rate}, guardrail_rate: {a.guardrail_rate}",
         "- by topic (topic | attempts | solve_rate | avg_reasoning | gaming_rate):",
@@ -485,6 +514,26 @@ def _facts_block(a: ClassAnalytics) -> str:
     for t in a.by_topic:
         lines.append(f"    {t.topic} | {t.attempts} | {t.solve_rate} | "
                      f"{t.avg_reasoning} | {t.gaming_rate}")
+    if selected_topic:
+        selected = next(
+            (row for row in a.practice.get("practice_by_topic", [])
+             if row.get("topic") == selected_topic),
+            None,
+        )
+        if selected:
+            lines.extend([
+                f"- SELECTED DASHBOARD TOPIC: {selected_topic}",
+                "  Practice metrics below count every submission, including retries.",
+                f"  submissions: {selected['attempts']}; "
+                f"overall_correct_rate: {selected['correct_rate']}; "
+                f"independent_correct_rate: {selected['independent_rate']}; "
+                f"ai_assisted_correct_rate: {selected['ai_assisted_rate']}.",
+            ])
+        else:
+            lines.append(
+                f"- SELECTED DASHBOARD TOPIC: {selected_topic} "
+                "(no practice submissions yet)."
+            )
     return "\n".join(lines)
 
 

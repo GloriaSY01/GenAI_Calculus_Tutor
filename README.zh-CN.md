@@ -6,18 +6,18 @@
 Strang 的 *Calculus* 学习：读带出处的概念页、做教材题或生成题，并与苏格拉底式
 导师对话（引导推理、不直接给答案）。教师从同一份交互日志看班级汇总。
 
-技术栈：**FastAPI（后端）+ Vite + React（前端）**。学生端和教师端是同一个应用。
-`frontend/` 下的 Streamlit 代码不是现行界面。
+技术栈：**FastAPI（后端）+ Vite + React（学生端）+ Streamlit（教师端）**。
+学生端与教师端是两个明确分开的本地应用，共用同一个后端数据。
 
 ---
 
 ## 学生端与教师端
 
-在侧栏底部切换角色：
+两个端口之间通过角色入口跳转：
 
 - **学生：** 教材目录、概念页、自由练习 / 闯关、题下导师、收藏。支持中英文；
   教材正文可随界面语言显示。
-- **教师：** 总览、诊断、布置、助手。图表用 ECharts。
+- **教师（`teacher-frontend/`，8503）：** 总览、诊断、布置、助手。
 
 导师仍支持两种条件（`explain` / `control`）。explain-to-unlock 要求先解释再给
 下一步提示；control 只做渐进提示。两边用同一套评分。每轮写入
@@ -30,8 +30,8 @@ Strang 的 *Calculus* 学习：读带出处的概念页、做教材题或生成�
 ```
 GenAI_Calculus_Tutor/
 ├── backend/                 # FastAPI：RAG、出题判分、导师、分析
-├── frontend-web/            # Vite + React（现行界面）
-├── frontend/                # Streamlit 原型（运行时不用）
+├── student-frontend/           # 学生端：Vite + React，5173 端口
+├── teacher-frontend/           # 教师端：Streamlit，8503 端口
 ├── data/textbook/mit-calculus/
 ├── data/chroma/             # 本地向量索引（不提交）
 ├── data/logs/               # 会话 JSONL（不提交）
@@ -65,7 +65,7 @@ python -m scripts.ingest_mit --chapters 1 2 3 4 5 6 7 8
 4. 前端依赖：
 
 ```bash
-cd frontend-web
+cd student-frontend
 npm install
 ```
 
@@ -80,7 +80,29 @@ npm install
 
 ## 运行
 
-两个终端，均从仓库根目录开始。
+本项目包含三个进程，均使用固定的本机端口：
+
+| 进程 | 地址 | 技术栈 |
+|---|---|---|
+| 后端 API | http://127.0.0.1:8000 | FastAPI |
+| 教师端（唯一） | http://127.0.0.1:8503/?lang=zh | Streamlit |
+| 学生端 | http://127.0.0.1:5173 | React + Vite |
+
+### 一键启动（推荐）
+
+装好依赖（`pip install -r requirements.txt`，并在 `student-frontend/` 执行
+`npm install`）后，从仓库根目录运行：
+
+```bash
+scripts/run_dev.sh
+```
+
+脚本会依次启动后端、教师端、学生端，按 `Ctrl+C` 一并停止。端口可用
+`BACKEND_PORT / TEACHER_PORT / STUDENT_PORT` 环境变量覆盖。
+
+### 手动启动（三个终端）
+
+均从仓库根目录开始。
 
 **终端 1 — 后端：**
 
@@ -92,26 +114,31 @@ python -m uvicorn backend.main:app --reload --reload-dir backend --host 127.0.0.
 `127.0.0.1`，不要用 `localhost`（Node 18+ 可能把 `localhost` 解析成 IPv6，
 而 uvicorn 只听 IPv4）。
 
-**终端 2 — 前端：**
+**终端 2 — 教师端：**
 
 ```bash
-cd frontend-web
-npx vite --host 127.0.0.1
+python -m streamlit run teacher-frontend/teacher_app.py \
+  --server.address 127.0.0.1 --server.port 8503
 ```
 
-PowerShell 也可以显式指定后端：
+**终端 3 — 学生端：**
 
-```powershell
-cd frontend-web
-$env:VITE_BACKEND_URL="http://127.0.0.1:8000"
-npm run dev
+```bash
+cd student-frontend
+npm run dev -- --host 127.0.0.1
 ```
 
-打开 http://127.0.0.1:5175（或以 Vite 打印的端口为准）。在侧栏底部切换
-**教师 / 学生**。
+### 师生切换
 
-后端未启动时，教师页可能出现 `● demo data`。翻译接口（`POST /localize`）
-不会用演示文案冒充译文，失败会直接报错。
+- 学生端 → 教师端：在右上角 **设置** 中点击 **教师**，会打开
+  `http://127.0.0.1:8503/?lang=<当前语言>`。
+- 教师端 → 学生端：顶部 **学生** 链接回到 `http://127.0.0.1:5173/`。
+
+两端是各自独立的进程与端口，不共享同一页面，但跳转地址固定，不会指向其他版本。
+教师端只保留 Streamlit 这一个界面，`student-frontend` 中不再包含 React 教师页面。
+
+后端未启动时，看板会明确提示“无法连接后端”，而不会以演示数据冒充真实结果；
+翻译接口（`POST /localize`）失败也会直接报错。
 
 可选：给教师看板灌演示日志：
 

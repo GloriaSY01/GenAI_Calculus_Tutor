@@ -283,6 +283,7 @@ class ClassAnalytics(BaseModel):
 
 class AnalyticsQuery(BaseModel):
     class_id: Optional[str] = None
+    selected_topic: Optional[str] = None
     question: str
     language: Language = "en"
     history: List[dict] = Field(default_factory=list)

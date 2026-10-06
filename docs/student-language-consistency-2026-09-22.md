@@ -20,4 +20,4 @@
 
 ## 维护
 
-scripts.prepare_translations 可补充教材译文缓存，需 yolo8 环境及有效模型配置。动态翻译缓存位于 data/textbook/mit-calculus/translations.json；发布的静态教材译文位于 frontend-web/src/textbook-zh.json。更新教材后需重新生成，并审校新译文。
+scripts.prepare_translations 可补充教材译文缓存，需 yolo8 环境及有效模型配置。动态翻译缓存位于 data/textbook/mit-calculus/translations.json；发布的静态教材译文位于 student-frontend/src/textbook-zh.json。更新教材后需重新生成，并审校新译文。

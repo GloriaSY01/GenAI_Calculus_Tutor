@@ -9,13 +9,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "frontend"))
+sys.path.insert(0, str(ROOT / "teacher-frontend"))
 
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
 
 def main() -> int:
-    at = AppTest.from_file(str(ROOT / "frontend" / "teacher_app.py"), default_timeout=60)
+    at = AppTest.from_file(str(ROOT / "teacher-frontend" / "teacher_app.py"), default_timeout=60)
     at.run()
 
     if at.exception:

@@ -12,8 +12,8 @@ env/
 
 # Node / frontend build
 node_modules/
-frontend-web/dist/
-frontend-web/.vite-dev.log
+student-frontend/dist/
+student-frontend/.vite-dev.log
 *.log
 
 # Logs / runtime data
