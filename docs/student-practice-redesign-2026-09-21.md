@@ -21,11 +21,11 @@
 - 教材原始标题继续使用现有翻译映射，未覆盖的教材标题保留原文。
 
 ## 实现文件
-- frontend-web/src/pages/StudentWorkspace.jsx：章节首页、练习状态、答题与题下导师。
-- frontend-web/src/pages/student/workspace.css：局部样式与窄屏布局。
-- frontend-web/src/App.jsx：切换学生端入口。
-- frontend-web/src/pages/student/Practice.jsx：导出现有四种题型的 AnswerControls，供新界面复用。
-- frontend-web/scripts/student-ui-fixture.mjs：独立 UI 测试数据服务，不由生产应用导入。
+- student-frontend/src/pages/StudentWorkspace.jsx：章节首页、练习状态、答题与题下导师。
+- student-frontend/src/pages/student/workspace.css：局部样式与窄屏布局。
+- student-frontend/src/App.jsx：切换学生端入口。
+- student-frontend/src/pages/student/Practice.jsx：导出现有四种题型的 AnswerControls，供新界面复用。
+- student-frontend/scripts/student-ui-fixture.mjs：独立 UI 测试数据服务，不由生产应用导入。
 
 ## 验证
 - Vite 生产构建通过。

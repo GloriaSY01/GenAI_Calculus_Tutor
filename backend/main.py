@@ -159,7 +159,8 @@ def get_class_analytics(class_id: Optional[str] = None):
 def ask_analytics(req: AnalyticsQuery):
     data = analytics.compute(req.class_id)
     answer, llm_available = analytics.answer_question(
-        req.question, data, req.language, history=req.history
+        req.question, data, req.language, history=req.history,
+        selected_topic=req.selected_topic,
     )
     return AnalyticsAnswer(answer=answer, grounded_on=data,
                            llm_available=llm_available)

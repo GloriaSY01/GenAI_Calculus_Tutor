@@ -8,19 +8,22 @@ practise on textbook or generated items, and talk to a Socratic tutor that
 asks for reasoning instead of revealing the answer. Instructors see class-level
 analytics from the same interaction log.
 
-Built with **FastAPI** (backend) and **Vite + React** (student and teacher in
-one app). The older Streamlit files under `frontend/` are not the current UI.
+Built with **FastAPI** (backend), **Vite + React** (student app under
+`student-frontend/`), and **Streamlit** (teacher dashboard under
+`teacher-frontend/teacher_app.py`). The teacher interface is Streamlit-only; the React
+app does not contain teacher views.
 
 ---
 
 ## Student and teacher views
 
-One app, switched in the sidebar:
+Two separate processes on fixed local ports, linked to each other:
 
-- **Student:** textbook contents, concept page, free practice / challenge mode,
-  in-question tutor, and favourites. Chinese/English toggle; textbook prose can
-  follow the UI language.
-- **Teacher:** Overview, Diagnose, Assign, Assistant. Charts use ECharts.
+- **Student (React, :5173):** textbook contents, concept page, free practice /
+  challenge mode, in-question tutor, and favourites. Chinese/English toggle;
+  textbook prose can follow the UI language.
+- **Teacher (Streamlit, :8503):** Overview, Diagnose, Assign, Assistant, with
+  behaviour-based class analytics.
 
 The tutor still supports two conditions (`explain` vs `control`). Explain-to-unlock
 requires a justification before the next hint; control gives progressive hints
@@ -34,8 +37,8 @@ without that gate. Both are scored the same way. Turns are logged to
 ```
 GenAI_Calculus_Tutor/
 ├── backend/                 # FastAPI: RAG, generate/grade, tutor, analytics
-├── frontend-web/            # Vite + React (current UI)
-├── frontend/                # Streamlit prototype (not used at runtime)
+├── student-frontend/           # Student app: Vite + React, port 5173
+├── teacher-frontend/           # Teacher dashboard: Streamlit, port 8503
 ├── data/textbook/mit-calculus/
 ├── data/chroma/             # generated index (gitignored)
 ├── data/logs/               # session JSONL (gitignored)
@@ -70,7 +73,7 @@ repository already includes curated passages, exercises, figures, and TOC.
 4. Frontend dependencies:
 
 ```bash
-cd frontend-web
+cd student-frontend
 npm install
 ```
 
@@ -85,7 +88,29 @@ npm install
 
 ## Run
 
-Two terminals, from the repo root.
+Three processes run on fixed loopback ports:
+
+| Process | URL | Stack |
+|---|---|---|
+| Backend API | http://127.0.0.1:8000 | FastAPI |
+| Teacher dashboard (the only one) | http://127.0.0.1:8503/?lang=en | Streamlit |
+| Student app | http://127.0.0.1:5173 | React + Vite |
+
+### One command (recommended)
+
+After installing dependencies (`pip install -r requirements.txt` and
+`npm install` inside `student-frontend/`), run from the repo root:
+
+```bash
+scripts/run_dev.sh
+```
+
+It starts the backend, teacher, and student in order and stops all three on
+`Ctrl+C`. Override ports with `BACKEND_PORT / TEACHER_PORT / STUDENT_PORT`.
+
+### Manual (three terminals)
+
+From the repo root.
 
 **Terminal 1 — backend:**
 
@@ -97,26 +122,33 @@ python -m uvicorn backend.main:app --reload --reload-dir backend --host 127.0.0.
 Use `127.0.0.1`, not `localhost`, on Windows (Node 18+ may resolve `localhost`
 to IPv6 while uvicorn listens on IPv4).
 
-**Terminal 2 — frontend:**
+**Terminal 2 — teacher:**
 
 ```bash
-cd frontend-web
-npx vite --host 127.0.0.1
+python -m streamlit run teacher-frontend/teacher_app.py \
+  --server.address 127.0.0.1 --server.port 8503
 ```
 
-Or, in PowerShell, pin the proxy target explicitly:
+**Terminal 3 — student:**
 
-```powershell
-cd frontend-web
-$env:VITE_BACKEND_URL="http://127.0.0.1:8000"
-npm run dev
+```bash
+cd student-frontend
+npm run dev -- --host 127.0.0.1
 ```
 
-Open http://127.0.0.1:5175 (or the port Vite prints). Switch **Teacher / Student**
-at the bottom of the sidebar.
+### Switching roles
 
-If the backend is down, teacher pages may show a `● demo data` badge. Translation
-requests (`POST /localize`) do not use demo text: they fail visibly instead.
+- Student → teacher: open **Settings** (top right) and click **Teacher**; it opens
+  `http://127.0.0.1:8503/?lang=<current language>`.
+- Teacher → student: the **Student** link at the top returns to
+  `http://127.0.0.1:5173/`.
+
+The two are separate processes and ports, but the links are fixed and never point
+at another version. The teacher interface is Streamlit-only; there are no React
+teacher pages in `student-frontend`.
+
+If the backend is down, the dashboard shows an explicit "cannot connect" message
+rather than demo results. Translation requests (`POST /localize`) fail visibly too.
 
 Optional teacher-dashboard seed data:
 

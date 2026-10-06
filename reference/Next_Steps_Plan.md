@@ -23,7 +23,7 @@
 - 后端 FastAPI（`backend/`）：题目生成 `/generate`、判分 `/grade`、苏格拉底会话 `/session/*`、主题 `/topics`。
 - 内容生成 `backend/generator.py`：单选 / 多选 / 填空 / 拖拽排序 4 种题型 + 自动判分。
 - 苏格拉底 Agent `backend/socratic.py`：line-based 结构化输出（ASSESSMENT/ACTION/ASKS_EXPLANATION/SOLVED/MASTERY_GAIN/MESSAGE）、explain-to-unlock、guardrail、free chat / 关联题目两种模式。
-- 前端 `frontend/streamlit_app.py`：左右两块（练习 + 助教）、学生/老师双视图。
+- 前端 `teacher-frontend/streamlit_app.py`：左右两块（练习 + 助教）、学生/老师双视图。
 - 逐轮日志 `backend/store.py` + 分析脚本 `scripts/analyze_logs.py`（explain vs control 对比图）。
 
 **关键差距（对应导师意见）：**
@@ -98,7 +98,7 @@
 - **稳健性**：保留「LLM 失败兜底」，但区分「兜底回复」与正常回复（打标，避免污染分析）。
 
 ### 3.4 涉及文件
-`backend/socratic.py`（状态机 + prompt 调整）、`backend/store.py`（持久化 state）、`backend/schemas.py`（TutorTurn 增字段：`dialogue_state`、`is_fallback`）、`frontend/streamlit_app.py`（认可标识）。
+`backend/socratic.py`（状态机 + prompt 调整）、`backend/store.py`（持久化 state）、`backend/schemas.py`（TutorTurn 增字段：`dialogue_state`、`is_fallback`）、`teacher-frontend/streamlit_app.py`（认可标识）。
 
 ### 3.5 验收标准
 - 每轮返回带 `dialogue_state`；状态转移在脚本回放中确定、可复现。

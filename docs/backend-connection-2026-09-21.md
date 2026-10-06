@@ -14,7 +14,7 @@ python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 
 Frontend:
 ```powershell
-cd frontend-web
+cd student-frontend
 npm.cmd run dev -- --host 127.0.0.1 --port 5175 --strictPort
 ```
 

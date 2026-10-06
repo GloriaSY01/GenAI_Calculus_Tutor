@@ -16,7 +16,7 @@ def main():
     import re
     for key, value in list(translated.items()):
         translated[re.sub(r'^\d+(?:\.\d+)*\s+', '', key)] = re.sub(r'^\d+(?:\.\d+)*\s+', '', value)
-    (root/'frontend-web/src/textbook-labels.json').write_text(json.dumps(translated, ensure_ascii=False, indent=2), encoding='utf-8')
+    (root/'student-frontend/src/textbook-labels.json').write_text(json.dumps(translated, ensure_ascii=False, indent=2), encoding='utf-8')
     sections = [s for c in catalog['chapters'] for s in c['sections']]
     cards = {s['id']: rag.concept_card(s['title']) for s in sections}
     def translate_section(s):
@@ -34,5 +34,5 @@ def main():
                 if attempt == 2: raise
     with ThreadPoolExecutor(max_workers=3) as pool:
         for section in pool.map(translate_section, sections): print('translated',section,flush=True)
-    (root/'frontend-web/src/textbook-zh.json').write_text(json.dumps(localization._cache.get('zh',{}), ensure_ascii=False), encoding='utf-8')
+    (root/'student-frontend/src/textbook-zh.json').write_text(json.dumps(localization._cache.get('zh',{}), ensure_ascii=False), encoding='utf-8')
 if __name__ == '__main__': main()
