@@ -9,6 +9,9 @@ Strang 的 *Calculus* 学习：读带出处的概念页、做教材题或生成�
 技术栈：**FastAPI（后端）+ Vite + React（学生端）+ Streamlit（教师端）**。
 学生端与教师端是两个明确分开的本地应用，共用同一个后端数据。
 
+多人共享部署请参阅 [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)。配置
+`DATABASE_URL` 后会使用 Railway PostgreSQL；本地开发不配置数据库仍可运行。
+
 ---
 
 ## 学生端与教师端

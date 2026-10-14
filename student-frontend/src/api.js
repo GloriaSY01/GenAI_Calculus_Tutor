@@ -11,7 +11,7 @@
 ------------------------------------------------------------------- */
 import { MOCK } from './mock.js'
 
-const BASE = import.meta.env.VITE_API_BASE || '/api'
+const BASE = import.meta.env.VITE_API_BASE ?? (import.meta.env.DEV ? '/api' : '')
 
 async function req(path, opts = {}) {
   const res = await fetch(BASE + path, {
@@ -271,6 +271,17 @@ export const api = {
   deleteFavorite: (questionId, studentId) =>
     req(`/favorites/${questionId}?student_id=` + encodeURIComponent(studentId), { method: 'DELETE' })
       .catch(() => ({ removed: true, _mock: true })),
+
+  getProgress: (studentId, classId, scope = 'study') =>
+    req('/progress?student_id=' + encodeURIComponent(studentId)
+      + '&class_id=' + encodeURIComponent(classId)
+      + '&scope=' + encodeURIComponent(scope)),
+
+  saveProgress: (studentId, classId, version, state, scope = 'study') =>
+    req('/progress', {
+      method: 'PUT',
+      body: JSON.stringify({ student_id: studentId, class_id: classId, scope, version, state }),
+    }),
 }
 
 // No demo fallback for translations: never present unrelated text as a translation.

@@ -9,7 +9,7 @@ import time
 import uuid
 from typing import List
 
-from . import config
+from . import config, database
 from .schemas import Assignment, AssignmentCreate
 
 
@@ -50,6 +50,8 @@ def _upgrade(record: dict) -> dict:
 
 
 def list_assignments() -> List[Assignment]:
+    if database.enabled():
+        return [Assignment(**record) for record in database.list_assignments()]
     items = _read_all()
     items.sort(key=lambda a: a.get("created_at", 0), reverse=True)
     return [Assignment(**_upgrade(a)) for a in items]
@@ -61,6 +63,9 @@ def create_assignment(req: AssignmentCreate) -> Assignment:
         created_at=time.time(),
         **req.model_dump(),
     )
+    if database.enabled():
+        database.add_assignment(record.model_dump(mode="json"))
+        return record
     items = _read_all()
     items.append(record.model_dump())
     _write_all(items)
@@ -68,6 +73,8 @@ def create_assignment(req: AssignmentCreate) -> Assignment:
 
 
 def delete_assignment(assignment_id: str) -> bool:
+    if database.enabled():
+        return database.remove_assignment(assignment_id)
     items = _read_all()
     new_items = [a for a in items if a.get("id") != assignment_id]
     if len(new_items) == len(items):

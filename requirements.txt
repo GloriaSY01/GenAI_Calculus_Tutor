@@ -16,3 +16,5 @@ httpx>=0.28.0
 pandas>=2.2.0
 matplotlib>=3.9.0
 sympy>=1.13.0
+sqlalchemy>=2.0.36,<3
+psycopg[binary]>=3.2.3,<4

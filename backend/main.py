@@ -12,8 +12,8 @@ from __future__ import annotations
 import re
 import time
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Literal, Optional
 from . import localization
@@ -24,6 +24,7 @@ from . import (
     analytics,
     assignments,
     config,
+    database,
     generator,
     guardrail,
     learning_path,
@@ -60,6 +61,7 @@ from .schemas import (
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    database.init()
     try:
         rag.warmup()
     except Exception:
@@ -416,6 +418,36 @@ class LocalizationRequest(BaseModel):
     language: Literal["zh", "en"]
 
 
+class ProgressWrite(BaseModel):
+    student_id: str = Field(min_length=1, max_length=160)
+    class_id: str = Field(min_length=1, max_length=80)
+    scope: str = Field(default="study", min_length=1, max_length=120)
+    version: int = Field(ge=1)
+    state: dict
+
+
+@app.get("/progress")
+def get_progress(
+    student_id: str = Query(min_length=1, max_length=160),
+    class_id: str = Query(min_length=1, max_length=80),
+    scope: str = Query(default="study", min_length=1, max_length=120),
+):
+    if not database.enabled():
+        return {"found": False, "persistence": "local"}
+    progress = database.get_progress(student_id.strip(), class_id, scope)
+    return {"found": progress is not None, "persistence": "postgres", "progress": progress}
+
+
+@app.put("/progress")
+def save_progress(req: ProgressWrite):
+    if not database.enabled():
+        return {"saved": False, "persistence": "local"}
+    progress = database.save_progress(
+        req.student_id.strip(), req.class_id, req.scope, req.version, req.state
+    )
+    return {"saved": True, "persistence": "postgres", "progress": progress}
+
+
 @app.post("/localize")
 def localize_content(req: LocalizationRequest):
     if sum(len(t) for t in req.texts) > 30000:
@@ -424,3 +456,23 @@ def localize_content(req: LocalizationRequest):
         return {"translations": localization.translate_texts(req.texts, req.language)}
     except Exception:
         raise HTTPException(503, "Translation is temporarily unavailable")
+
+
+# In production the Vite build is copied beside the backend. API routes above
+# keep priority; all other paths fall back to index.html for React navigation.
+FRONTEND_DIST = config.ROOT_DIR / "student-frontend" / "dist"
+if FRONTEND_DIST.is_dir():
+    assets_dir = FRONTEND_DIST / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend-assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def serve_frontend(path: str):
+        candidate = (FRONTEND_DIST / path).resolve()
+        try:
+            candidate.relative_to(FRONTEND_DIST.resolve())
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Not found")
+        if candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_DIST / "index.html")

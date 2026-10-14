@@ -16,6 +16,7 @@ Run the backend first, then:
 """
 from __future__ import annotations
 
+import os
 from urllib.parse import urlencode
 
 import streamlit as st
@@ -93,7 +94,7 @@ def load_analytics(class_id: str | None) -> dict:
 
 class_names = {"calc1-a": "微积分 I · A 班", "calc1-b": "微积分 I · B 班"}
 class_ids = list(class_names)
-STUDENT_APP_URL = "http://127.0.0.1:5173/"
+STUDENT_APP_URL = os.getenv("STUDENT_APP_URL", "http://127.0.0.1:5173/")
 
 if st.query_params.get("refresh") == "1":
     load_analytics.clear()

@@ -13,6 +13,10 @@ Built with **FastAPI** (backend), **Vite + React** (student app under
 `teacher-frontend/teacher_app.py`). The teacher interface is Streamlit-only; the React
 app does not contain teacher views.
 
+For shared deployment, see [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md).
+Railway PostgreSQL is supported through `DATABASE_URL`; local development still
+works without a database.
+
 ---
 
 ## Student and teacher views

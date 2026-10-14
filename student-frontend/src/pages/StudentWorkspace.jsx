@@ -61,6 +61,7 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [storageError, setStorageError] = useState(false)
+  const [remoteReady, setRemoteReady] = useState(false)
   const [favorites, setFavorites] = useState([])
   const [guestId] = useState(browserGuestId)
   const favoriteOwner = student || guestId
@@ -69,9 +70,27 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
   useEffect(() => {
+    let current = true
+    setRemoteReady(false)
+    if (!classId) return () => { current = false }
+    api.getProgress(favoriteOwner, classId).then(result => {
+      if (!current) return
+      const progress = result?.progress
+      if (result?.found && progress?.version === STUDY_STATE_VERSION && progress.state?.rounds) {
+        setState({ ...fresh(), ...sanitizeSavedState(progress.state) })
+      }
+    }).catch(() => {}).finally(() => { if (current) setRemoteReady(true) })
+    return () => { current = false }
+  }, [favoriteOwner, classId])
+  useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify({ version: STUDY_STATE_VERSION, state })); setStorageError(false) }
     catch { setStorageError(true) }
-  }, [state, storageKey])
+    if (!remoteReady || !classId) return undefined
+    const timer = window.setTimeout(() => {
+      api.saveProgress(favoriteOwner, classId, STUDY_STATE_VERSION, state).catch(() => {})
+    }, 700)
+    return () => window.clearTimeout(timer)
+  }, [state, storageKey, remoteReady, favoriteOwner, classId])
   useEffect(() => { let current = true; api.getFavorites(favoriteOwner).then(r => { if (current) setFavorites(r.favorites || []) }); return () => { current = false } }, [favoriteOwner])
   const chapters = catalog?.chapters || []
   const chapter = chapters.find(c => c.id === state.chapter) || chapters[0]

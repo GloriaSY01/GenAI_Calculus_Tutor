@@ -20,7 +20,7 @@ import time
 import uuid
 from typing import Any, Dict, List, Tuple
 
-from . import config, exercise_bank, llm, rag, textbook
+from . import config, database, exercise_bank, llm, rag, textbook
 from .math_quality import (
     choice_key,
     normalize_math_notation,
@@ -40,6 +40,9 @@ _REGISTRY_LOCK = threading.RLock()
 
 
 def _load_registry() -> Dict[str, Dict[str, Any]]:
+    if database.enabled():
+        database.init()
+        return database.load_generated_questions()
     path = config.GENERATED_QUESTIONS_FILE
     if not path.exists():
         return {}
@@ -69,6 +72,11 @@ _REGISTRY: Dict[str, Dict[str, Any]] = _load_registry()
 
 def _register(record: Dict[str, Any]) -> None:
     """Store private grading data atomically so browser-saved questions remain valid."""
+    if database.enabled():
+        with _REGISTRY_LOCK:
+            _REGISTRY[record["id"]] = record
+            database.save_generated_question(record)
+        return
     path = config.GENERATED_QUESTIONS_FILE
     with _REGISTRY_LOCK:
         _REGISTRY[record["id"]] = record

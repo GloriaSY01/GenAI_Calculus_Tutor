@@ -6,7 +6,7 @@ import StudentWorkspace from './pages/StudentWorkspace.jsx'
 // Single teacher interface = the Streamlit dashboard on a fixed port.
 // The React app is student-only; the "Teacher" control opens that dashboard,
 // carrying the current language. No in-app React teacher views are kept.
-const TEACHER_DASHBOARD_URL = 'http://127.0.0.1:8503/'
+const TEACHER_DASHBOARD_URL = import.meta.env.VITE_TEACHER_DASHBOARD_URL || 'http://127.0.0.1:8503/'
 
 function useTheme() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')

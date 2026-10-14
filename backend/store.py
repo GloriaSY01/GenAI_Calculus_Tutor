@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-from . import config
+from . import config, database
 from .schemas import Condition, Language, Problem
 
 
@@ -57,11 +57,37 @@ def create_session(problem: Optional[Problem], condition: Condition,
                    "problem_id": problem.id if problem else "free",
                    "condition": condition, "topic": session.topic,
                    "language": session.language})
+    _save_session(session)
     return session
 
 
 def get_session(session_id: str) -> Session | None:
-    return _SESSIONS.get(session_id)
+    current = _SESSIONS.get(session_id)
+    if current is not None or not database.enabled():
+        return current
+    payload = database.load_session(session_id)
+    if payload is None:
+        return None
+    restored = Session(
+        session_id=payload["session_id"],
+        problem=(Problem.model_validate(payload["problem"]) if payload.get("problem") else None),
+        condition=payload["condition"],
+        student_id=payload.get("student_id") or "anon",
+        class_id=payload.get("class_id"),
+        topic=payload.get("topic"),
+        language=payload.get("language", "en"),
+        history=list(payload.get("history") or []),
+        hint_level=int(payload.get("hint_level", 0)),
+        mastery=int(payload.get("mastery", 0)),
+        turns=int(payload.get("turns", 0)),
+        is_solved=bool(payload.get("is_solved", False)),
+        created_at=float(payload.get("created_at", time.time())),
+        last_activity_at=float(payload.get("last_activity_at", time.time())),
+        recent_student_texts=list(payload.get("recent_student_texts") or []),
+        hint_request_streak=int(payload.get("hint_request_streak", 0)),
+    )
+    _SESSIONS[session_id] = restored
+    return restored
 
 
 def log_turn(session: Session, student_text: str, turn_payload: dict,
@@ -75,6 +101,7 @@ def log_turn(session: Session, student_text: str, turn_payload: dict,
         "response_time_ms": response_time_ms,
         **turn_payload,
     })
+    _save_session(session)
 
 
 def log_practice(payload: dict) -> None:
@@ -85,6 +112,9 @@ def log_practice(payload: dict) -> None:
 def log_question(payload: dict) -> None:
     """Append a generated-question record for later difficulty calibration."""
     record = {"ts": time.time(), "event": "question_generated", "hint_usage": None, **payload}
+    if database.enabled():
+        database.add_event(record)
+        return
     path = config.LOG_DIR / "questions.jsonl"
     with open(path, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -93,6 +123,9 @@ def log_question(payload: dict) -> None:
 def log_activity(event: str, payload: dict) -> None:
     """Append a student activity event to the shared JSONL stream."""
     record = {"ts": time.time(), "event": event, **payload}
+    if database.enabled():
+        database.add_event(record)
+        return
     path = config.LOG_DIR / "practice.jsonl"
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -100,6 +133,8 @@ def log_activity(event: str, payload: dict) -> None:
 
 def list_favorites(student_id: str) -> List[dict]:
     """Return one student's favorites, newest first."""
+    if database.enabled():
+        return database.list_favorites(student_id)
     with _FAVORITES_LOCK:
         records = _read_favorites().get(student_id, [])
     return sorted(records, key=lambda item: item.get("saved_at", 0), reverse=True)
@@ -108,6 +143,15 @@ def list_favorites(student_id: str) -> List[dict]:
 def add_favorite(record: dict) -> dict:
     """Upsert a question snapshot in one student's favorites."""
     student_id = record["student_id"]
+    if database.enabled():
+        database.add_favorite(record)
+        log_activity("favorite_add", {
+            "student_id": student_id,
+            "class_id": record["class_id"],
+            "question_id": record["question_id"],
+            "topic": record["topic"],
+        })
+        return record
     with _FAVORITES_LOCK:
         data = _read_favorites()
         favorites = data.setdefault(student_id, [])
@@ -130,6 +174,14 @@ def add_favorite(record: dict) -> dict:
 
 def remove_favorite(student_id: str, question_id: str) -> bool:
     """Remove a favorite and return whether it existed."""
+    if database.enabled():
+        removed = database.remove_favorite(student_id, question_id)
+        if removed:
+            log_activity("favorite_remove", {
+                "student_id": student_id,
+                "question_id": question_id,
+            })
+        return removed
     removed = None
     with _FAVORITES_LOCK:
         data = _read_favorites()
@@ -180,6 +232,37 @@ def _log(session: Session, payload: dict) -> None:
         "class_id": session.class_id,
         **payload,
     }
+    if database.enabled():
+        database.add_event(record)
+        return
     path = config.LOG_DIR / f"{session.session_id}.jsonl"
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def _save_session(session: Session) -> None:
+    if not database.enabled():
+        return
+    database.save_session(
+        session.session_id,
+        session.student_id,
+        session.class_id,
+        {
+            "session_id": session.session_id,
+            "problem": session.problem.model_dump(mode="json") if session.problem else None,
+            "condition": session.condition,
+            "student_id": session.student_id,
+            "class_id": session.class_id,
+            "topic": session.topic,
+            "language": session.language,
+            "history": session.history,
+            "hint_level": session.hint_level,
+            "mastery": session.mastery,
+            "turns": session.turns,
+            "is_solved": session.is_solved,
+            "created_at": session.created_at,
+            "last_activity_at": session.last_activity_at,
+            "recent_student_texts": session.recent_student_texts,
+            "hint_request_streak": session.hint_request_streak,
+        },
+    )

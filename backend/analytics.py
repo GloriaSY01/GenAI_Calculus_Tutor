@@ -21,7 +21,7 @@ import logging
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 
-from . import config, textbook
+from . import config, database, textbook
 from .schemas import AnalyticsInsight, ClassAnalytics, TopicStat
 
 log = logging.getLogger(__name__)
@@ -42,6 +42,8 @@ def _student_account(value: str | None) -> str | None:
 
 
 def _load_events() -> List[dict]:
+    if database.enabled():
+        return database.list_events()
     events: List[dict] = []
     if not config.LOG_DIR.exists():
         return events
