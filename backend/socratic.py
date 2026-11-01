@@ -21,13 +21,17 @@ log = logging.getLogger(__name__)
 _ASSESSMENT_ORDER = ["none", "weak", "partial", "adequate", "strong"]
 _VALID_ACTIONS = {"probe", "hint", "correct", "affirm", "advance", "complete", "blocked"}
 _FIELD_KEYS = ("ASSESSMENT", "ACTION", "ASKS_EXPLANATION", "SOLVED", "MASTERY_GAIN", "MESSAGE")
+_FIELD_KEYS = (*_FIELD_KEYS, "EVIDENCE")
 
 _SHARED_RULES = """\
 You are a Socratic Calculus 1 tutor. Your job is to help the student reach the
 answer THEMSELVES through guided questioning.
 
 Hard rules (never break these):
-- NEVER reveal the final answer or a complete worked solution.
+- NEVER supply an unproposed final answer or a complete worked solution.
+- You may confirm a final answer already proposed by the student, after checking
+  it against the reference. Never mistake a question asking for the answer for
+  a student solution. Concept questions deserve direct explanations.
 - Give at most ONE small step or ONE guiding question per reply.
 - Use the private reference solution only to decide what to ask next; never
   paste it.
@@ -50,6 +54,10 @@ their current step ("why" / "how"). Evaluate the quality of their explanation:
   push them to justify their reasoning (action = "probe"); do NOT advance yet.
 - If they state a step with no reasoning: ask them to explain why first
   (action = "probe", asks_for_explanation = true).
+- Students who are stuck may receive a rule clarification or a different worked
+  example without first explaining. Do not advance through the original solution
+  or award progress credit merely for receiving help. Ask for reasons only at key
+  decisions, and accept equations or short phrases as evidence.
 """
 
 _CONTROL_POLICY = """\
@@ -72,6 +80,7 @@ ACTION: <probe|hint|correct|affirm|advance|complete>
 ASKS_EXPLANATION: <yes|no>
 SOLVED: <yes|no>
 MASTERY_GAIN: <yes|no>
+EVIDENCE: <exact quote from the latest student message supporting NEW reasoning, or empty>
 MESSAGE: <your reply to the student here; use $...$ and $$...$$ for math>
 
 Field meanings:
@@ -193,7 +202,7 @@ def process_turn(
 ) -> TutorTurn:
     # 1. Input guardrail.
     flagged = guardrail.check_input(student_text)
-    if flagged:
+    if flagged == "injection":
         return TutorTurn(
             tutor_message=guardrail.deflection_message(flagged, language),
             reasoning_assessment="none",
@@ -204,6 +213,12 @@ def process_turn(
             is_solved=False,
         )
 
+    intent = guardrail.learning_intent(student_text)
+    proposed_answer = bool(
+        problem and intent != "answer_request"
+        and guardrail.answer_in_text(student_text, problem.final_answer)
+    )
+    prior_student = [x["content"] for x in history if x.get("role") == "user"]
     # 2. Retrieve textbook grounding. Missing indexes degrade safely.
     retrieved: list[dict] = []
     section_id = (
@@ -252,6 +267,22 @@ def process_turn(
         }
     ]
     messages.extend(history)
+    messages.insert(1, {
+        "role": "system", "content": (
+            f"SERVER TEACHING LIMITS: intent={intent}; hints_used={hint_level}; "
+            f"student_proposed_reference_answer={proposed_answer}. "
+            "An answer request is a teaching opportunity: ask a concrete task tied "
+            "to this problem, not a generic refusal. If stuck, clarify the rule or "
+            "use a DIFFERENT example. Do not progressively solve the original "
+            "problem when the student only requests more answers/hints. "
+            "Help is allowed without a long explanation, but progress credit "
+            "requires a new, correct student contribution with an exact EVIDENCE quote. "
+            "Do not credit repetition of earlier student or assistant statements. "
+            "Accept alternative valid solution paths. If uncertain, ask one targeted "
+            "verification question. Concept explanations need not be gated. "
+            "Only confirm a proposed answer after verifying its correctness."
+        ),
+    })
     messages.append({"role": "user", "content": student_text})
 
     # 4. Call the model and parse the line-based structured reply.
@@ -288,6 +319,19 @@ def process_turn(
     is_solved = _as_bool(fields.get("SOLVED"))
     asks_for_explanation = _as_bool(fields.get("ASKS_EXPLANATION"))
     mastery_gain = _as_bool(fields.get("MASTERY_GAIN"))
+    evidence = fields.get("EVIDENCE", "").strip().strip('"“”')
+    normalize = lambda value: re.sub(r"\s+", "", value).casefold()
+    new_evidence = bool(
+        evidence and len(normalize(evidence)) >= 4
+        and evidence in student_text
+        and not any(normalize(evidence) in normalize(x["content"]) for x in history)
+        and assessment in ("adequate", "strong")
+        and intent != "answer_request"
+    )
+    mastery_gain = mastery_gain and new_evidence
+    # Literal matching alone is not a correctness verdict: retain the model's
+    # verdict, and subject it to the independent review below when enabled.
+    is_solved = is_solved and proposed_answer
     if not message:
         message = (
             "我们继续：你的下一步是什么？为什么？"
@@ -296,11 +340,26 @@ def process_turn(
         )
     message = normalize_math_notation(message)
 
+    # Repeated help without new evidence must not accumulate a worked solution.
+    if (problem and hint_level >= 2 and not new_evidence and not proposed_answer
+            and intent in ("help", "answer_request")):
+        action, mastery_gain, is_solved = "probe", False, False
+        asks_for_explanation = True
+        message = (
+            f"我们先停在当前步骤。题目是：{problem.statement}\n"
+            "请指出一个已知条件，或写出你卡住的那一行；我会解释对应规则，不继续代算后续步骤。"
+            if language == "zh" else
+            f"Let's pause at the current step. Problem: {problem.statement}\n"
+            "Identify one given quantity or paste the line you are stuck on; "
+            "I can clarify that rule without working through the remaining steps."
+        )
+
     # 5. Enforce the experimental policy server-side.
     if (
         condition == "explain"
-        and assessment not in ("adequate", "strong")
+        and not new_evidence
         and action in ("advance", "complete")
+        and not proposed_answer
     ):
         action = "probe"
         is_solved = False
@@ -335,7 +394,8 @@ def process_turn(
     safety_event = None
     if problem:
         safety_event = guardrail.check_output(
-            message, problem.final_answer, problem.solution_steps
+            message, problem.final_answer, problem.solution_steps,
+            allow_answer=proposed_answer,
         )
         if safety_event:
             try:
@@ -344,7 +404,8 @@ def process_turn(
                         "role": "system",
                         "content": (
                             "Rewrite the tutor reply as one Socratic question. Remove "
-                            "all final answers and worked solutions. Keep at most one "
+                            "all final answers and worked solutions. Use only the current "
+                            "problem and conversation to ask a focused question. Keep at most one "
                             "small hint and do not add new mathematical facts. "
                             + (
                                 "Write the result in Simplified Chinese."
@@ -353,12 +414,16 @@ def process_turn(
                             )
                         ),
                     },
-                    {"role": "user", "content": message},
+                    {"role": "user", "content": (
+                        f"Problem: {problem.statement}\nRecent conversation: {history[-6:]}\n"
+                        f"Student: {student_text}\nUnsafe draft: {message}"
+                    )},
                 ], temperature=0.1, max_tokens=180, retries=1)
             except Exception:
                 message = ""
             if not message or guardrail.check_output(
-                message, problem.final_answer, problem.solution_steps
+                message, problem.final_answer, problem.solution_steps,
+                allow_answer=proposed_answer,
             ):
                 message = (
                     "最终结果留给你自己发现。你会对当前表达式使用哪条规则？为什么？"
@@ -381,7 +446,12 @@ def process_turn(
                             "You are a strict Calculus 1 tutor-response reviewer. "
                             "Check only mathematical correctness and consistency with "
                             "the private reference. Also reject any reply that reveals "
-                            "the final answer or a complete solution. Return JSON only: "
+                            "the final answer not already proposed by the student or a complete solution. "
+                            "Exception: explicitly confirming a correct answer that the student "
+                            "already proposed is VALID, even when the reply repeats that answer. "
+                            "Do not reject such confirmation as leakage. "
+                            "Also verify any SOLVED claim against the student's actual answer, "
+                            "and reject cumulative worked solutions without student contributions. Return JSON only: "
                             "{\"valid\": true|false, \"issues\": [\"...\"]}."
                         ),
                     },
@@ -391,6 +461,9 @@ def process_turn(
                             f"Problem: {problem.statement}\n"
                             f"Private final answer: {problem.final_answer}\n"
                             f"Private steps: {problem.solution_steps}\n"
+                            f"Student: {student_text}\nSOLVED claim: {is_solved}\n"
+                            f"Student already proposed reference answer: {proposed_answer}\n"
+                            f"Recent conversation: {history[-8:]}\n"
                             f"Proposed tutor reply: {message}"
                         ),
                     },
@@ -425,7 +498,10 @@ def process_turn(
         new_hint_level = hint_level + 1
 
     new_mastery = mastery
-    if mastery_gain or is_solved:
+    repeated = any(normalize(student_text) == normalize(text) for text in prior_student)
+    if (mastery_gain or (is_solved and not any(
+        guardrail.answer_in_text(text, problem.final_answer) for text in prior_student
+    ))) and not repeated:
         new_mastery = min(100, mastery + (25 if is_solved else 10))
 
     return TutorTurn(

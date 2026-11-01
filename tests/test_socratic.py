@@ -41,7 +41,9 @@ def test_output_answer_leak_falls_back_to_question(monkeypatch):
     replies = iter([
         (
             "ASSESSMENT: adequate\nACTION: advance\nASKS_EXPLANATION: no\n"
-            "SOLVED: no\nMASTERY_GAIN: yes\nMESSAGE: The final answer is 2x."
+            "SOLVED: no\nMASTERY_GAIN: yes\n"
+            "EVIDENCE: differentiating x squared brings down the exponent\n"
+            "MESSAGE: The final answer is 2x."
         ),
         "The answer is 2x.",
     ])

@@ -41,10 +41,37 @@ def check_input(text: str) -> str | None:
     for pat in _INJECTION:
         if re.search(pat, lowered):
             return "injection"
-    for pat in _ANSWER_BEGGING:
-        if re.search(pat, lowered):
-            return "answer_begging"
+    if learning_intent(text) == "answer_request":
+        return "answer_begging"
     return None
+
+
+def learning_intent(text: str) -> str:
+    """Routing hints only: never treat this heuristic as proof of understanding."""
+    lowered = text.lower()
+    # Remove negated requests before checking positive requests in the same turn.
+    cleaned = re.sub(
+        r"\b(?:do not|don't|without|never)\s+(?:give|giving|tell|telling|show|showing)"
+        r"\s+me\s+the\s+(?:final\s+)?(?:answer|solution)\b"
+        r"|(?:不要|别|不用)\s*(?:直接)?\s*(?:给我|告诉我|提供|给出|说出)?\s*(?:最终)?答案",
+        "", lowered,
+    )
+    if any(re.search(pat, cleaned) for pat in _ANSWER_BEGGING) or re.search(
+        r"只(?:输出|返回|说).{0,6}(?:答案|数字|选项)|选哪个|答案呢|\bwhich option\b", cleaned
+    ):
+        return "answer_request"
+    if re.search(r"对吗|是否正确|检查|核对|\b(check|verify)\b|\bis .+ correct\b", cleaned):
+        return "verification"
+    if re.search(r"不会|不知道|提示|怎么开始|\b(hint|stuck)\b|don't know", cleaned):
+        return "help"
+    return "discussion"
+
+
+def answer_in_text(text: str, answer: str) -> bool:
+    """Conservative literal evidence, not symbolic equivalence or correctness."""
+    needle = _normalize_math(answer)
+    candidates = re.findall(r"\$([^$]+)\$", text) + re.split(r"[\s，。；：:=]+", text)
+    return bool(needle) and any(_normalize_math(part) == needle for part in candidates)
 
 
 def deflection_message(category: str, language: str = "en") -> str:
@@ -76,11 +103,14 @@ def _normalize_math(text: str) -> str:
 
 
 def check_output(text: str, final_answer: str,
-                 solution_steps: list[str] | None = None) -> str | None:
+                 solution_steps: list[str] | None = None,
+                 allow_answer: bool = False) -> str | None:
     """Detect likely answer or worked-solution leakage in a tutor reply."""
     answer = _normalize_math(final_answer)
     output = _normalize_math(text)
-    if answer:
+    if answer and not allow_answer:
+        if any(_normalize_math(span) == answer for span in re.findall(r"\$([^$]+)\$", text)):
+            return "answer_leak"
         if len(answer) >= 4 and answer in output:
             return "answer_leak"
         if len(answer) < 4:
