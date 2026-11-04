@@ -150,6 +150,13 @@ async function withFallback(fn, mockShaped) {
 }
 
 export const api = {
+  teacherData: classId => req('/analytics/class?class_id=' + encodeURIComponent(classId)),
+  teacherTopics: () => req('/topics'),
+  teacherCatalog: () => req('/catalog'),
+  teacherCreate: body => req('/assignments', { method: 'POST', body: JSON.stringify(body) }),
+  teacherDelete: id => req('/assignments/' + encodeURIComponent(id), { method: 'DELETE' }),
+  teacherAssignments: classId => req('/assignments?class_id=' + encodeURIComponent(classId)),
+  teacherAsk: body => req('/analytics/ask', { method: 'POST', body: JSON.stringify(body) }),
   getClassAnalytics: (classId = '') =>
     withFallback(
       async () => normalizeAnalytics(await req('/analytics/class' + (classId ? '?class_id=' + encodeURIComponent(classId) : ''))),
