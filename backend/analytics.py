@@ -464,26 +464,15 @@ def answer_question(
     facts = _facts_block(a, selected_topic)
     chat_context = _chat_context(history or [])
     try:
-        from . import llm
-        prompt = (
-            "You are a teaching assistant helping a Calculus 1 instructor "
-            "interpret CLASS-LEVEL analytics and plan teaching actions. The "
-            "teacher may ask follow-up questions conversationally. Use ONLY "
-            "the facts provided when mentioning class data; do not invent "
-            "numbers. If the teacher asks for general teaching advice, make it "
-            "practical and label it as a suggestion rather than a measured "
-            "finding. You cannot see the teacher's dashboard unless they "
-            "provide a screenshot or describe the chart. When a chart "
-            "interpretation request lacks a screenshot or the chart's title, "
-            "metrics, and values, ask the teacher to provide those details "
-            "before interpreting the visual. Answer in 2-5 short sentences.\n\n"
-            f"CLASS FACTS:\n{facts}\n\n"
-            f"RECENT CHAT:\n{chat_context}\n\n"
-            f"TEACHER QUESTION: {question}\n\nAnswer:"
+        from . import llm, teacher_prompt
+        messages = teacher_prompt.build_messages(
+            facts_block=facts,
+            chat_context=chat_context,
+            question=question,
+            language=language,
         )
         answer = llm.chat(
-            [{"role": "system", "content": "You are concise and data-grounded. " + ("Reply in Simplified Chinese." if language == "zh" else "Reply in English.")},
-             {"role": "user", "content": prompt}],
+            messages,
             temperature=0.3, max_tokens=250, retries=1,
         ).strip()
         if answer:
