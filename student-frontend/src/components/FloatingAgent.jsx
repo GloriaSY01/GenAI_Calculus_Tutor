@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Send, X } from 'lucide-react'
+import { MathText } from './math.jsx'
 
 export default function FloatingAgent({
   title,
@@ -75,7 +76,7 @@ export default function FloatingAgent({
         {messages.map((message, index) => <div key={index} className={'agent-message ' + message.role}>
           <div className={'agent-bubble' + (message.error ? ' error' : '')}>
             {message.note && <small className="agent-note">{message.note}</small>}
-            <p>{message.content}</p>
+            <MathText as="div" className="agent-message-content">{message.content}</MathText>
             {!!message.citations?.length && <small>{message.citations.map((citation) => citation.title).join(' · ')}</small>}
           </div>
         </div>)}

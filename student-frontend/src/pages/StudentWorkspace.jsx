@@ -243,6 +243,7 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   const localized = useTranslatedContent(item ? [item.q.stem, item.q.instructions, ...(item.q.options || []), ...(item.q.steps || []), item.grade?.feedback, item.grade?.correct_answer, ...(item.q.citations || []).map(c => c.title)] : [], lang, item?.q?.language)
   const tr = localized.translate
   const questionPanel = item && <>
+    {localized.loading && <p role="status" className="note-tip">{text('正在翻译题目，完成后会自动更新。', 'Translating the question; it will update automatically.')}</p>}
     {localized.error && <p role="alert" className="note-tip">{text('翻译暂不可用，答案已保留。', 'Translation unavailable. Your answer is saved.')} <button className="btn sm" onClick={localized.retry}>{text('重试', 'Retry')}</button></p>}
     <div className="sw-questionnav" aria-label={text('本轮题目', 'Questions')}>{round.items.map((x, i) => <button key={x.q.id} disabled={busy} aria-current={i === round.cursor ? 'step' : undefined} className={i === round.cursor ? 'active' : ''} onClick={() => updateRound(roundKey, r => ({ ...r, cursor: i }))}>{i + 1}{hasAnswer(x) ? ' ·' : ''}</button>)}</div>
     <section className="sw-panel sw-question">
@@ -314,6 +315,7 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
     <StudentAgent
       topic={item?.q?.topic || selected?.title || chapter?.title}
       problem={item?.q || null}
+      submittedAnswer={item?.grade && (!challenge || reviewing) ? item.answer : null}
       studentId={student}
       classId={classId}
     />

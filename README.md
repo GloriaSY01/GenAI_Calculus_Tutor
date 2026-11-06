@@ -29,9 +29,10 @@ Two separate processes on fixed local ports, linked to each other:
 - **Teacher (Streamlit, :8503):** Overview, Diagnose, Assign, Assistant, with
   behaviour-based class analytics.
 
-The tutor still supports two conditions (`explain` vs `control`). Explain-to-unlock
-requires a justification before the next hint; control gives progressive hints
-without that gate. Both are scored the same way. Turns are logged to
+All students use one Socratic policy: justify key decisions before progressing,
+while definitions, clarifications, and foundational help remain available.
+Legacy `explain` / `control` API values remain compatible but no longer select
+different teaching behaviors. Turns are logged to
 `data/logs/<session_id>.jsonl`.
 
 ---
@@ -56,10 +57,19 @@ GenAI_Calculus_Tutor/
 
 ## Setup
 
-1. Python 3.9+ (this repo is typically run in conda env `yolo8`):
+1. Use a dedicated Python environment (Python 3.12 matches the Docker runtime)
+   and Node.js 20+ for the frontend. Create and activate the environment first:
 
 ```bash
-pip install -r requirements.txt
+python -m venv .venv
+```
+
+Activate with `.venv\Scripts\Activate.ps1` in Windows PowerShell or
+`source .venv/bin/activate` on macOS/Linux. Install the full local dependencies
+with that same interpreter:
+
+```bash
+python -m pip install -r requirements.txt
 ```
 
 2. Build the Chroma index from the bundled MIT chapters (once, or after textbook
@@ -71,14 +81,21 @@ python -m scripts.ingest_mit --chapters 1 2 3 4 5 6 7 8
 
 MinerU parsing is only needed if you regenerate text from the PDFs. The
 repository already includes curated passages, exercises, figures, and TOC.
+The index and model weights are gitignored: pulling `main` does not download
+them. Build the index in the same environment used to start the backend.
+After startup, `/health` must report `rag.ready: true` for textbook retrieval.
+`requirements-deploy.txt` is a reduced web-service dependency set and does not
+include the Chroma/embedding stack needed for local textbook retrieval.
 
-3. Copy `.env.example` to `.env` and set `LLM_API_KEY`. Do not commit `.env`.
+3. Copy `.env.example` to `.env` and set a working `LLM_API_KEY`, endpoint, and
+   model. Leave `DATABASE_URL` empty for local use. Do not commit `.env`.
+   AI tutoring, generation, and uncached translations require API connectivity.
 
 4. Frontend dependencies:
 
 ```bash
 cd student-frontend
-npm install
+npm ci
 ```
 
 On Windows, if `npm install` fails with `EPERM` on the global cache:

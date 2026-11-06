@@ -43,12 +43,77 @@ def test_weak_explanation_cannot_earn_credit(monkeypatch):
     assert turn.mastery == 0
 
 
-def test_repeated_requests_stop_accumulating_hints(monkeypatch):
+def test_repeated_answer_requests_stop_accumulating_hints(monkeypatch):
     setup_reply(monkeypatch)
-    turn = socratic.process_turn(P, "explain", [], 2, 0, "再给我提示", language="zh")
+    turn = socratic.process_turn(P, "explain", [], 2, 0, "直接告诉我答案", language="zh")
     assert turn.action == "probe"
     assert turn.hint_level == 2
     assert "已知条件" in turn.tutor_message
+
+
+@pytest.mark.parametrize("condition", ["explain", "control"])
+@pytest.mark.parametrize("language", ["en", "zh"])
+def test_foundational_help_remains_available_after_many_hints(monkeypatch, condition, language):
+    message = (
+        "幂函数求导时，原来的指数作为系数，指数再减一。"
+        if language == "zh" else
+        "For a power, use the original exponent as a coefficient and reduce the exponent by one."
+    )
+    setup_reply(monkeypatch, message=message)
+    turn = socratic.process_turn(
+        P, condition, [], 5, 0,
+        "我不知道幂法则怎么用" if language == "zh" else "I don't know the power rule",
+        language=language,
+    )
+    assert turn.tutor_message == message
+    assert turn.action == "hint"
+    assert turn.mastery == 0 and not turn.is_solved
+
+
+@pytest.mark.parametrize("condition", ["explain", "control"])
+def test_key_progression_requires_reasoning_for_every_session(monkeypatch, condition):
+    setup_reply(monkeypatch, action="advance", message="Move to the next step.")
+    turn = socratic.process_turn(P, condition, [], 0, 0, "I use the power rule")
+    assert turn.action == "probe"
+    assert turn.asks_for_explanation
+    assert turn.hint_level == 0 and turn.mastery == 0
+
+
+@pytest.mark.parametrize("condition", ["explain", "control"])
+def test_short_meaningful_reason_can_unlock_progress(monkeypatch, condition):
+    # The model assesses mathematical meaning; the server must not impose an
+    # arbitrary minimum quote length, especially on compact Chinese reasoning.
+    setup_reply(monkeypatch, assessment="adequate", action="advance", evidence="幂函数")
+    turn = socratic.process_turn(P, condition, [], 0, 0, "幂函数", language="zh")
+    assert turn.action == "advance"
+    assert turn.mastery == 10
+
+
+@pytest.mark.parametrize("problem", [None, P])
+@pytest.mark.parametrize("language", ["en", "zh"])
+def test_language_routing_and_legacy_condition_compatibility(monkeypatch, problem, language):
+    captured = []
+    monkeypatch.setattr(socratic.rag, "retrieve", lambda *a, **k: [])
+
+    def reply(messages, **kwargs):
+        captured.append(messages[0]["content"])
+        return (
+            "ASSESSMENT: none\nACTION: hint\nASKS_EXPLANATION: no\n"
+            "SOLVED: no\nMASTERY_GAIN: no\nEVIDENCE:\nMESSAGE: Think about slope."
+        )
+
+    monkeypatch.setattr(socratic.llm, "chat", reply)
+    for condition in ("explain", "control"):
+        socratic.process_turn(problem, condition, [], 0, 0, "What is slope?", language=language)
+    assert captured[0] == captured[1]
+    selected = socratic._SYSTEM_EN if language == "en" else socratic._SYSTEM_ZH
+    other = socratic._SYSTEM_ZH if language == "en" else socratic._SYSTEM_EN
+    assert captured[0].startswith(selected)
+    assert other not in captured[0]
+    assert "MESSAGE:" in captured[0] and "EVIDENCE:" in captured[0]
+    assert socratic.opening_message(problem, "explain", language) == socratic.opening_message(
+        problem, "control", language
+    )
 
 
 def test_student_answer_can_be_confirmed_once(monkeypatch):

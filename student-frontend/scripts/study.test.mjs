@@ -1,6 +1,16 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { hasAnswer, challengePlan, roundSummary } from '../src/pages/student/study.js'
+import { hasAnswer, challengePlan, roundSummary, submittedAnswerText } from '../src/pages/student/study.js'
+
+test('tutor gets the submitted work, never an inferred correct answer', () => {
+  const q = {type: 'single_choice', options: ['$6t-2$', '$6t+4$']}
+  assert.equal(submittedAnswerText(q, null), '')
+  assert.equal(submittedAnswerText(q, {single: 1}), '$6t+4$')
+  assert.equal(submittedAnswerText(q, {single: 99}), '')
+  assert.equal(submittedAnswerText({type:'multiple_choice', options:['a','b','c']}, {multiple:[0,2]}), 'a; c')
+  assert.equal(submittedAnswerText({type:'fill_blank'}, {blanks:['2x']}), '2x')
+  assert.equal(submittedAnswerText({type:'drag_order'}, {order:['first','last']}), 'first → last')
+})
 test('challenge covers every selected chapter section exactly once', () => {
   assert.deepEqual(challengePlan([{id:'1.1'},{id:'1.2'},{id:'1.3'}]), ['1.1','1.2','1.3'])
 })

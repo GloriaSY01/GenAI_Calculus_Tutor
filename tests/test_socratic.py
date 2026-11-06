@@ -164,4 +164,63 @@ def test_tutor_factual_review_fails_closed(monkeypatch):
 
     assert turn.action == "probe"
     assert turn.safety_event == "factual_review"
-    assert "return to the givens" in turn.tutor_message
+    assert "does not mean your answer is wrong" in turn.tutor_message
+
+
+def test_review_repairs_and_rechecks_before_display(monkeypatch):
+    _mock_retrieval(monkeypatch)
+    monkeypatch.setattr(socratic.config, "TUTOR_REVIEW_ENABLED", True)
+    replies = iter([
+        "ASSESSMENT: none\nACTION: hint\nASKS_EXPLANATION: no\n"
+        "SOLVED: no\nMASTERY_GAIN: no\nEVIDENCE:\nMESSAGE: Use the product rule.",
+        "The derivative gives the slope of the original function's graph.",
+    ])
+    monkeypatch.setattr(socratic.llm, "chat", lambda *a, **k: next(replies))
+    reviews = []
+
+    def review(messages, **kwargs):
+        reviews.append(messages)
+        return {"valid": len(reviews) == 2, "issues": ["wrong rule"] if len(reviews) == 1 else []}
+
+    monkeypatch.setattr(socratic.llm, "chat_json", review)
+    turn = socratic.process_turn(PROBLEM, "explain", [], 0, 0, "Is it the slope of the derivative?")
+    assert len(reviews) == 2
+    assert "original function" in turn.tutor_message
+    assert turn.mastery == 0 and not turn.is_solved
+
+
+def test_repair_answer_leak_never_reaches_student(monkeypatch):
+    _mock_retrieval(monkeypatch)
+    monkeypatch.setattr(socratic.config, "TUTOR_REVIEW_ENABLED", True)
+    replies = iter([
+        "ASSESSMENT: none\nACTION: hint\nASKS_EXPLANATION: no\n"
+        "SOLVED: no\nMASTERY_GAIN: no\nEVIDENCE:\nMESSAGE: Use the product rule.",
+        "The final answer is $2x$.",
+    ])
+    monkeypatch.setattr(socratic.llm, "chat", lambda *a, **k: next(replies))
+    monkeypatch.setattr(socratic.llm, "chat_json", lambda *a, **k: {"valid": False, "issues": ["wrong rule"]})
+    turn = socratic.process_turn(PROBLEM, "explain", [], 0, 0, "I am stuck")
+    assert "2x" not in turn.tutor_message
+    assert turn.safety_event == "factual_review"
+    assert turn.mastery == 0
+
+
+def test_missing_protocol_is_retried_with_same_conversation(monkeypatch):
+    _mock_retrieval(monkeypatch)
+    calls = []
+
+    def reply(messages, **kwargs):
+        calls.append(messages)
+        if len(calls) == 1:
+            return "A plain reply without metadata."
+        return (
+            "ASSESSMENT: none\nACTION: hint\nASKS_EXPLANATION: no\n"
+            "SOLVED: no\nMASTERY_GAIN: no\nEVIDENCE:\nMESSAGE: A derivative measures local change."
+        )
+
+    monkeypatch.setattr(socratic.llm, "chat", reply)
+    turn = socratic.process_turn(None, "explain", [], 0, 0, "What is a derivative?")
+    assert len(calls) == 2
+    assert calls[0][-1] == calls[1][-1]
+    assert sum(m['role'] == 'system' for m in calls[0]) == 1
+    assert turn.tutor_message == "A derivative measures local change."

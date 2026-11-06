@@ -12,6 +12,13 @@ This repository deploys as two web services plus one shared PostgreSQL service.
 The application still works without `DATABASE_URL` for local development. In
 that mode it uses the existing JSON files and browser storage.
 
+The current lightweight Docker image installs `requirements-deploy.txt`, which
+does not include Chroma or embedding dependencies. It supports tutoring without
+retrieval, but does not reproduce a local `rag.ready: true` setup automatically.
+For textbook retrieval in deployment, additionally provision the retrieval
+dependencies, model weights, and an index built from the bundled textbook data
+on persistent storage; configure their paths and verify `/health` before use.
+
 ## Railway setup
 
 1. Create a Railway project and add PostgreSQL.

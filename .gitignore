@@ -12,6 +12,7 @@ env/
 
 # Node / frontend build
 node_modules/
+.npm-cache/
 student-frontend/dist/
 student-frontend/.vite-dev.log
 *.log
@@ -37,6 +38,7 @@ data/textbook/mit-calculus/parsed/*
 
 # Generated analysis artifacts
 reports/
+tmp/
 
 # OS / IDE
 .DS_Store

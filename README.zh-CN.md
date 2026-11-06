@@ -22,8 +22,9 @@ Strang 的 *Calculus* 学习：读带出处的概念页、做教材题或生成�
   教材正文可随界面语言显示。
 - **教师（`teacher-frontend/`，8503）：** 总览、诊断、布置、助手。
 
-导师仍支持两种条件（`explain` / `control`）。explain-to-unlock 要求先解释再给
-下一步提示；control 只做渐进提示。两边用同一套评分。每轮写入
+所有学生采用统一的苏格拉底策略：关键决策解释后推进，同时随时提供定义、
+规则澄清和基础帮助。旧接口的 `explain` / `control` 值保留兼容，
+不再决定不同教学行为。每轮写入
 `data/logs/<session_id>.jsonl`。
 
 ---
@@ -48,10 +49,18 @@ GenAI_Calculus_Tutor/
 
 ## 安装
 
-1. Python 3.9+（本仓库常用 conda 环境 `yolo8`）：
+1. 使用独立 Python 环境（建议与 Docker 一致的 Python 3.12），前端使用
+   Node.js 20+。先创建并激活环境：
 
 ```bash
-pip install -r requirements.txt
+python -m venv .venv
+```
+
+Windows PowerShell 执行 `.venv\Scripts\Activate.ps1`；macOS/Linux 执行
+`source .venv/bin/activate`。使用同一个解释器安装完整本地依赖：
+
+```bash
+python -m pip install -r requirements.txt
 ```
 
 2. 用已打包的 MIT 八章内容建 Chroma 索引（首次，或教材更新后）。embedding 模型
@@ -62,14 +71,20 @@ python -m scripts.ingest_mit --chapters 1 2 3 4 5 6 7 8
 ```
 
 只有要从 PDF 重新抽文本时才需要 MinerU。仓库已包含校验过的段落、习题、插图和目录。
+索引和模型权重不提交到 Git，因此拉取 `main` 不会自动获得它们。构建索引与
+启动后端必须使用同一个 Python 环境；启动后检查 `/health` 的 `rag.ready`
+是否为 `true`。`requirements-deploy.txt` 是精简 Web 服务依赖，不含本地教材
+检索所需的 Chroma 和向量模型依赖。
 
-3. 复制 `.env.example` 为 `.env`，填写 `LLM_API_KEY`。不要提交 `.env`。
+3. 复制 `.env.example` 为 `.env`，填写有效的 `LLM_API_KEY`、服务地址和模型。
+   本地运行时将 `DATABASE_URL` 留空。不要提交 `.env`。
+   AI 对话、生成题目和未缓存的翻译都需要模型 API 可连接。
 
 4. 前端依赖：
 
 ```bash
 cd student-frontend
-npm install
+npm ci
 ```
 
 Windows 上若 `npm install` 报全局缓存 `EPERM`：

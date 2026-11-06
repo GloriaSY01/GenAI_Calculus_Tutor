@@ -1021,6 +1021,7 @@
     "4x + 4": "4x + 4",
     "4x + 1": "4x + 1",
     "2x + 4": "2x + 4",
-    "2x + 1": "2x + 1"
+    "2x + 1": "2x + 1",
+    "Starting from $f(0)=0$, velocity is $8$ until time $T$ and then $-2$. When does the distance first return to zero?": "从 $f(0)=0$ 开始，速度是 $8$ 直到时间 $T$，然后是 $-2$。距离第一次回到零是什么时候？"
   }
 }

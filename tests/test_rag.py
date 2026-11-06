@@ -103,6 +103,20 @@ def test_missing_collection_has_clear_status(monkeypatch):
     assert "build the collection" in status["detail"]
 
 
+def test_missing_dependency_is_not_reported_as_missing_index(monkeypatch):
+    def unavailable():
+        raise rag.RAGUnavailable("Chroma is not installed")
+
+    monkeypatch.setattr(rag, "_client", unavailable)
+    # Bypass cache without altering unrelated test collections.
+    try:
+        rag._collection.__wrapped__()
+    except rag.RAGUnavailable as exc:
+        assert str(exc) == "Chroma is not installed"
+    else:
+        raise AssertionError("Expected the dependency error to propagate")
+
+
 def test_section_page_uses_ordered_concept_and_example(monkeypatch):
     chunks = [
         {

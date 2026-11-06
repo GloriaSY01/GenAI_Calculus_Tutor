@@ -1,4 +1,13 @@
 // Keep the challenge snapshot separate from post-submission tutor activity.
+export function submittedAnswerText(question, answer) {
+  if (!question || !answer) return ''
+  if (question.type === 'single_choice') return question.options?.[answer.single] || ''
+  if (question.type === 'multiple_choice') return (answer.multiple || []).map(i => question.options?.[i]).filter(Boolean).join('; ')
+  if (question.type === 'fill_blank') return (answer.blanks || []).join('; ')
+  if (question.type === 'drag_order') return (answer.order || []).join(' → ')
+  return ''
+}
+
 export function hasAnswer(item) {
   const a = item?.answer || {}, q = item?.q || {}
   if (q.type === 'single_choice') return Number.isInteger(a.single)

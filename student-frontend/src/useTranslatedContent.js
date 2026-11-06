@@ -12,7 +12,9 @@ export function useTranslatedContent(texts, lang, sourceLang = null) {
   const [attempt, setAttempt] = useState(0)
   const known = value => {
     if (!value) return value
-    if (sourceLang === lang) return value
+    // The API language is the requested locale, not proof that every field
+    // was localized (curated exercises and old saved questions may be English).
+    // Resolve each actual text through dictionaries, detection, and the cache.
     if (lang === 'en' && !/[\u4e00-\u9fff]/.test(value)) return value
     if (lang === 'zh' && (textbookLabels[value] || textbookChinese[value])) return textbookLabels[value] || textbookChinese[value]
     const prose = value.replace(/\$\$[\s\S]*?\$\$|\$(?:\\.|[^$])*?\$/g, '')

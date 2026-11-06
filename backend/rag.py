@@ -62,6 +62,9 @@ def _client():
 def _collection():
     try:
         return _client().get_collection(config.CHROMA_COLLECTION)
+    except RAGUnavailable:
+        # Preserve dependency/pointer failures instead of claiming data is missing.
+        raise
     except Exception as exc:
         raise RAGUnavailable(
             "MIT Chroma collection is missing. Run: python -m scripts.ingest_mit"
