@@ -1022,6 +1022,9 @@
     "4x + 1": "4x + 1",
     "2x + 4": "2x + 4",
     "2x + 1": "2x + 1",
-    "Starting from $f(0)=0$, velocity is $8$ until time $T$ and then $-2$. When does the distance first return to zero?": "从 $f(0)=0$ 开始，速度是 $8$ 直到时间 $T$，然后是 $-2$。距离第一次回到零是什么时候？"
+    "Starting from $f(0)=0$, velocity is $8$ until time $T$ and then $-2$. When does the distance first return to zero?": "从 $f(0)=0$ 开始，速度是 $8$ 直到时间 $T$，然后是 $-2$。距离第一次回到零是什么时候？",
+    "Arrange the steps in the correct order to solve: 一辆车以恒定速度行驶，速度为80公里/小时。如果车在3小时内行驶了多远？": "将步骤按正确顺序排列以解决：一辆车以恒定速度行驶，速度为80公里/小时。如果车在3小时内行驶了多远？",
+    "Convert $w$ grams to kilograms: $f(w)=$ ___.": "将 $w$ 克转换为千克： $f(w)=$ ___.",
+    "一个物体以速度2移动直到t=5，然后以速度3移动。求t=7时物体的距离f(7)。": "一个物体以速度2移动直到t=5，然后以速度3移动。求t=7时物体的距离f(7)。"
   }
 }
