@@ -19,6 +19,7 @@ student-frontend/.vite-dev.log
 
 # Logs / runtime data
 data/logs/*.jsonl
+data/learning.sqlite3*
 data/favorites.json
 data/favorites.json.tmp
 data/generated_questions.json

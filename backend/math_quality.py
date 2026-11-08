@@ -79,6 +79,16 @@ def derivative_correct_indices(stem: str, options: list[str]) -> set[int] | None
         if len(symbols) != 1:
             return None
         expected = diff(target, symbols[0])
+        # A derivative *at a point* has numeric answer options. Comparing those
+        # against the unevaluated derivative rejects otherwise correct questions.
+        variable = re.escape(symbols[0].name)
+        point = re.search(
+            rf"(?:\b{variable}\s*=\s*|\bf\s*['′]\s*\(\s*)(-?\d+(?:\.\d+)?)"
+            rf"(?=\s*(?:[$),，。;；]|处|时|$))",
+            stem,
+        )
+        if point:
+            expected = expected.subs(symbols[0], _parse_expression(point.group(1)))
         correct: set[int] = set()
         for index, option in enumerate(options):
             candidate = _parse_expression(option)

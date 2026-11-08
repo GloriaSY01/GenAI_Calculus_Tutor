@@ -20,7 +20,8 @@ import time
 import uuid
 from typing import Any, Dict, List, Tuple
 
-from . import config, database, exercise_bank, llm, rag, textbook
+from . import challenge_questions, config, database, exercise_bank, llm, rag, textbook
+from .answer_matching import equivalent_blank
 from .math_quality import (
     choice_key,
     normalize_math_notation,
@@ -513,8 +514,26 @@ def generate_question(
     *,
     language: Language = "en",
     exclude_stems: list[str] | None = None,
+    purpose: str = "practice",
 ) -> GeneratedQuestionPublic:
     section = _resolve_section(topic)
+    if purpose == "challenge":
+        # Chapter challenges must remain available even when the model is down
+        # or the curated bank has no question of the selected format.
+        if difficulty != "medium":
+            raise ValueError("Chapter challenge templates use medium difficulty")
+        data = challenge_questions.question(section, qtype, language, exclude_stems)
+        validate_question_data(data, qtype)
+        record = _build_record(
+            qid="challenge_" + uuid.uuid4().hex[:12], qtype=qtype,
+            topic=section["display_title"], section_id=section["id"],
+            difficulty="medium", data=data, source="generated",
+            citations=[_citation(section)], language=language,
+        )
+        record.update(generation_method=challenge_questions.VERSION, reference_ids=[],
+                      difficulty_reason={"basis": "authored section application; not empirically calibrated"})
+        _register(record)
+        return _public(record)
     excluded = {_norm(stem) for stem in (exclude_stems or [])}
     curated = _maybe_curated(qtype, section, difficulty, language, exclude_stems)
     if curated:
@@ -753,8 +772,8 @@ def _norm(s: str) -> str:
     return s.strip().lower().replace(" ", "").replace("$", "")
 
 
-def grade(req: GradeRequest) -> GradeResponse:
-    q = _REGISTRY.get(req.question_id)
+def grade(req: GradeRequest, record: dict | None = None) -> GradeResponse:
+    q = record if record is not None else _REGISTRY.get(req.question_id)
     if q is None:
         raise KeyError(req.question_id)
 
@@ -779,7 +798,7 @@ def grade(req: GradeRequest) -> GradeResponse:
         answers = req.blanks or []
         accepted = q["blank_answers"]
         correct = len(answers) == len(accepted) and all(
-            _norm(a) in {_norm(x) for x in acc}
+            equivalent_blank(a, acc)
             for a, acc in zip(answers, accepted)
         )
     elif qtype == "drag_order":
@@ -810,8 +829,8 @@ def grade(req: GradeRequest) -> GradeResponse:
 # --------------------------------------------------------------------------- #
 # Bridge to the Socratic tutor (2.2)
 # --------------------------------------------------------------------------- #
-def to_problem(qid: str) -> Problem | None:
-    q = _REGISTRY.get(qid)
+def to_problem(qid: str, record: dict | None = None) -> Problem | None:
+    q = record if record is not None else _REGISTRY.get(qid)
     if q is None:
         return None
 

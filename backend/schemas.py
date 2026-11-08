@@ -71,6 +71,7 @@ class TutorTurn(BaseModel):
     citations: List[Citation] = Field(default_factory=list)
     engagement_flag: Optional[str] = None
     safety_event: Optional[str] = None
+    response_status: Literal["ok", "unavailable"] = "ok"
 
 
 class SessionState(BaseModel):
@@ -162,6 +163,7 @@ class ClassOption(BaseModel):
 # Content generation (2.1)
 # --------------------------------------------------------------------------- #
 class GenerateRequest(BaseModel):
+    purpose: Literal["practice", "challenge"] = "practice"
     type: QuestionType
     topic: str
     difficulty: str = "medium"
@@ -263,6 +265,10 @@ class AnalyticsInsight(BaseModel):
 
 
 class ClassAnalytics(BaseModel):
+    scope: str = "legacy"
+    experiment_id: Optional[str] = None
+    metric_version: str = "legacy"
+    reasoning_sample_count: int = 0
     practice: dict = Field(default_factory=dict)
     practice_submission_count: int = 0
     independent_solve_rate: float = 0.0
@@ -282,6 +288,7 @@ class ClassAnalytics(BaseModel):
 
 
 class AnalyticsQuery(BaseModel):
+    scope: Literal["legacy", "learning"] = "legacy"
     class_id: Optional[str] = None
     selected_topic: Optional[str] = None
     question: str

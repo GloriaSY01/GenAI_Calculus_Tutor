@@ -1,5 +1,39 @@
-/* React replacements for Streamlit's layout/widget primitives. The original
-   dashboard CSS and copy are loaded unchanged from legacy82.json. */
+.teacher-legacy .teacher-summary-metrics { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px }
+.teacher-legacy .teacher-summary-metrics small { color:#64748b;font-size:12px;line-height:1.6 }
+.teacher-legacy .teacher-overview h2 { font-size:20px;margin:0 0 16px }
+.teacher-legacy .teacher-toolbar { display:flex;align-items:center;justify-content:space-between;gap:16px }
+.teacher-legacy .teacher-topic-list { list-style:none;margin:0;padding:0 }
+.teacher-legacy .teacher-topic-list li { display:grid;grid-template-columns:minmax(180px,2fr) minmax(80px,1fr) 100px;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid #e6e9f2 }
+.teacher-legacy .teacher-topic-label { display:flex;flex-direction:column;gap:4px;min-width:0 }
+.teacher-legacy .teacher-topic-label small,.teacher-legacy .teacher-topic-score small { color:#64748b }
+.teacher-legacy .teacher-topic-button { background:none;border:0;color:inherit;padding:0;text-align:left;font:inherit;cursor:pointer;overflow-wrap:anywhere }
+.teacher-legacy .teacher-topic-button[aria-pressed="true"] { color:#2563eb;text-decoration:underline }
+.teacher-legacy meter { width:100%;height:12px;accent-color:#2563eb }
+.teacher-legacy .teacher-topic-score { text-align:right;font-variant-numeric:tabular-nums }
+.teacher-legacy .teacher-topic-score small { display:block }
+.teacher-legacy .teacher-disclosure>summary { font-size:17px;font-weight:600;padding:4px 0 }
+.teacher-legacy .teacher-disclosure[open]>summary { margin-bottom:24px }
+.teacher-legacy .teacher-more-topics { margin-top:16px }
+.teacher-legacy .teacher-metrics-table { width:100%;border-collapse:collapse;min-width:440px;font-size:14px }
+.teacher-legacy .teacher-metrics-table th,.teacher-legacy .teacher-metrics-table td { padding:14px 8px;text-align:left;border-bottom:1px solid #e6e9f2 }
+.teacher-legacy .teacher-reasoning-values { display:flex;flex-wrap:wrap;gap:24px }
+.teacher-legacy .teacher-reasoning-values dd { margin:6px 0;font-weight:600 }
+.teacher-legacy .teacher-toc>a { display:block;margin:14px 0 }
+.teacher-legacy.legacy-dark .teacher-summary-metrics small,.teacher-legacy.legacy-dark .teacher-topic-label small,.teacher-legacy.legacy-dark .teacher-topic-score small { color:#a7b4ca }
+.teacher-legacy.legacy-dark .teacher-topic-list li,.teacher-legacy.legacy-dark .teacher-metrics-table th,.teacher-legacy.legacy-dark .teacher-metrics-table td { border-color:#303a50 }
+.teacher-legacy.legacy-dark .sw-header { background:#141a2b;border-color:#303a50 }
+.teacher-legacy.legacy-dark .sw-brand,.teacher-legacy.legacy-dark .sw-preferences summary { color:#eef1f9 }
+.teacher-legacy.legacy-dark .sw-brand small { color:#a7b4ca }
+.teacher-legacy.legacy-dark .teacher-toc>a { background:#12203f;color:#c6d9ff }
+.teacher-legacy.legacy-dark .btn:not(.primary) { background:#1c2840;color:#e4ecfb;border-color:#394760 }
+.teacher-legacy.legacy-dark .btn:disabled { opacity:.5 }
+.teacher-legacy.legacy-dark .teacher-topic-button[aria-pressed="true"] { color:#9bbcff }
+@media(max-width:600px) {
+ .teacher-legacy .teacher-summary-metrics { grid-template-columns:1fr;gap:0 }
+ .teacher-legacy .teacher-topic-list li { grid-template-columns:minmax(0,1fr) 70px;gap:12px }
+ .teacher-legacy .teacher-topic-list meter { grid-column:1;grid-row:2 }
+ .teacher-legacy .teacher-topic-score { grid-column:2;grid-row:1 / span 2 }
+}
 .teacher-legacy { min-height:100vh;background:#F6F8FC;color:#141A2E;font-family:Inter,system-ui,sans-serif;--teacher-toc-width:264px;--teacher-ai-width:360px }
 body:has(.teacher-legacy) { background:#F6F8FC }
 body:has(.teacher-legacy.legacy-dark) { background:#0b1020 }

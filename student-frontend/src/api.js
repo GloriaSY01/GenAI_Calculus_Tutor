@@ -150,13 +150,14 @@ async function withFallback(fn, mockShaped) {
 }
 
 export const api = {
-  teacherData: classId => req('/analytics/class?class_id=' + encodeURIComponent(classId)),
+  teacherData: classId => req('/analytics/class?scope=learning&class_id=' + encodeURIComponent(classId)),
+  teacherClasses: () => req('/classes'),
   teacherTopics: () => req('/topics'),
   teacherCatalog: () => req('/catalog'),
   teacherCreate: body => req('/assignments', { method: 'POST', body: JSON.stringify(body) }),
   teacherDelete: id => req('/assignments/' + encodeURIComponent(id), { method: 'DELETE' }),
   teacherAssignments: classId => req('/assignments?class_id=' + encodeURIComponent(classId)),
-  teacherAsk: body => req('/analytics/ask', { method: 'POST', body: JSON.stringify(body) }),
+  teacherAsk: body => req('/analytics/ask', { method: 'POST', body: JSON.stringify({ ...body, scope: 'learning' }) }),
   getClassAnalytics: (classId = '') =>
     withFallback(
       async () => normalizeAnalytics(await req('/analytics/class' + (classId ? '?class_id=' + encodeURIComponent(classId) : ''))),
@@ -227,6 +228,13 @@ export const api = {
   /* ---------------- Student side ---------------- */
 
   // GET /classes -> [{ id, label }]
+  learningClasses: async () => {
+    const classes = await req('/classes')
+    if (!Array.isArray(classes) || !classes.length || classes.some(c => !c?.id || !c?.label)) {
+      throw new Error('班级列表不可用，请稍后重试。 / Class list unavailable; please retry.')
+    }
+    return classes
+  },
   getClasses: () =>
     withFallback(async () => ({ classes: await req('/classes') }), { classes: MOCK.classes }),
 
@@ -239,8 +247,8 @@ export const api = {
     withFallback(async () => await req('/concept?topic=' + encodeURIComponent(topic)), MOCK.concept(topic)),
 
   // POST /generate { type, topic, difficulty, language } -> GeneratedQuestionPublic
-  generateQuestion: ({ type, topic, difficulty, language = 'en', exclude_stems = [] }) =>
-    req('/generate', { method: 'POST', body: JSON.stringify({ type, topic, difficulty, language, exclude_stems }) }),
+  generateQuestion: ({ type, topic, difficulty, language = 'en', exclude_stems = [], purpose = 'practice' }) =>
+    req('/generate', { method: 'POST', body: JSON.stringify({ type, topic, difficulty, language, exclude_stems, purpose }) }),
 
   // POST /grade { question_id, single|multiple|blanks|order, student_id, class_id } -> GradeResponse
   // Never replace a real grading failure with a simulated result. Students

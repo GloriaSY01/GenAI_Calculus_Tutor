@@ -75,8 +75,9 @@ def _empty_analytics() -> ClassAnalytics:
     )
 
 
-def compute(class_id: str | None = None) -> ClassAnalytics:
-    events = _load_events()
+def compute(class_id: str | None = None, scope: str = "legacy") -> ClassAnalytics:
+    from . import learning
+    events = learning.list_events(class_id) if scope == "learning" else _load_events()
     if class_id:
         session_ids = {e.get("session_id") for e in events
                        if e.get("event") == "session_start" and e.get("class_id") == class_id}
@@ -90,7 +91,10 @@ def compute(class_id: str | None = None) -> ClassAnalytics:
             for name in (info["id"], info["title"], info["display_title"]):
                 aliases[name] = info["display_title"]
     events = [{**e, "topic": aliases.get(e.get("section_id") or e.get("topic"), e.get("topic"))} for e in events]
-    result = _compute_events(events)
+    valid_events = [e for e in events if e.get("event") != "turn" or (
+        e.get("response_status", "ok") == "ok" and not e.get("safety_event") and e.get("action") != "blocked"
+    )] if scope == "learning" else events
+    result = _compute_events(valid_events)
     practice = _compute_practice(events)
     result.practice = practice
     result.practice_submission_count = practice["n_answers"]
@@ -106,6 +110,16 @@ def compute(class_id: str | None = None) -> ClassAnalytics:
     }
     if practice_students:
         result.n_students = max(result.n_students, len(practice_students))
+    if scope == "learning":
+        result.scope = "learning"
+        result.experiment_id = learning.experiment_id()
+        result.metric_version = "pilot-v2"
+        result.n_students = len({e["student_id"] for e in events
+                                 if e.get("event") in {"practice_grade", "tutor_requested"}})
+        result.reasoning_sample_count = sum(e.get("event") == "turn" for e in valid_events)
+        # These historical heuristics are not validated research measures.
+        result.gaming_rate = 0
+        result.insights = []
     return result
 
 
@@ -126,6 +140,8 @@ def _compute_practice(events: List[dict]) -> dict:
             "ai_assisted_submissions": 0,
             "ai_assisted_correct_count": 0,
             "not_correct_count": 0,
+            "unknown_submissions": 0,
+            "unknown_correct_count": 0,
         }
     )
     by_difficulty: Dict[str, dict] = defaultdict(
@@ -137,6 +153,8 @@ def _compute_practice(events: List[dict]) -> dict:
             "ai_assisted_submissions": 0,
             "ai_assisted_correct_count": 0,
             "not_correct_count": 0,
+            "unknown_submissions": 0,
+            "unknown_correct_count": 0,
         }
     )
 
@@ -148,13 +166,20 @@ def _compute_practice(events: List[dict]) -> dict:
             or event.get("hint_usage") == "ai_assisted"
             or key in assisted_keys
         )
+        status = event.get("assistance_status")
+        if event.get("schema_version") == 2:
+            assisted = status == "received"
+            status = status if status in {"none", "received"} else "unknown"
         correct = bool(event.get("correct"))
         topic = event.get("topic") or "General / Free chat"
         difficulty = event.get("difficulty") or "unknown"
 
         for bucket in (by_topic[topic], by_difficulty[difficulty]):
             bucket["attempts"] += 1
-            if assisted:
+            if status == "unknown":
+                bucket["unknown_submissions"] += 1
+                bucket["unknown_correct_count"] += int(correct)
+            elif assisted:
                 bucket["ai_assisted_submissions"] += 1
                 if correct:
                     bucket["ai_assisted_correct_count"] += 1
@@ -177,6 +202,7 @@ def _compute_practice(events: List[dict]) -> dict:
         correct_count = bucket["correct"]
         return {
             **bucket,
+            "unknown_rate": round(bucket["unknown_correct_count"] / bucket["unknown_submissions"], 3) if bucket["unknown_submissions"] else 0.0,
             # Compatibility aliases retained for existing consumers.
             "independent_count": independent_correct,
             "ai_assisted_count": ai_assisted_correct,
@@ -210,9 +236,13 @@ def _compute_practice(events: List[dict]) -> dict:
     ai_assisted_correct = sum(row["ai_assisted_correct_count"] for row in topic_rows)
     not_correct = sum(row["not_correct_count"] for row in topic_rows)
     correct_total = sum(row["correct"] for row in topic_rows)
+    unknown_submissions = sum(row["unknown_submissions"] for row in topic_rows)
+    unknown_correct = sum(row["unknown_correct_count"] for row in topic_rows)
 
     return {
         "n_answers": n_answers,
+        "unknown_submissions": unknown_submissions,
+        "unknown_rate": round(unknown_correct / unknown_submissions, 3) if unknown_submissions else 0.0,
         "correct_rate": round(correct_total / n_answers, 3) if n_answers else 0.0,
         "ai_help_count": ai_assisted_submissions,
         "ai_help_rate": round(ai_assisted_submissions / n_answers, 3) if n_answers else 0.0,
@@ -227,6 +257,7 @@ def _compute_practice(events: List[dict]) -> dict:
         "practice_completion_modes": [
             {"mode": "independent", "count": independent_submissions},
             {"mode": "ai_assisted", "count": ai_assisted_submissions},
+            *([{"mode": "unknown", "count": unknown_submissions}] if unknown_submissions else []),
         ],
         "not_correct_count": not_correct,
         "by_difficulty_completion": difficulty_rows,
@@ -495,6 +526,19 @@ def _chat_context(history: List[dict], limit: int = 6) -> str:
 
 
 def _facts_block(a: ClassAnalytics, selected_topic: Optional[str] = None) -> str:
+    if a.scope == "learning":
+        return json.dumps({
+            "scope": a.scope, "experiment_id": a.experiment_id, "metric_version": a.metric_version,
+            "participating_students": a.n_students, "practice": a.practice,
+            "reasoning_distribution": a.reasoning_distribution, "reasoning_sample_count": a.reasoning_sample_count,
+            "selected_topic": selected_topic,
+            "interpretation": "Submissions include retries. Participants are the union of submitters and tutor requesters. "
+                "AI status is frozen at submission: none means no help recorded for this exposure, received means "
+                "a usable reply was displayed, unknown means a request without confirmed usable display. "
+                "No denominators means no evidence, not 0% performance. Reasoning is a model judgement of valid turns. "
+                "These observational rates do not prove learning gains or AI effects. Do not infer enrollment, "
+                "ability, mastery, or gaming from these metrics.",
+        }, ensure_ascii=False)
     lines = [
         f"- sessions: {a.n_sessions}, students: {a.n_students}, turns: {a.n_turns}",
         f"- solve_rate: {a.solve_rate}, avg_reasoning(0-4): {a.avg_reasoning}",
@@ -529,6 +573,16 @@ def _facts_block(a: ClassAnalytics, selected_topic: Optional[str] = None) -> str
 
 
 def _fallback_answer(a: ClassAnalytics, language: str = "en") -> str:
+    if a.scope == "learning":
+        count = a.practice_submission_count
+        rate = f"{a.practice.get('correct_rate', 0) * 100:.0f}%" if count else "—"
+        if language == "zh":
+            return (f"当前实验 {a.experiment_id}：参与学生 {a.n_students} 人，提交 {count} 次，"
+                    f"提交正确率 {rate}（含重试）。可在知识点列表查看需要复习的内容。"
+                    "AI 分组正确率仅是行为描述，不能解释为 AI 带来的学习提升。")
+        return (f"Experiment {a.experiment_id}: {a.n_students} participants, {count} submissions, "
+                f"submission accuracy {rate} (including retries). Review the topic list for practice needs. "
+                "AI group differences do not measure learning gains.")
     if language == "zh":
         if not a.by_topic:
             return "暂无足够的班级数据，请在学生完成练习后再查看。"

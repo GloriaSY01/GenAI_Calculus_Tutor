@@ -270,6 +270,15 @@ def load_generated_questions(limit: int = 2000) -> dict[str, dict]:
         return {row[0]: dict(row[1]) for row in connection.execute(statement)}
 
 
+def load_generated_question(question_id: str) -> dict | None:
+    """Fetch a persisted question missed by this worker's bounded cache."""
+    with engine().connect() as connection:
+        row = connection.execute(select(generated_questions.c.record).where(
+            generated_questions.c.question_id == question_id,
+        )).first()
+        return dict(row[0]) if row else None
+
+
 def get_progress(student_id: str, class_id: str, scope: str) -> dict | None:
     statement = select(
         student_progress.c.version,

@@ -28,6 +28,7 @@ from . import (
     generator,
     guardrail,
     learning_path,
+    learning,
     problems,
     rag,
     socratic,
@@ -62,6 +63,7 @@ from .schemas import (
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     database.init()
+    learning.init()
     try:
         rag.warmup()
     except Exception:
@@ -72,6 +74,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="GenAI Calculus Tutor", version="0.4.0", lifespan=lifespan
 )
+app.include_router(learning.router)
 app.mount(
     "/textbook-assets",
     StaticFiles(directory=config.TEXTBOOK_ASSETS_DIR, check_dir=False),
@@ -153,13 +156,13 @@ def get_learning_path():
 # Teacher analytics (class-level)
 # --------------------------------------------------------------------------- #
 @app.get("/analytics/class", response_model=ClassAnalytics)
-def get_class_analytics(class_id: Optional[str] = None):
-    return analytics.compute(class_id)
+def get_class_analytics(class_id: Optional[str] = None, scope: Literal["legacy", "learning"] = "legacy"):
+    return analytics.compute(class_id, scope=scope)
 
 
 @app.post("/analytics/ask", response_model=AnalyticsAnswer)
 def ask_analytics(req: AnalyticsQuery):
-    data = analytics.compute(req.class_id)
+    data = analytics.compute(req.class_id, scope=req.scope)
     answer, llm_available = analytics.answer_question(
         req.question, data, req.language, history=req.history,
         selected_topic=req.selected_topic,
@@ -196,6 +199,7 @@ def generate(req: GenerateRequest):
         public = generator.generate_question(
             req.type, req.topic, req.difficulty, language=req.language,
             exclude_stems=req.exclude_stems,
+            purpose=req.purpose,
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Unknown section") from exc
@@ -468,6 +472,10 @@ if FRONTEND_DIST.is_dir():
 
     @app.get("/{path:path}", include_in_schema=False)
     def serve_frontend(path: str):
+        # Missing learning endpoints must never masquerade as a successful SPA
+        # response, otherwise API clients try to parse index.html as JSON.
+        if path == "learning" or path.startswith("learning/"):
+            raise HTTPException(status_code=404, detail="Learning API route not found")
         candidate = (FRONTEND_DIST / path).resolve()
         try:
             candidate.relative_to(FRONTEND_DIST.resolve())

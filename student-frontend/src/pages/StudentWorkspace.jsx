@@ -1,5 +1,5 @@
 import { useTranslatedContent } from '../useTranslatedContent.js'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLang } from '../i18n.jsx'
 import { api } from '../api.js'
 import { MathText, Formula } from '../components/math.jsx'
@@ -9,6 +9,7 @@ import { AnswerControls } from './student/Practice.jsx'
 import Concept from './student/Concept.jsx'
 import Favorites from './student/Favorites.jsx'
 import StudentAgent from './StudentAgent.jsx'
+import { createLearningClient } from '../learning.js'
 import { hasAnswer, challengePlan, roundSummary } from './student/study.js'
 import './student/workspace.css'
 
@@ -29,7 +30,7 @@ function sanitizeSavedState(savedState) {
   const rounds = Object.fromEntries(
     Object.entries(savedState.rounds || {}).filter(([, round]) =>
       (round.items || []).every(item => item.q?.quality_version >= 2),
-    ),
+    ).map(([key, round]) => [key, { ...round, items: round.items.map(item => ({ ...item, trackingId: item.trackingId || crypto.randomUUID() })) }]),
   )
   const active = rounds[savedState.active] ? savedState.active : ''
   const view = savedState.active && !active ? 'home' : savedState.view
@@ -45,15 +46,41 @@ export default function StudentWorkspace({ topbar }) {
   const [classId, setClassId] = useState(() => localStorage.getItem('stu_class') || '')
   const [catalog, setCatalog] = useState(null)
   const [classes, setClasses] = useState([])
+  const [classStatus, setClassStatus] = useState('loading')
+  const [classError, setClassError] = useState('')
+  const [classReload, setClassReload] = useState(0)
   useEffect(() => {
-    api.getClasses().then(r => { setClasses(r.classes || []); setClassId(current => r.classes?.some(c => c.id === current) ? current : r.classes?.[0]?.id || '') })
     api.getCatalog().then(setCatalog)
   }, [])
+  useEffect(() => {
+    let current = true
+    setClassStatus('loading'); setClassError('')
+    api.learningClasses().then(options => {
+      if (!current) return
+      setClasses(options)
+      setClassId(previous => {
+        // Never silently assign an obsolete/demo identifier to a real class.
+        const selected = options.some(c => c.id === previous) ? previous : ''
+        localStorage.setItem('stu_class', selected)
+        return selected
+      })
+      setClassStatus('ready')
+    }).catch(e => { if (current) { setClassError(e.message); setClassStatus('error') } })
+    return () => { current = false }
+  }, [classReload])
+  if (classStatus !== 'ready') return <main className="sw-main"><section className="sw-panel">
+    <h1>{lang === 'zh' ? '连接班级' : 'Connect to your class'}</h1>
+    {classStatus === 'loading' ? <p role="status">{lang === 'zh' ? '正在读取班级列表…' : 'Loading classes…'}</p> : <>
+      <p role="alert">{lang === 'zh' ? '无法加载班级列表，请检查后端连接后重试。' : 'Could not load classes. Check the backend connection and retry.'} {classError}</p>
+      <button className="btn primary" onClick={() => setClassReload(n => n + 1)}>{lang === 'zh' ? '重新加载班级' : 'Reload classes'}</button>
+    </>}
+  </section></main>
   const scope = JSON.stringify([student || 'guest', classId])
   return <Workspace key={scope} {...{ topbar, t, lang, student, classId, classes, catalog, scope }}
+    onReloadClasses={() => setClassReload(n => n + 1)}
     onStudent={v => { setStudent(v); localStorage.setItem('stu_name', v) }} onClass={v => { setClassId(v); localStorage.setItem('stu_class', v) }} />
 }
-function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope, onStudent, onClass }) {
+function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope, onStudent, onClass, onReloadClasses }) {
   const text = (zh, en) => lang === 'zh' ? zh : en
   const storageKey = 'calculus-study-v3:' + scope
   const [state, setState] = useState(() => read(storageKey))
@@ -61,36 +88,39 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [storageError, setStorageError] = useState(false)
-  const [remoteReady, setRemoteReady] = useState(false)
+  const learning = useMemo(() => createLearningClient(student, classId), [student, classId])
+  const classConfirmed = classes.some(c => c.id === classId)
+  const [runInfo, setRunInfo] = useState(null)
+  const [connecting, setConnecting] = useState(false)
+  const [trackingError, setTrackingError] = useState('')
+  const [trackingRetry, setTrackingRetry] = useState(0)
   const [favorites, setFavorites] = useState([])
   const [guestId] = useState(browserGuestId)
-  const favoriteOwner = student || guestId
+  const favoriteOwner = runInfo?.student_id || guestId
   const lock = useRef(false)
   const prefetched = useRef(null)
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
   useEffect(() => {
     let current = true
-    setRemoteReady(false)
-    if (!classId) return () => { current = false }
-    api.getProgress(favoriteOwner, classId).then(result => {
-      if (!current) return
-      const progress = result?.progress
-      if (result?.found && progress?.version === STUDY_STATE_VERSION && progress.state?.rounds) {
-        setState({ ...fresh(), ...sanitizeSavedState(progress.state) })
-      }
-    }).catch(() => {}).finally(() => { if (current) setRemoteReady(true) })
+    if (!classConfirmed) return () => { current = false }
+    setConnecting(true)
+    learning.connect().then(result => { if (current) setRunInfo(result) })
+      .catch(e => { if (current) { setError(e.message); if (e.code === 'UNKNOWN_CLASS') onReloadClasses() } })
+      .finally(() => { if (current) setConnecting(false) })
     return () => { current = false }
-  }, [favoriteOwner, classId])
+  }, [learning, classConfirmed])
+  async function consent() {
+    if (!classConfirmed || connecting) return
+    setConnecting(true); setError('')
+    try { const result = await learning.connect(true); if (alive.current) setRunInfo(result) }
+    catch (e) { if (alive.current) { setError(e.message); if (e.code === 'UNKNOWN_CLASS') onReloadClasses() } }
+    finally { if (alive.current) setConnecting(false) }
+  }
   useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify({ version: STUDY_STATE_VERSION, state })); setStorageError(false) }
     catch { setStorageError(true) }
-    if (!remoteReady || !classId) return undefined
-    const timer = window.setTimeout(() => {
-      api.saveProgress(favoriteOwner, classId, STUDY_STATE_VERSION, state).catch(() => {})
-    }, 700)
-    return () => window.clearTimeout(timer)
-  }, [state, storageKey, remoteReady, favoriteOwner, classId])
+  }, [state, storageKey])
   useEffect(() => { let current = true; api.getFavorites(favoriteOwner).then(r => { if (current) setFavorites(r.favorites || []) }); return () => { current = false } }, [favoriteOwner])
   const chapters = catalog?.chapters || []
   const chapter = chapters.find(c => c.id === state.chapter) || chapters[0]
@@ -105,6 +135,19 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   const item = round?.items[round.cursor]
   const challenge = round?.mode === 'challenge'
   const reviewing = challenge && !!round.submitted
+  const questionVisible = !!item && ['study', 'challenge', 'review'].includes(state.view) &&
+    (!challenge || round.items.length === round.plan.length)
+  useEffect(() => {
+    let current = true
+    const recordPresentation = () => {
+      if (!runInfo || !questionVisible || document.visibilityState !== 'visible') return
+      learning.expose(item, round.mode).then(() => { if (current) setTrackingError('') })
+        .catch(e => { if (current) setTrackingError(e.message) })
+    }
+    recordPresentation()
+    document.addEventListener('visibilitychange', recordPresentation)
+    return () => { current = false; document.removeEventListener('visibilitychange', recordPresentation) }
+  }, [learning, runInfo, item?.trackingId, questionVisible, round?.mode, trackingRetry])
   const patch = fields => setState(s => ({ ...s, ...fields }))
   const updateRound = (key, fn) => setState(s => ({ ...s, rounds: { ...s.rounds, [key]: fn(s.rounds[key]) } }))
   const updateItem = (key, index, fields) => updateRound(key, r => ({ ...r, items: r.items.map((x, i) => i === index ? { ...x, ...fields } : x) }))
@@ -127,9 +170,11 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
     if (!sec) throw new Error(text('没有可用的小节。', 'No section is available.'))
     const candidates = TYPES.filter(type => type !== r.items.at(-1)?.q.type)
     const type = r.type === 'mixed' ? candidates[Math.floor(Math.random() * candidates.length)] : r.type
-    const q = await api.generateQuestion({ topic: sec.title, type, difficulty: r.difficulty, language: lang, exclude_stems: [...(r.previousStems || []), ...r.items.map(x => x.q.stem)].slice(-50) })
+    const q = await api.generateQuestion({ topic: sec.title, type, difficulty: r.difficulty, language: lang, purpose: r.mode === 'challenge' ? 'challenge' : 'practice', exclude_stems: [...(r.previousStems || []), ...r.items.map(x => x.q.stem)].slice(-50) })
     if (!q?.id || !q.stem || r.items.some(x => x.q.stem === q.stem)) throw new Error(text('未获取到新题，请重试。', 'No new question returned. Please retry.'))
-    return { q, section: sec.id, answer: {}, grade: null, first: null, assisted: false, chat: [] }
+    const generated = { q, trackingId: crypto.randomUUID(), section: sec.id, answer: {}, grade: null, first: null, assisted: false, chat: [] }
+    await learning.expose(generated, r.mode, false)
+    return generated
   }
   function nextFree(restart = false) {
     if (restart && round && !window.confirm(text('重新开始此范围的练习？当前这轮记录将被替换。', 'Start over for this scope? This replaces the current round.'))) return
@@ -148,7 +193,11 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   }
   function startChallenge(restart = false) {
     const saved = state.rounds[challengeKey]
-    if (saved && !restart) { patch({ active: challengeKey, view: saved.submitted ? 'result' : 'challenge' }); return }
+    if (saved && !restart) {
+      patch({ active: challengeKey, view: saved.submitted ? 'result' : 'challenge' })
+      if (!saved.submitted && saved.items.length < saved.plan.length) prepareChallenge(saved)
+      return
+    }
     if (saved && !window.confirm(text('开始新的章节挑战？将替换上一轮记录。', 'Start a new challenge? This replaces the previous round.'))) return
     const next = { mode: 'challenge', title: chapter.title, difficulty: 'medium', type: 'mixed', plan: challengePlan(sections), items: [], cursor: 0, submitted: false, previousStems: saved?.items.map(x => x.q.stem) || [] }
     setState(s => ({ ...s, active: challengeKey, view: 'challenge', rounds: { ...s.rounds, [challengeKey]: next } }))
@@ -168,15 +217,16 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
     })
   }
   async function grade(x) {
-    const result = await api.gradeAnswer({ question_id: x.q.id, student_id: student || 'anon', class_id: classId, ai_assisted: !!x.assisted, ...x.answer,
-      ...(x.q.type === 'drag_order' ? { order: x.answer.order } : {}) })
-    return result
+    return learning.submit(x, round.mode)
   }
   function submitFree() {
     if (lock.current) return
     lock.current = true; setBusy(true); setError('')
     grade(item).then(result => {
-      if (alive.current) updateItem(roundKey, round.cursor, { grade: result, gradeError: null, first: item.first ?? { correct: result.correct, assisted: item.assisted } })
+      if (alive.current && result.recovered) setError(text('已恢复上次提交的答案与结果；若要修改答案，请重新选择后提交。', 'Recovered the previous submission and answer. Select your revised answer to submit a new attempt.'))
+      if (alive.current) updateItem(roundKey, round.cursor, { grade: result, answer: result.submitted_answer,
+        attemptNo: result.attempt_no, assisted: result.assistance_status === 'received', gradeError: null,
+        first: item.first ?? { correct: result.correct, assisted: result.assistance_status === 'received' } })
       if (result.correct && !challenge) {
         const nextRound = { ...round, items: round.items.map((entry, index) => index === round.cursor ? { ...entry, grade: result } : entry) }
         prefetched.current = {
@@ -186,6 +236,7 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
       }
     }).catch(e => {
       if (!alive.current) return
+      setError(e.message)
       if (e.status === 404 || e.code === 'QUESTION_EXPIRED') {
         updateItem(roundKey, round.cursor, { gradeError: 'expired' })
       } else {
@@ -218,15 +269,12 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
     if (!round.grading && !window.confirm(text(`确认交卷？还有 ${missing} 道未作答，交卷后不能修改本次答案。`, `Submit? ${missing} unanswered. Answers cannot be changed after submission.`))) return
     task(async () => {
       updateRound(roundKey, r => ({ ...r, grading: true }))
-      for (let i = 0; i < round.items.length; i++) {
-        const x = round.items[i]
-        if (!hasAnswer(x) || x.grade) continue
-        setStatus(text('正在批改 ', 'Checking ') + (i + 1) + ' / ' + round.items.length)
-        const result = await grade(x)
-        if (!alive.current) return
-        updateItem(roundKey, i, { grade: result, first: { correct: result.correct, assisted: false } })
-      }
-      updateRound(roundKey, r => ({ ...r, submitted: true, grading: false }))
+      const response = await learning.challenge(round, hasAnswer)
+      if (!alive.current) return
+      updateRound(roundKey, r => ({ ...r, submitted: true, grading: false,
+        items: r.items.map((x, i) => ({ ...x, grade: response.results[i], answer: response.entries[i].answer || response.entries[i].draft_answer || {},
+          attemptNo: response.results[i]?.attempt_no || 0,
+          first: response.results[i] ? { correct: response.results[i].correct, assisted: response.results[i].assistance_status === 'received' } : null })) }))
       patch({ view: 'result' })
     })
   }
@@ -268,8 +316,18 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
   </>
   return <div className="sw">
     <header className="sw-header"><button className="sw-brand" disabled={busy} onClick={home}><span>∫</span><div>{text('微积分学习伙伴', 'Calculus Companion')}<small>{text('理解概念，练会方法', 'Understand the ideas. Practice the methods.')}</small></div></button>
-      <div className="sw-account"><input className="inp" aria-label={t('stu_name')} placeholder={t('stu_name_ph')} defaultValue={student} disabled={busy} onBlur={e => onStudent(e.target.value.trim())} /><select className="inp" aria-label={t('stu_class')} value={classId} disabled={busy} onChange={e => onClass(e.target.value)}>{classes.map(c => <option key={c.id} value={c.id}>{displayLabel(c.label, lang)}</option>)}</select><details className="sw-preferences"><summary>{text('设置', 'Settings')}</summary><div>{topbar}</div></details></div></header>
-    <main className="sw-main"><div className="sw-chapterbar"><label><span className="sw-eyebrow">{text('当前章节', 'YOUR CHAPTER')}</span><select aria-label={text('选择章节', 'Choose chapter')} disabled={busy} value={chapter?.id || ''} onChange={e => { patch({ chapter: e.target.value, section: '', view: 'home' }); setError('') }}>{chapters.map(c => <option key={c.id} value={c.id}>{displayLabel(c.title, lang)}</option>)}</select></label><nav aria-label={text('章节导航', 'Chapter navigation')}><button className="btn" disabled={busy} onClick={home}>{text('章节首页', 'Chapter home')}</button><button className="btn" disabled={busy} onClick={() => patch({ view: 'favorites' })}>{t('stu_favorites')}</button></nav></div>
+      <div className="sw-account"><input className="inp" aria-label={t('stu_name')} placeholder={t('stu_name_ph')} defaultValue={student} disabled={busy} onBlur={e => onStudent(e.target.value.trim())} /><select className="inp" aria-label={t('stu_class')} value={classId} disabled={busy} onChange={e => onClass(e.target.value)}><option value="">{text('请选择班级', 'Select a class')}</option>{classes.map(c => <option key={c.id} value={c.id}>{displayLabel(c.label, lang)}</option>)}</select><details className="sw-preferences"><summary>{text('设置', 'Settings')}</summary><div>{topbar}</div></details></div></header>
+    {!runInfo ? <main className="sw-main"><section className="sw-panel">
+      <h1>{text('开始学习记录', 'Start learning records')}</h1>
+      <p>{text('系统将用随机参与者编号保存班级、题目、提交的答案、作答结果、时间和 AI 对话，用于教师查看班级汇总与后续研究分析。这里的称呼只用于区分本机进度；请不要在对话中填写姓名、联系方式等个人信息。', 'A random participant ID links your class, questions, submitted answers, results, timestamps and AI conversations for class summaries and research analysis. Your local name separates browser progress. Do not include names or contact details in conversations.')}</p>
+      <p>{text('当前浏览器保存身份凭据。请使用实验参与者代号；共用设备时切换代号，清除浏览器数据会失去原身份。若不希望记录，可直接离开；如需撤回已提交数据，请联系实验负责人。', 'This browser stores your identity credential. Use a participant code and change codes on shared devices. Clearing browser data loses this identity. Leave this page if you do not agree; contact the study organizer to withdraw recorded data.')}</p>
+      {!classConfirmed && <p role="status">{text('请先在右上角选择本次学习所属的班级。', 'Select your class at the top right before starting.')}</p>}
+      {error && <p role="alert">{error}</p>}
+      <button className="btn primary" disabled={connecting || !classConfirmed || storageError} onClick={consent}>{connecting ? text('正在连接…', 'Connecting…') : text('同意记录并开始', 'Agree and start')}</button>
+    </section></main> : <main className="sw-main">
+      <p className="sw-small">{text('学习记录已连接 · 实验 ', 'Learning records connected · Experiment ')}{runInfo.experiment_id}</p>
+      {trackingError && <p role="alert" className="note-tip">{text('题目显示记录未同步：', 'Question display not synced: ')}{trackingError} <button className="btn sm" onClick={() => setTrackingRetry(n => n + 1)}>{text('重试', 'Retry')}</button></p>}
+      <div className="sw-chapterbar"><label><span className="sw-eyebrow">{text('当前章节', 'YOUR CHAPTER')}</span><select aria-label={text('选择章节', 'Choose chapter')} disabled={busy} value={chapter?.id || ''} onChange={e => { patch({ chapter: e.target.value, section: '', view: 'home' }); setError('') }}>{chapters.map(c => <option key={c.id} value={c.id}>{displayLabel(c.title, lang)}</option>)}</select></label><nav aria-label={text('章节导航', 'Chapter navigation')}><button className="btn" disabled={busy} onClick={home}>{text('章节首页', 'Chapter home')}</button><button className="btn" disabled={busy} onClick={() => patch({ view: 'favorites' })}>{t('stu_favorites')}</button></nav></div>
       {catalog?._mock && <p role="alert" className="note-tip">{text('教材服务未连接，暂时展示示例目录。请启动后端并刷新。', 'Textbook service unavailable. Showing a sample catalog; start the backend and refresh.')}</p>}
       {storageError && <p role="alert">{text('浏览器无法保存进度。', 'Browser progress could not be saved.')}</p>}
       {error && <p role="alert" className="grade-box bad">{error}</p>}
@@ -305,20 +363,22 @@ function Workspace({ topbar, t, lang, student, classId, classes, catalog, scope,
         const ch = chapters.find(c => c.sections.some(s => s.title === f.topic)); const sec = ch?.sections.find(s => s.title === f.topic)
         if (!ch || !sec) { setError(text('未找到此题对应的小节。', 'The section for this question was not found.')); return }
         const key = ch.id + ':free:' + sec.id
-        setState(s => { const base = s.rounds[key] || { mode: 'free', section: sec.id, title: sec.title, items: [] }; const index = base.items.findIndex(x => x.q.id === f.question_id); const items = index >= 0 ? base.items : [...base.items, { q: { ...f, id: f.question_id }, section: sec.id, answer: {}, chat: [] }]; return { ...s, chapter: ch.id, section: sec.id, view: 'study', active: key, rounds: { ...s.rounds, [key]: { ...base, items, cursor: index >= 0 ? index : items.length - 1 } } } })
+        setState(s => { const base = s.rounds[key] || { mode: 'free', section: sec.id, title: sec.title, items: [] }; const index = base.items.findIndex(x => x.q.id === f.question_id); const items = index >= 0 ? base.items : [...base.items, { trackingId: crypto.randomUUID(), q: { ...f, id: f.question_id }, section: sec.id, answer: {}, chat: [] }]; return { ...s, chapter: ch.id, section: sec.id, view: 'study', active: key, rounds: { ...s.rounds, [key]: { ...base, items, cursor: index >= 0 ? index : items.length - 1 } } } })
       }} /> : challenge ? <div className="sw-focus"><div className="sw-focushead"><button className="btn ghost" disabled={busy} onClick={home}>← {text('返回学习（保留进度）', 'Back to learning (progress saved)')}</button><span>{text('章节挑战', 'Chapter challenge')}</span></div><h2>{displayLabel(round.title, lang)}</h2>
         {state.view === 'result' && reviewing ? <section className="sw-panel sw-result"><h2>{text('看看这次的表现', 'Review this attempt')}</h2><p>{text('结果只反映这组题目的表现，不能代表整个小节或整章的掌握程度。', 'These results describe this set of questions, not mastery of a section or chapter.')}</p><div className="sw-resultstats"><div><b>{summary.correct}</b>{text('答对', 'Correct')}</div><div><b>{summary.incorrect}</b>{text('答错', 'Incorrect')}</div><div><b>{summary.unanswered}</b>{text('未作答', 'Unanswered')}</div></div>{round.items.map((x, i) => <div className="sw-result-row" key={x.q.id}><button className="sw-reviewrow" onClick={() => { updateRound(roundKey, r => ({ ...r, cursor: i })); patch({ view: 'review' }) }}><span>{i + 1}. {displayLabel(x.q.topic, lang)}</span><strong>{!hasAnswer(x) ? text('未作答', 'Unanswered') : x.grade?.correct ? text('答对', 'Correct') : text('答错', 'Incorrect')} →</strong></button>{!x.grade?.correct && <button className="btn sm ghost" onClick={() => learn(sections.find(s => s.id === x.section))}>{text('去这个小节练习', 'Practice this section')}</button>}</div>)}<div className="sw-actions"><button className="btn" onClick={() => startChallenge(true)}>{text('重新挑战', 'New challenge')}</button><button className="btn primary" onClick={home}>{text('返回学习', 'Back to learning')}</button></div></section>
         : round.items.length < round.plan.length ? <section className="sw-panel"><h3>{text('正在准备整章题目', 'Preparing your chapter challenge')}</h3><p>{round.items.length} / {round.plan.length} {text('道已准备。准备完后统一开始。', 'ready. Your challenge starts when all questions are ready.')}</p><button className="btn" disabled={busy} onClick={() => prepareChallenge()}>{text('继续准备', 'Continue preparation')}</button><button className="btn ghost" disabled={busy} onClick={() => startChallenge(true)}>{text('重新准备', 'Start over')}</button></section>
         : <>{!reviewing && <p className="note-tip">{text(`已作答 ${round.items.filter(hasAnswer).length} / ${round.items.length}。可以返回修改；交卷后再看反馈和询问导师。`, `${round.items.filter(hasAnswer).length} / ${round.items.length} answered. Revisit before submitting; feedback and tutor follow submission.`)}</p>}{questionPanel}{round.grading && <p role="alert">{text('已确认交卷，答案已锁定。若批改中断，请点击“继续批改”。', 'Submission confirmed; answers are locked. If interrupted, use Retry grading.')}</p>}{!reviewing && <button className="btn ghost" disabled={busy} onClick={() => startChallenge(true)}>{text('放弃本轮并重新开始', 'Discard this attempt and restart')}</button>}</>}
       </div> : <button className="btn" onClick={home}>{text('返回章节首页', 'Back to chapter')}</button>}
-    </main>
-    <StudentAgent
-      topic={item?.q?.topic || selected?.title || chapter?.title}
-      problem={item?.q || null}
+    </main>}
+    {runInfo && !(questionVisible && challenge && !reviewing) && <StudentAgent
+      key={questionVisible ? item.trackingId : 'general'}
+      learning={learning} item={questionVisible ? item : null} mode={round?.mode || 'free'}
+      topic={(questionVisible && item?.q?.topic) || selected?.title || chapter?.title}
+      problem={questionVisible ? item.q : null}
       submittedAnswer={item?.grade && (!challenge || reviewing) ? item.answer : null}
       studentId={student}
       classId={classId}
-    />
+    />}
   </div>
 }
 function StudyNotes({ topic, lang }) {
@@ -332,37 +392,4 @@ function StudyNotes({ topic, lang }) {
   if (card._mock) return <p className="note-tip">{zh ? '教材暂时无法读取，请检查后端后刷新。' : 'Textbook unavailable. Check the backend and refresh.'}</p>
   const formulas = card.content?.find(b => b.content_type === 'concept')?.formulas || card.formulas || []
   return <section className="sw-concept-preview"><span className="sw-eyebrow">{zh ? '核心概念' : 'CORE IDEA'}</span><MathText as="p">{translated.translate(card.summary || card.definition)}</MathText>{formulas.slice(0, 2).map((f, i) => <Formula key={i}>{f}</Formula>)}<details onToggle={e => setExpanded(e.currentTarget.open)}><summary>{zh ? '查看教材、例题与插图' : 'Explore the textbook, examples and figures'}</summary>{expanded && <div className="sw-material"><Concept topic={topic} embedded /></div>}</details></section>
-}
-function QuestionHelp({ item, lang, student, classId, busy, task, onChange }) {
-  const zh = lang === 'zh'
-  const chatTranslations = useTranslatedContent((item.chat || []).filter(m => m.role === 'assistant').flatMap(m => [m.content, ...(m.citations || []).map(c => c.title)]), lang)
-  const input = item.helpDraft || ''
-  const setInput = helpDraft => onChange({ helpDraft })
-  const [open, setOpen] = useState(false)
-  async function ask(message) {
-    if (!message.trim()) return
-    await task(async () => {
-      onChange({ assisted: true })
-      let sid = item.sid
-      if (!sid) {
-        const start = await api.startSession({ problem_id: item.q.id || null, topic: item.q.topic, student_id: student || 'anon', class_id: classId, language: lang, condition: 'explain' })
-        if (start._mock) throw new Error(zh ? '导师暂不可用，请稍后重试。' : 'Tutor unavailable. Please retry later.')
-        sid = start.session_id
-        onChange({ sid, assisted: true })
-      }
-      const context = JSON.stringify({ question: item.q.stem, options: item.q.options, steps: item.q.steps, current_answer: item.answer, grading_feedback: item.grade?.feedback, question_from_student: message })
-      const reply = await api.sendMessage(sid, context, lang, { topic: item.q.topic })
-      if (reply._mock) { onChange({ sid: null }); throw new Error(zh ? '导师回复失败，输入已保留，请重试。' : 'Tutor reply failed. Your input is kept; please retry.') }
-      onChange({ sid, assisted: true, chat: [...(item.chat || []), { role: 'user', content: message }, { role: 'assistant', content: reply.tutor_message, citations: reply.citations }] })
-      setInput(''); setOpen(true)
-    })
-  }
-  return <section className="sw-help"><div className="sw-helphead"><span className="sw-modeicon">✧</span><div><h3>{zh ? '对这道题有疑问？' : 'A question about this problem?'}</h3><p>{zh ? '告诉导师你卡在哪一步，答案会留在上面。' : 'Tell your tutor where you got stuck. Your answer stays above.'}</p></div>
-    {!!item.chat?.length && <button className="btn sm" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? (zh ? '收起讨论' : 'Collapse') : (zh ? '查看讨论' : 'Show discussion')}</button>}</div>
-    <div className="row wrap">{[zh ? '给我一点提示' : 'Give me a hint', zh ? '帮我检查当前思路' : 'Check my current reasoning'].map(p => <button key={p} className="chip" disabled={busy} onClick={() => ask(p)}>{p}</button>)}</div>
-    {chatTranslations.error && <p role="alert">{zh ? '回复翻译暂不可用。' : 'Reply translation unavailable.'}<button className="btn sm" onClick={chatTranslations.retry}>{zh ? '重试' : 'Retry'}</button></p>}
-    {open && <div className="sw-discussion" aria-live="polite">{item.chat?.map((m, i) => <div key={i} className={'sw-message ' + m.role}><strong>{m.role === 'user' ? (zh ? '我' : 'You') : (zh ? '导师' : 'Tutor')}</strong><MathText as="div">{m.role === 'assistant' ? chatTranslations.translate(m.content) : m.content}</MathText>{m.citations?.map((c, j) => <small key={j}>{chatTranslations.translate(c.title)} {c.page != null ? ' · p.' + c.page : ''}</small>)}</div>)}</div>}
-    <form className="sw-helpinput" onSubmit={e => { e.preventDefault(); ask(input) }}><textarea className="inp" rows={2} aria-label={zh ? '向导师提问' : 'Ask the tutor'} placeholder={zh ? '说说你卡在哪一步……' : 'Where did you get stuck?'} value={input} onChange={e => setInput(e.target.value)} disabled={busy} /><button className="btn primary" disabled={busy || !input.trim()}>{zh ? '发送' : 'Send'}</button></form>
-    {!!item.chat?.length && <small className="muted">{zh ? '参考提示后，可以回到上方修改答案并重新提交。导师讨论不会改变判题结果。' : 'Use the hint to revise and resubmit above. Discussion does not change your recorded result.'}</small>}
-  </section>
 }

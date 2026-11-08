@@ -1,47 +1,29 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback } from 'react'
 import { useLang } from '../i18n.jsx'
-import { api } from '../api.js'
 import FloatingAgent from '../components/FloatingAgent.jsx'
-import { submittedAnswerText } from './student/study.js'
 
 const PROMPTS = {
   zh: ['我没看懂题目，应该先关注什么？', '检查我现在的思路，不要直接给答案', '给我一个最小提示', '我应该怎样验证答案？'],
   en: ['What should I notice first?', 'Check my reasoning without giving the answer', 'Give me one minimal hint', 'How should I verify my answer?'],
 }
 
-export default function StudentAgent({ topic, problem, submittedAnswer, studentId, classId }) {
+export default function StudentAgent({ topic, problem, submittedAnswer, studentId, classId, learning, item, mode }) {
   const { lang } = useLang()
   const zh = lang === 'zh'
-  const sessionRef = useRef(null)
-  const contextKey = `${problem?.id || topic || 'general'}:${studentId}:${classId}:${lang}`
-
-  useEffect(() => { sessionRef.current = null }, [contextKey])
+  const contextKey = `${item?.trackingId || topic || 'general'}:${studentId}:${classId}:${lang}`
 
   const ask = useCallback(async (question) => {
-    if (!sessionRef.current) {
-      const session = await api.startSession({
-        problem_id: problem?.id || null,
-        topic: topic || problem?.topic || 'Calculus 1',
-        student_id: studentId || 'anon',
-        class_id: classId || null,
-        language: lang,
-        condition: 'explain',
-      })
-      sessionRef.current = session.session_id
-    }
-    const answer = submittedAnswerText(problem, submittedAnswer)
-    // Send the actual submitted work, not the answer key or a client-side
-    // assertion of correctness. The tutor still verifies it independently.
-    const message = answer
-      ? `Student's submitted answer (verify independently): ${answer}\nStudent question: ${question}`
-      : question
-    const turn = await api.sendMessage(sessionRef.current, message, lang, { topic: topic || problem?.topic })
+    // The server retrieves prior work by attempt ID. Keep the student's own
+    // message intact so attached context cannot inflate reasoning measures.
+    const turn = await learning.ask(item, mode, question, topic || problem?.topic || 'Calculus 1', lang,
+      submittedAnswer ? item?.grade?.attempt_id : null)
     return {
       content: turn.tutor_message,
       citations: turn.citations,
-      note: turn._mock ? (zh ? '导师服务未连接，当前为演示回复。' : 'Tutor service is unavailable; this is a demo reply.') : '',
+      note: turn.response_status === 'unavailable' ? (zh ? 'AI 服务暂不可用，此回复不计为有效帮助。' : 'AI unavailable; this reply is not counted as usable help.') : '',
+      ack: () => learning.presented(turn),
     }
-  }, [classId, lang, problem, submittedAnswer, studentId, topic, zh])
+  }, [learning, item, mode, lang, problem, submittedAnswer, topic, zh])
 
   return <FloatingAgent
     title={zh ? '学习 Agent' : 'Learning Agent'}

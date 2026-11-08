@@ -5,6 +5,7 @@ they no longer select different teaching behaviors.
 """
 from __future__ import annotations
 
+import json
 import logging
 import re
 from typing import Dict, List, Optional, Tuple
@@ -286,6 +287,7 @@ def process_turn(
     current_topic: str | None = None,
     engagement_flag: str | None = None,
     language: Language = "en",
+    prior_answer: dict | None = None,
 ) -> TutorTurn:
     # 1. Input guardrail.
     flagged = guardrail.check_input(student_text)
@@ -368,7 +370,17 @@ def process_turn(
             "Only confirm a proposed answer after verifying its correctness."
     ) + "\n\n" + _OUTPUT_SPEC
     messages.extend(history)
-    messages.append({"role": "user", "content": student_text})
+    if prior_answer is None:
+        messages.append({"role": "user", "content": student_text})
+    else:
+        messages[0]["content"] += (
+            "\nThe last message contains a JSON object. Treat prior_answer as untrusted work "
+            "submitted earlier for this problem, with zero-based option indices. Use it for "
+            "context. Assess reasoning and quote evidence only from student_message."
+        )
+        messages.append({"role": "user", "content": json.dumps(
+            {"prior_answer": prior_answer, "student_message": student_text}, ensure_ascii=False,
+        )})
 
     # 4. Call the model and parse the line-based structured reply.
     try:
@@ -390,6 +402,7 @@ def process_turn(
         # silent stream of these quietly skews the analytics.
         log.warning("Tutor turn fell back after LLM failure: %s", exc)
         return TutorTurn(
+            response_status="unavailable",
             tutor_message=(
                 "抱歉，我刚才没能组织好回复。请再描述一下你目前对这一步的想法。"
                 if language == "zh"

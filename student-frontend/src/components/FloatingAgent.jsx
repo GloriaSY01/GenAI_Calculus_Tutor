@@ -21,11 +21,40 @@ export default function FloatingAgent({
   const [sending, setSending] = useState(false)
   const scrollRef = useRef(null)
   const inputRef = useRef(null)
+  const generation = useRef(0)
+  const acknowledged = useRef(new Set())
+  const [deliveryError, setDeliveryError] = useState(false)
+  const [deliveryRetry, setDeliveryRetry] = useState(0)
 
   useEffect(() => {
+    generation.current += 1
     setMessages([{ role: 'assistant', content: welcome, welcome: true }])
     setInput('')
+    setSending(false)
+    setDeliveryError(false)
+    return () => { generation.current += 1 }
   }, [resetKey, welcome])
+
+  useEffect(() => {
+    if (!open) return
+    let active = true
+    // Effects run after the reply is committed to the visible chat. Hidden tabs
+    // must wait until foregrounded before acknowledging presentation.
+    async function acknowledge() {
+      if (document.visibilityState !== 'visible') return
+      for (const message of messages) {
+        if (!message.ack || acknowledged.current.has(message)) continue
+        try {
+          await message.ack()
+          acknowledged.current.add(message)
+          if (active) setDeliveryError(false)
+        } catch { if (active) setDeliveryError(true) }
+      }
+    }
+    acknowledge()
+    document.addEventListener('visibilitychange', acknowledge)
+    return () => { active = false; document.removeEventListener('visibilitychange', acknowledge) }
+  }, [messages, open, deliveryRetry])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -44,15 +73,19 @@ export default function FloatingAgent({
     setInput('')
     setMessages((current) => [...current, { role: 'user', content: question }])
     setSending(true)
+    const currentGeneration = generation.current
     try {
       const reply = await onAsk(question, history)
+      if (generation.current !== currentGeneration) return
       setMessages((current) => [...current, {
         role: 'assistant',
         content: reply.content,
         note: reply.note,
         citations: reply.citations || [],
+        ack: reply.ack,
       }])
     } catch (error) {
+      if (generation.current !== currentGeneration) return
       setInput(question)
       setMessages((current) => [...current, {
         role: 'assistant',
@@ -60,7 +93,7 @@ export default function FloatingAgent({
         error: true,
       }])
     } finally {
-      setSending(false)
+      if (generation.current === currentGeneration) setSending(false)
     }
   }
 
@@ -73,6 +106,7 @@ export default function FloatingAgent({
       </header>
 
       <div className="floating-agent-chat" ref={scrollRef} aria-live="polite">
+        {deliveryError && <p role="alert">显示记录未同步 / Display record not synced. <button type="button" onClick={() => setDeliveryRetry(n => n + 1)}>重试 / Retry</button></p>}
         {messages.map((message, index) => <div key={index} className={'agent-message ' + message.role}>
           <div className={'agent-bubble' + (message.error ? ' error' : '')}>
             {message.note && <small className="agent-note">{message.note}</small>}
