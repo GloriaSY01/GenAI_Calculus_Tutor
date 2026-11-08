@@ -8,13 +8,18 @@ from openai import OpenAI
 
 from . import config
 
-_client = OpenAI(base_url=config.LLM_BASE_URL, api_key=config.LLM_API_KEY)
+_client: OpenAI | None = None
 
 
 def chat(messages: List[Dict[str, str]], temperature: float = 0.4,
          max_tokens: int = 700, response_format: Optional[dict] = None,
          retries: int = 1) -> str:
     """Return the raw assistant text, retrying once on transient failures."""
+    global _client
+    if not config.LLM_API_KEY.strip():
+        raise RuntimeError("LLM_API_KEY is not configured")
+    if _client is None:
+        _client = OpenAI(base_url=config.LLM_BASE_URL, api_key=config.LLM_API_KEY)
     last_exc: Optional[Exception] = None
     for attempt in range(retries + 1):
         try:

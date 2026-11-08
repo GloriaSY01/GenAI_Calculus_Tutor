@@ -93,6 +93,7 @@ app.add_middleware(
 def health():
     return {
         "status": "ok",
+        "llm_configured": bool(config.LLM_API_KEY.strip()),
         "model": config.LLM_MODEL,
         "base_url": config.LLM_BASE_URL,
         "rag": rag.index_status(),
