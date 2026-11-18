@@ -244,7 +244,7 @@ function Assistant({classId,topic}) {
 }
 export default function LegacyDashboard({theme,setTheme,onStudent}) {
  const {t,label,lang}=useCopy();const copy=useDashboardCopy();const {setLang}=useLang();const query=new URLSearchParams(window.location.search)
- const [classId,setClassId]=useState(()=>['demo','calc1-a','calc1-b'].includes(query.get('class_id'))?query.get('class_id'):'calc1-a');const [topic,setTopic]=useState('')
+ const [classId,setClassId]=useState(()=>['demo','calc1-a','calc1-b','calc1-c','calc1-d','calc1-e'].includes(query.get('class_id'))?query.get('class_id'):'calc1-a');const [topic,setTopic]=useState('')
  const classOptions=useAsync(()=>api.teacherClasses(),[])
  const result=useAsync(()=>Promise.all([api.teacherData(classId),api.teacherTopics()]).then(([data,topics])=>({data,topics,classId})),[classId])
  useEffect(()=>{if(['zh','en'].includes(query.get('lang')))setLang(query.get('lang'));if(['light','dark'].includes(query.get('theme')))setTheme(query.get('theme'))},[])

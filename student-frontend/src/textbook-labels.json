@@ -1,7 +1,10 @@
 {
-  "Demo class": "演示课",
+  "Demo class": "演示班",
   "Calculus I · Class A": "微积分 I · A 班",
   "Calculus I · Class B": "微积分 I · B 班",
+  "Calculus I · Class C": "微积分 I · C 班",
+  "Calculus I · Class D": "微积分 I · D 班",
+  "Calculus I · Class E": "微积分 I · E 班",
   "1 Introduction to Calculus": "1 微积分简介",
   "1.1 Velocity and Distance": "1.1 速度和距离",
   "1.2 Calculus Without Limits": "1.2 不借助极限的微积分",

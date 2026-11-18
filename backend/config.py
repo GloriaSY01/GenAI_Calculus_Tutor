@@ -80,6 +80,9 @@ CLASS_OPTIONS = [
     {"id": "demo", "label": "Demo class"},
     {"id": "calc1-a", "label": "Calculus I · Class A"},
     {"id": "calc1-b", "label": "Calculus I · Class B"},
+    {"id": "calc1-c", "label": "Calculus I · Class C"},
+    {"id": "calc1-d", "label": "Calculus I · Class D"},
+    {"id": "calc1-e", "label": "Calculus I · Class E"},
 ]
 
 LOG_DIR.mkdir(parents=True, exist_ok=True)
