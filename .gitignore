@@ -1,6 +1,7 @@
 # Secrets
 .env
 data/*.sqlite3
+!data/calculus_tutor.sqlite3
 
 # Python
 __pycache__/
