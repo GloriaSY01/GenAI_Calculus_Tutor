@@ -10,7 +10,7 @@ import copy
 import hashlib
 import os
 import time
-from collections import Counter
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from typing import Literal
 from uuid import UUID, uuid4
@@ -19,7 +19,7 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import Column, Float, JSON, MetaData, String, Table, create_engine, select, text
 
-from . import config, database, generator, socratic
+from . import config, database, generator, socratic, textbook
 from .schemas import GradeRequest
 
 
@@ -39,6 +39,15 @@ events = Table(
     Column("class_id", String(80), nullable=False, index=True),
     Column("created_at", Float, nullable=False),
     Column("payload", JSON, nullable=False),
+)
+student_logins = Table(
+    "student_logins_v1", metadata,
+    Column("run_id", String(100), primary_key=True),
+    Column("participant_id", String(64), nullable=False, index=True),
+    Column("student_number", String(80), nullable=False, index=True),
+    Column("student_name", String(160), nullable=False),
+    Column("class_id", String(80), nullable=False, index=True),
+    Column("logged_in_at", Float, nullable=False, index=True),
 )
 _local_engine = None
 
@@ -130,12 +139,18 @@ def settings():
 class RunStart(BaseModel):
     run_id: UUID
     class_id: str
+    student_name: str = Field(min_length=1, max_length=100)
+    student_number: str = Field(min_length=1, max_length=80)
     consent: bool
 
 
 @router.post("/start")
 def start(req: RunStart, x_learning_token: str | None = Header(default=None)):
     identity = owner(x_learning_token)
+    student_name = req.student_name.strip()
+    student_number = req.student_number.strip().upper()
+    if not student_name or not student_number:
+        raise HTTPException(422, "Student name and student number are required")
     if not req.consent:
         raise HTTPException(400, "Consent is required to record learning")
     if req.class_id not in {item["id"] for item in config.CLASS_OPTIONS}:
@@ -144,13 +159,21 @@ def start(req: RunStart, x_learning_token: str | None = Header(default=None)):
     with transaction() as connection:
         if find(connection, req.run_id):
             run = get(connection, req.run_id, "run", identity)
-            if run["class_id"] != req.class_id or run["experiment_id"] != experiment_id():
+            if (run["class_id"] != req.class_id or run["experiment_id"] != experiment_id()
+                    or run.get("student_number") != student_number or run.get("student_name") != student_name):
                 raise HTTPException(409, "Start a new run for this class or experiment")
         else:
+            logged_in_at = time.time()
             run = dict(run_id=str(req.run_id), student_id=identity, class_id=req.class_id,
                        experiment_id=experiment_id(), consent_version="pilot-v1",
-                       started_at=time.time(), status="active")
+                       student_name=student_name, student_number=student_number,
+                       started_at=logged_in_at, status="active")
             save(connection, req.run_id, "run", identity, run)
+            connection.execute(student_logins.insert().values(
+                run_id=str(req.run_id), participant_id=identity,
+                student_number=student_number, student_name=student_name,
+                class_id=req.class_id, logged_in_at=logged_in_at,
+            ))
             emit(connection, "start:" + str(req.run_id), context(run), "run_started")
     return {**context(run), "status": run["status"], "persistence": engine().dialect.name}
 
@@ -490,3 +513,243 @@ def list_events(class_id=None):
         statement = statement.where(events.c.class_id == class_id)
     with engine().connect() as connection:
         return [dict(row[0]) for row in connection.execute(statement.order_by(events.c.created_at, events.c.id))]
+
+
+def student_dashboard(class_id=None):
+    """Teacher-facing student rows built from local login and learning events."""
+    init()
+    login_statement = select(student_logins)
+    event_statement = select(events.c.payload).where(events.c.experiment_id == experiment_id())
+    challenge_statement = select(records.c.payload).where(records.c.kind == "challenge")
+    if class_id:
+        login_statement = login_statement.where(student_logins.c.class_id == class_id)
+        event_statement = event_statement.where(events.c.class_id == class_id)
+    with engine().connect() as connection:
+        login_rows = [dict(row) for row in connection.execute(
+            login_statement.order_by(student_logins.c.logged_in_at.desc())
+        ).mappings()]
+        event_rows = [dict(row[0]) for row in connection.execute(
+            event_statement.order_by(events.c.created_at, events.c.id)
+        )]
+        challenge_rows = [dict(row[0]) for row in connection.execute(challenge_statement)]
+
+    catalog = textbook.catalog_tree()["chapters"]
+    section_to_chapter = {
+        section["id"]: chapter["id"] for chapter in catalog for section in chapter["sections"]
+    }
+    chapter_sizes = {chapter["id"]: len(chapter["sections"]) for chapter in catalog}
+    challenge_events = {
+        str(event.get("submission_id")): event
+        for event in event_rows if event.get("event") == "challenge_submitted"
+    }
+    challenge_by_run = defaultdict(list)
+    for record in challenge_rows:
+        request = record.get("request") or {}
+        result = record.get("result") or {}
+        run_id = str(request.get("run_id") or "")
+        submission_id = str(result.get("submission_id") or "")
+        if not run_id or not submission_id:
+            continue
+        event = challenge_events.get(submission_id, {})
+        results = result.get("results") or []
+        assigned = int(event.get("assigned") or len(results))
+        answered = int(event.get("answered") or sum(item is not None for item in results))
+        correct = sum(bool(item and item.get("correct")) for item in results)
+        challenge_by_run[run_id].append({
+            "submission_id": submission_id,
+            "submitted_at": event.get("ts"),
+            "assigned": assigned,
+            "answered": answered,
+            "correct": correct,
+            "completion_rate": round(answered / assigned, 3) if assigned else None,
+            "score_rate": round(correct / assigned, 3) if assigned else None,
+        })
+
+    def empty_stats():
+        return {
+            "answers": 0, "correct": 0,
+            "practice_answers": 0, "practice_correct": 0,
+            "challenge_answers": 0, "challenge_correct": 0,
+            "practice_by_type": defaultdict(lambda: {"answers": 0, "correct": 0}),
+            "practice_by_difficulty": defaultdict(lambda: {"answers": 0, "correct": 0}),
+            "practice_by_topic": defaultdict(lambda: {"answers": 0, "correct": 0}),
+            "agent_questions": 0, "agent_hints": 0,
+            "helped_answers": 0, "helped_correct": 0,
+            "reasoning": Counter(), "sections": set(), "chapters": set(),
+            "event_times": [], "last_activity_at": None,
+        }
+
+    by_run = defaultdict(empty_stats)
+    exposure_meta = {}
+    for event in event_rows:
+        run = by_run[event.get("run_id")]
+        if event.get("event") == "question_assigned":
+            exposure_meta[str(event.get("exposure_id"))] = {
+                "mode": event.get("mode"), "section_id": event.get("section_id"),
+                "topic": event.get("topic"),
+            }
+        if event.get("event") == "practice_grade":
+            run["answers"] += 1
+            run["correct"] += int(bool(event.get("correct")))
+            prefix = "challenge" if event.get("mode") == "challenge" else "practice"
+            run[f"{prefix}_answers"] += 1
+            run[f"{prefix}_correct"] += int(bool(event.get("correct")))
+            if prefix == "practice":
+                is_correct = int(bool(event.get("correct")))
+                for field, bucket_name, fallback in (
+                    ("type", "practice_by_type", "unknown"),
+                    ("difficulty", "practice_by_difficulty", "unknown"),
+                    ("topic", "practice_by_topic", "未标记知识点"),
+                ):
+                    key = event.get(field) or fallback
+                    run[bucket_name][key]["answers"] += 1
+                    run[bucket_name][key]["correct"] += is_correct
+                if event.get("assistance_status") == "received":
+                    run["helped_answers"] += 1
+                    run["helped_correct"] += is_correct
+        elif event.get("event") == "tutor_requested":
+            run["agent_questions"] += 1
+        elif event.get("event") == "turn":
+            if event.get("action") in {"hint", "correct", "advance"}:
+                run["agent_hints"] += 1
+            run["reasoning"][event.get("reasoning_assessment") or "none"] += 1
+        section_id = event.get("section_id")
+        if not section_id and event.get("exposure_id"):
+            section_id = exposure_meta.get(str(event.get("exposure_id")), {}).get("section_id")
+        if section_id:
+            run["sections"].add(section_id)
+            chapter_id = section_to_chapter.get(section_id)
+            if chapter_id:
+                run["chapters"].add(chapter_id)
+        timestamp = event.get("ts")
+        if timestamp is not None:
+            run["last_activity_at"] = max(run["last_activity_at"] or timestamp, timestamp)
+            run["event_times"].append(timestamp)
+
+    def breakdown(bucket):
+        return [{
+            "key": key, "answers": value["answers"], "correct": value["correct"],
+            "accuracy": round(value["correct"] / value["answers"], 3) if value["answers"] else None,
+        } for key, value in sorted(bucket.items(), key=lambda row: (-row[1]["answers"], str(row[0])))]
+
+    def active_seconds(values):
+        ordered = sorted(set(values))
+        return round(sum(min(current - previous, 300) for previous, current in zip(ordered, ordered[1:])))
+
+    students = {}
+    for login in login_rows:
+        key = (login["student_number"], login["class_id"])
+        stats = by_run.get(login["run_id"], {})
+        session = {
+            "run_id": login["run_id"], "logged_in_at": login["logged_in_at"],
+            "answers": stats.get("answers", 0), "correct": stats.get("correct", 0),
+            "practice_answers": stats.get("practice_answers", 0),
+            "practice_correct": stats.get("practice_correct", 0),
+            "challenge_answers": stats.get("challenge_answers", 0),
+            "challenge_correct": stats.get("challenge_correct", 0),
+            "agent_questions": stats.get("agent_questions", 0),
+            "agent_hints": stats.get("agent_hints", 0),
+            "helped_answers": stats.get("helped_answers", 0),
+            "helped_correct": stats.get("helped_correct", 0),
+            "active_seconds": active_seconds(stats.get("event_times", [])),
+            "challenge_history": sorted(
+                challenge_by_run.get(login["run_id"], []),
+                key=lambda item: item.get("submitted_at") or 0, reverse=True,
+            ),
+            "last_activity_at": stats.get("last_activity_at") or login["logged_in_at"],
+        }
+        if key not in students:
+            students[key] = {
+                "student_name": login["student_name"], "student_number": login["student_number"],
+                "class_id": login["class_id"], "first_login_at": login["logged_in_at"],
+                "last_login_at": login["logged_in_at"], "login_count": 0,
+                "answers": 0, "correct": 0,
+                "practice_answers": 0, "practice_correct": 0,
+                "challenge_answers": 0, "challenge_correct": 0,
+                "agent_questions": 0, "agent_hints": 0,
+                "helped_answers": 0, "helped_correct": 0,
+                "active_seconds": 0,
+                "practice_by_type": defaultdict(lambda: {"answers": 0, "correct": 0}),
+                "practice_by_difficulty": defaultdict(lambda: {"answers": 0, "correct": 0}),
+                "practice_by_topic": defaultdict(lambda: {"answers": 0, "correct": 0}),
+                "reasoning": Counter(), "sections": set(), "chapters": set(),
+                "challenge_history": [],
+                "last_activity_at": session["last_activity_at"], "sessions": [],
+            }
+        student = students[key]
+        if login["logged_in_at"] >= student["last_login_at"]:
+            student["student_name"] = login["student_name"]
+        student["first_login_at"] = min(student["first_login_at"], login["logged_in_at"])
+        student["last_login_at"] = max(student["last_login_at"], login["logged_in_at"])
+        student["last_activity_at"] = max(student["last_activity_at"], session["last_activity_at"])
+        student["login_count"] += 1
+        student["answers"] += session["answers"]
+        student["correct"] += session["correct"]
+        student["practice_answers"] += session["practice_answers"]
+        student["practice_correct"] += session["practice_correct"]
+        student["challenge_answers"] += session["challenge_answers"]
+        student["challenge_correct"] += session["challenge_correct"]
+        student["agent_questions"] += session["agent_questions"]
+        student["agent_hints"] += session["agent_hints"]
+        student["helped_answers"] += session["helped_answers"]
+        student["helped_correct"] += session["helped_correct"]
+        student["active_seconds"] += session["active_seconds"]
+        for source, target in (
+            (stats.get("practice_by_type", {}), student["practice_by_type"]),
+            (stats.get("practice_by_difficulty", {}), student["practice_by_difficulty"]),
+            (stats.get("practice_by_topic", {}), student["practice_by_topic"]),
+        ):
+            for name, values in source.items():
+                target[name]["answers"] += values["answers"]
+                target[name]["correct"] += values["correct"]
+        student["reasoning"].update(stats.get("reasoning", {}))
+        student["sections"].update(stats.get("sections", set()))
+        student["chapters"].update(stats.get("chapters", set()))
+        student["challenge_history"].extend(session["challenge_history"])
+        student["sessions"].append(session)
+
+    result = []
+    for student in students.values():
+        student["accuracy"] = round(student["correct"] / student["answers"], 3) if student["answers"] else None
+        student["practice_accuracy"] = round(student["practice_correct"] / student["practice_answers"], 3) if student["practice_answers"] else None
+        student["challenge_accuracy"] = round(student["challenge_correct"] / student["challenge_answers"], 3) if student["challenge_answers"] else None
+        challenge_assigned = sum(item["assigned"] for item in student["challenge_history"])
+        challenge_answered = sum(item["answered"] for item in student["challenge_history"])
+        student["challenge_attempts"] = len(student["challenge_history"])
+        student["challenge_completion_rate"] = round(challenge_answered / challenge_assigned, 3) if challenge_assigned else None
+        student["challenge_history"].sort(key=lambda item: item.get("submitted_at") or 0, reverse=True)
+        student["agent_help_rate"] = round(student["helped_answers"] / student["practice_answers"], 3) if student["practice_answers"] else None
+        student["helped_accuracy"] = round(student["helped_correct"] / student["helped_answers"], 3) if student["helped_answers"] else None
+        student["practice_by_type"] = breakdown(student["practice_by_type"])
+        student["practice_by_difficulty"] = breakdown(student["practice_by_difficulty"])
+        topic_rows = breakdown(student["practice_by_topic"])
+        student["practice_by_topic"] = topic_rows
+        student["weak_topics"] = sorted(
+            [row for row in topic_rows if row["answers"] > 0],
+            key=lambda row: (row["accuracy"], -row["answers"]),
+        )[:3]
+        reasoning_total = sum(student["reasoning"].values())
+        reasoning_score = sum(
+            {"none": 0, "weak": 1, "partial": 2, "adequate": 3, "strong": 4}.get(level, 0) * count
+            for level, count in student["reasoning"].items()
+        )
+        student["reasoning_distribution"] = dict(student["reasoning"])
+        student["reasoning_average"] = round(reasoning_score / reasoning_total, 2) if reasoning_total else None
+        covered_by_chapter = Counter(section_to_chapter.get(section) for section in student["sections"])
+        student["coverage"] = {
+            "chapters_covered": len(student["chapters"]), "chapters_total": len(catalog),
+            "sections_covered": len(student["sections"]),
+            "chapter_rate": round(len(student["chapters"]) / len(catalog), 3) if catalog else None,
+            "by_chapter": [{
+                "chapter_id": chapter["id"], "chapter": chapter["title"],
+                "covered": covered_by_chapter.get(chapter["id"], 0),
+                "total": chapter_sizes[chapter["id"]],
+            } for chapter in catalog if covered_by_chapter.get(chapter["id"], 0)],
+        }
+        student.pop("reasoning", None)
+        student.pop("sections", None)
+        student.pop("chapters", None)
+        student["sessions"].sort(key=lambda row: row["logged_in_at"], reverse=True)
+        result.append(student)
+    result.sort(key=lambda row: row["last_activity_at"], reverse=True)
+    return {"generated_at": time.time(), "database": engine().dialect.name, "students": result}

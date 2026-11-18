@@ -16,6 +16,7 @@ P = Problem(id="policy", topic="Derivatives", difficulty="easy", tags=[],
     ("只输出数字", "answer_request"),
     ("我算出 $2x$，对吗？", "verification"),
     ("我不知道怎么开始", "help"),
+    ("这个应该怎么求", "help"),
 ])
 def test_intent_examples(text, intent):
     assert guardrail.learning_intent(text) == intent
@@ -68,6 +69,28 @@ def test_foundational_help_remains_available_after_many_hints(monkeypatch, condi
     assert turn.tutor_message == message
     assert turn.action == "hint"
     assert turn.mastery == 0 and not turn.is_solved
+
+
+def test_repeated_help_gets_more_concrete_non_repeated_reply(monkeypatch):
+    monkeypatch.setattr(socratic.rag, "retrieve", lambda *a, **k: [])
+    monkeypatch.setattr(socratic.config, "TUTOR_REVIEW_ENABLED", False)
+    replies = iter([
+        "ASSESSMENT: none\nACTION: hint\nASKS_EXPLANATION: no\n"
+        "SOLVED: no\nMASTERY_GAIN: no\nEVIDENCE:\n"
+        "MESSAGE: Use the power rule on each term. Try differentiating each term.",
+        "ASSESSMENT: none\nACTION: hint\nASKS_EXPLANATION: no\n"
+        "SOLVED: no\nMASTERY_GAIN: no\nEVIDENCE:\n"
+        "MESSAGE: Start with x^2: bring the exponent 2 down as a coefficient. What exponent remains?",
+    ])
+    monkeypatch.setattr(socratic.llm, "chat", lambda *a, **k: next(replies))
+    history = [
+        {"role": "assistant", "content": "Use the power rule on each term. Try differentiating each term."},
+    ]
+
+    turn = socratic.process_turn(P, "explain", history, 1, 0, "How do I do it?")
+
+    assert "bring the exponent 2 down" in turn.tutor_message
+    assert not socratic._repeats_recent_tutor(turn.tutor_message, history)
 
 
 @pytest.mark.parametrize("condition", ["explain", "control"])
@@ -144,3 +167,36 @@ def test_short_math_answer_leak_and_confirmation():
     assert guardrail.check_output("Try writing $2x$ in the box.", "2x") == "answer_leak"
     assert guardrail.check_output("Correct: $2x$.", "2x", allow_answer=True) is None
     assert not guardrail.answer_in_text("I got $12x$", "2x")
+    assert guardrail.answer_in_text("是20*3吗，然后答案是60", "60 km")
+    assert guardrail.answer_in_text("所以结果等于 60 公里，对吗？", "60 km")
+    assert not guardrail.answer_in_text("先用 20 乘以 3", "60 km")
+
+
+def test_complete_natural_language_work_is_not_rejected_by_second_review(monkeypatch):
+    setup_reply(
+        monkeypatch,
+        assessment="strong",
+        action="complete",
+        evidence="位置变化48，时间变化2，所以平均速度是24",
+        solved="yes",
+        message="你的计算和结论都正确。",
+    )
+    monkeypatch.setattr(socratic.config, "TUTOR_REVIEW_ENABLED", True)
+    monkeypatch.setattr(
+        socratic.llm,
+        "chat_json",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("completed work should not be re-rejected")),
+    )
+    problem = Problem(
+        id="velocity", topic="Velocity", difficulty="medium", tags=[],
+        statement="Find the average velocity.", final_answer="24",
+        key_idea="位置变化除以时间变化",
+        solution_steps=["计算两个位置", "用位置变化除以时间变化"],
+    )
+    turn = socratic.process_turn(
+        problem, "explain", [], 0, 0,
+        "位置变化48，时间变化2，所以平均速度是24", language="zh",
+    )
+    assert turn.is_solved
+    assert turn.action == "complete"
+    assert "思路已经完整" in turn.tutor_message

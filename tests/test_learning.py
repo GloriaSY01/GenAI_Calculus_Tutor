@@ -47,8 +47,13 @@ def post(client, path, data, token=TOKEN, status=200):
     return response.json()
 
 
+def login_data(run_id=None, class_id='calc1-a', consent=True):
+    return {'run_id': run_id or uid(), 'class_id': class_id, 'consent': consent,
+            'student_name': 'Test Student', 'student_number': 'S000001'}
+
+
 def start(client, token=TOKEN, class_id='calc1-a'):
-    return post(client, '/start', {'run_id': uid(), 'class_id': class_id, 'consent': True}, token)['run_id']
+    return post(client, '/start', login_data(class_id=class_id), token)['run_id']
 
 
 def expose(client, run, token=TOKEN, mode='free', presented=True):
@@ -183,9 +188,9 @@ def test_failures_are_not_help_or_reasoning_samples(client, monkeypatch):
 
 
 def test_validation_and_consent(client):
-    post(client, '/start', {'run_id': uid(), 'class_id': 'calc1-a', 'consent': False}, status=400)
-    post(client, '/start', {'run_id': uid(), 'class_id': 'not-a-class', 'consent': True}, status=400)
-    post(client, '/start', {'run_id': uid(), 'class_id': 'calc1-a', 'consent': True}, token='short', status=401)
+    post(client, '/start', login_data(consent=False), status=400)
+    post(client, '/start', login_data(class_id='not-a-class'), status=400)
+    post(client, '/start', login_data(), token='short', status=401)
     exposure = expose(client, start(client))
     for answer in ({}, {'single': 'bad'}, {'multiple': [0]}, {'single': -1}, {'single': 2}):
         post(client, '/attempts', {'exposure_id': exposure, 'attempt_id': uid(), 'answer': answer}, status=422)
@@ -196,7 +201,7 @@ def test_config_and_class_list_share_authoritative_identifiers(client):
     classes = client.get('/classes').json()
     assert client.get('/learning/config').json()['classes'] == classes
     for legacy_id in ['class-a', 'class-b']:
-        result = post(client, '/start', {'run_id': uid(), 'class_id': legacy_id, 'consent': True}, status=400)
+        result = post(client, '/start', login_data(class_id=legacy_id), status=400)
         assert result['detail']['code'] == 'UNKNOWN_CLASS'
     assert learning.list_events() == []
 

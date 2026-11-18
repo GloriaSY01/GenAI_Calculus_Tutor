@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from difflib import SequenceMatcher
 from typing import Dict, List, Optional, Tuple
 
 from . import config, guardrail, llm, rag, textbook
@@ -20,6 +21,23 @@ _ASSESSMENT_ORDER = ["none", "weak", "partial", "adequate", "strong"]
 _VALID_ACTIONS = {"probe", "hint", "correct", "affirm", "advance", "complete", "blocked"}
 _FIELD_KEYS = ("ASSESSMENT", "ACTION", "ASKS_EXPLANATION", "SOLVED", "MASTERY_GAIN", "MESSAGE")
 _FIELD_KEYS = (*_FIELD_KEYS, "EVIDENCE")
+
+
+def _repeats_recent_tutor(message: str, history: List[Dict[str, str]]) -> bool:
+    """Detect a near-repeat of recent student-visible tutor guidance."""
+    compact = lambda value: re.sub(r"[\s$`*_\\{}()\[\],.;:，。；：？！?]+", "", value).casefold()
+    current = compact(message)
+    if len(current) < 12:
+        return False
+    recent = [compact(item.get("content", "")) for item in history if item.get("role") == "assistant"][-2:]
+    return any(
+        previous and (
+            SequenceMatcher(None, current, previous).ratio() >= 0.72
+            or (len(current) >= 24 and current in previous)
+            or (len(previous) >= 24 and previous in current)
+        )
+        for previous in recent
+    )
 
 # Keep the English and Chinese editions in the same numbered order.
 _SYSTEM_EN = """\
@@ -308,6 +326,28 @@ def process_turn(
         and guardrail.answer_in_text(student_text, problem.final_answer)
     )
     prior_student = [x["content"] for x in history if x.get("role") == "user"]
+    # Reasoning is cumulative across a dialogue. A student who has already
+    # shown calculations or a method should not be asked to restate the same
+    # reasoning after proposing the correct final answer.
+    prior_reasoning = any(
+        len(re.sub(r"\s+", "", text)) >= 5
+        and bool(re.search(
+            r"[=+\-*/^]|because|since|therefore|substitut|divide|difference|"
+            r"因为|所以|代入|相减|除以|差值|变化量|公式|法则",
+            text,
+            re.IGNORECASE,
+        ))
+        for text in prior_student
+    )
+    current_reasoning = bool(
+        len(re.sub(r"\s+", "", student_text)) >= 5
+        and re.search(
+            r"[=+\-*/^]|because|since|therefore|substitut|divide|difference|"
+            r"因为|所以|然后|代入|相减|除以|差值|变化量|公式|法则",
+            student_text,
+            re.IGNORECASE,
+        )
+    )
     # 2. Retrieve textbook grounding. Missing indexes degrade safely.
     retrieved: list[dict] = []
     section_id = (
@@ -367,7 +407,15 @@ def process_turn(
             "Do not credit repetition of earlier student or assistant statements. "
             "Accept alternative valid solution paths. If uncertain, ask one targeted "
             "verification question. Concept explanations need not be gated. "
-            "Only confirm a proposed answer after verifying its correctness."
+            "Only confirm a proposed answer after verifying its correctness. "
+            f"prior_student_reasoning_already_present={prior_reasoning}. If the "
+            "student now proposes the correct final answer and prior reasoning is "
+            "already present, confirm and briefly summarize; never ask them to "
+            "repeat that reasoning. If intent=help and hints_used is at least 1, "
+            "the previous support did not resolve the block: do not restate the "
+            "same rule or task. Increase support by exactly one level with a "
+            "concrete application to the current expression, a limited choice, "
+            "or one worked step in a different example."
     ) + "\n\n" + _OUTPUT_SPEC
     messages.extend(history)
     if prior_answer is None:
@@ -397,6 +445,36 @@ def process_turn(
             )
             raw = llm.chat(retry_messages, retries=1)
             fields, message = _parse_response(raw)
+
+        if intent == "help" and _repeats_recent_tutor(message, history):
+            # A follow-up such as “怎么求” means the preceding hint was not
+            # enough. Ask the model once more for genuinely different, more
+            # concrete support rather than displaying a paraphrase.
+            progression_messages = [dict(item) for item in messages]
+            progression_messages[0]["content"] += (
+                "\nREPETITION CHECK: The draft below is too similar to a recent tutor "
+                "reply and must not be shown. Give one level more concrete help. "
+                "Apply the relevant rule to only the first term or sub-step, or "
+                "offer a small choice. Do not repeat the same instruction and do "
+                "not solve the complete problem.\nREJECTED DRAFT: " + message
+            )
+            revised = llm.chat(progression_messages, retries=1)
+            revised_fields, revised_message = _parse_response(revised)
+            if revised_message:
+                fields, message = revised_fields, revised_message
+            if _repeats_recent_tutor(message, history):
+                message = (
+                    f"我们换一种方式，只处理一个最小步骤。先依据“{problem.key_idea if problem else current_topic or '当前概念'}”"
+                    "写出第一项或第一个已知量对应的式子，把这一行发给我；我只检查这一行。"
+                    if language == "zh" else
+                    f"Let's change approach and handle only one small step. Using "
+                    f"{problem.key_idea if problem else current_topic or 'the current concept'}, "
+                    "write the line for the first term or first given quantity; I will check only that line."
+                )
+                fields["ACTION"] = "hint"
+                fields["ASKS_EXPLANATION"] = "no"
+                fields["SOLVED"] = "no"
+                fields["MASTERY_GAIN"] = "no"
     except Exception as exc:  # noqa: BLE001 - surface a safe fallback
         # Logged because this turn still gets recorded like a normal one; a
         # silent stream of these quietly skews the analytics.
@@ -425,7 +503,7 @@ def process_turn(
     action = fields.get("ACTION", "hint").lower()
     if action not in _VALID_ACTIONS:
         action = "hint"
-    is_solved = _as_bool(fields.get("SOLVED"))
+    model_solved = _as_bool(fields.get("SOLVED"))
     asks_for_explanation = _as_bool(fields.get("ASKS_EXPLANATION"))
     mastery_gain = _as_bool(fields.get("MASTERY_GAIN"))
     evidence = fields.get("EVIDENCE", "").strip().strip('"“”')
@@ -438,9 +516,12 @@ def process_turn(
         and intent != "answer_request"
     )
     mastery_gain = mastery_gain and new_evidence
-    # Literal matching alone is not a correctness verdict: retain the model's
-    # verdict, and subject it to the independent review below when enabled.
-    is_solved = is_solved and proposed_answer
+    # Accept either an explicitly matched reference answer or a semantically
+    # verified natural-language derivation. The latter requires the model to
+    # mark the solution solved and quote new, adequate reasoning from the
+    # student's latest message; a bare guess cannot pass this route.
+    semantic_solution = bool(model_solved and new_evidence and current_reasoning)
+    is_solved = bool(model_solved and (proposed_answer or semantic_solution))
     if not message:
         message = (
             "我们先看当前这一步：你想用哪条规则？"
@@ -448,6 +529,26 @@ def process_turn(
             else "Let's focus on this step: which rule would you try?"
         )
     message = normalize_math_notation(message)
+
+    verified_completion = bool(
+        problem and is_solved and (prior_reasoning or current_reasoning or new_evidence)
+    )
+    if verified_completion:
+        # The reference answer is private, but the student has now proposed it
+        # and their earlier work already contains reasoning evidence. Complete
+        # the loop instead of imposing a redundant explanation prompt.
+        action = "complete"
+        is_solved = True
+        asks_for_explanation = False
+        mastery_gain = mastery_gain or new_evidence
+        message = (
+            f"正确。你前面的计算已经展示了关键过程，再根据“{problem.key_idea}”"
+            "就能得到这个结果。思路已经完整，不需要重复解释，可以进入下一题。"
+            if language == "zh" else
+            f"Correct. Your earlier work already showed the key calculation, and "
+            f"the result follows from {problem.key_idea}. You do not need to repeat "
+            "the reasoning; you can move on to the next question."
+        )
 
     # Repeated answer requests must not accumulate a worked solution. Ordinary
     # help remains available even after many hints; output checks still apply.
@@ -544,7 +645,7 @@ def process_turn(
             message = normalize_math_notation(message)
 
     # 7. Independently review mathematical claims against the private solution.
-    if problem and config.TUTOR_REVIEW_ENABLED:
+    if problem and config.TUTOR_REVIEW_ENABLED and not verified_completion:
         try:
             review = _review_reply(problem, history, student_text, message, is_solved, proposed_answer)
             reply_valid = review.get("valid") is True

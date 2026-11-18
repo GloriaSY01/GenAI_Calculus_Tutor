@@ -35,11 +35,11 @@ def test_duplicate_model_question_is_retried(monkeypatch):
     assert result.stem == "Find the slope of $4t$"
 
 
-def test_repeated_model_output_is_not_returned_as_next_question(monkeypatch):
+def test_repeated_model_output_falls_back_to_distinct_local_question(monkeypatch):
     setup_generation(monkeypatch)
     monkeypatch.setattr(generator.llm, "chat_to_json", lambda *a: {"stem": "Known question"})
-    with pytest.raises(ValueError, match="No new question"):
-        generator.generate_question("single_choice", TOPIC, exclude_stems=["Known question"])
+    result = generator.generate_question("single_choice", TOPIC, exclude_stems=["Known question"])
+    assert result.stem != "Known question"
 
 
 def test_offline_next_does_not_repeat_fixed_fallback(monkeypatch):
@@ -48,5 +48,5 @@ def test_offline_next_does_not_repeat_fixed_fallback(monkeypatch):
         raise RuntimeError("offline")
     monkeypatch.setattr(generator.llm, "chat_to_json", offline)
     first = generator.generate_question("single_choice", TOPIC)
-    with pytest.raises(ValueError, match="No new question"):
-        generator.generate_question("single_choice", TOPIC, exclude_stems=[first.stem])
+    second = generator.generate_question("single_choice", TOPIC, exclude_stems=[first.stem])
+    assert second.stem != first.stem

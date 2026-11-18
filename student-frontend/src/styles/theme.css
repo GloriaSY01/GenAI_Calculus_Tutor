@@ -512,8 +512,10 @@ textarea.inp { resize: vertical; line-height: 1.5; }
 .agent-thinking span:nth-child(3) { animation-delay: .28s; }
 @keyframes agentDot { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-3px); opacity: 1; } }
 
-.floating-agent-prompts { display: flex; flex-wrap: wrap; gap: 7px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--surface-2); }
-.floating-agent-prompt-label { width: 100%; color: var(--muted); font-size: 11.5px; font-weight: 700; }
+.floating-agent-suggestions { border-top: 1px solid var(--border); background: var(--surface-2); }
+.floating-agent-suggestions > summary { padding: 10px 14px; color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; user-select: none; }
+.floating-agent-suggestions > summary:hover { color: var(--text); }
+.floating-agent-prompts { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 14px 10px; background: var(--surface-2); }
 .floating-agent-prompts .chip { max-width: 100%; padding: 6px 9px; text-align: left; white-space: normal; line-height: 1.35; }
 .floating-agent-input { display: flex; align-items: flex-end; gap: 8px; padding: 11px 14px 14px; background: var(--surface-2); }
 .floating-agent-input textarea { min-height: 42px; max-height: 96px; resize: none; }

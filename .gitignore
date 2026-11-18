@@ -1,5 +1,6 @@
 # Secrets
 .env
+data/*.sqlite3
 
 # Python
 __pycache__/

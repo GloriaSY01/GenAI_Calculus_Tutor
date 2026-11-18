@@ -62,7 +62,7 @@ def learning_intent(text: str) -> str:
         return "answer_request"
     if re.search(r"对吗|是否正确|检查|核对|\b(check|verify)\b|\bis .+ correct\b", cleaned):
         return "verification"
-    if re.search(r"不会|不知道|提示|怎么开始|\b(hint|stuck)\b|don't know", cleaned):
+    if re.search(r"不会|不知道|提示|怎么开始|怎么求|怎么算|如何求|如何算|\b(hint|stuck)\b|don't know", cleaned):
         return "help"
     return "discussion"
 
@@ -71,7 +71,37 @@ def answer_in_text(text: str, answer: str) -> bool:
     """Conservative literal evidence, not symbolic equivalence or correctness."""
     needle = _normalize_math(answer)
     candidates = re.findall(r"\$([^$]+)\$", text) + re.split(r"[\s，。；：:=]+", text)
-    return bool(needle) and any(_normalize_math(part) == needle for part in candidates)
+    if not needle:
+        return False
+    if any(_normalize_math(part) == needle for part in candidates):
+        return True
+
+    # Reference answers often include a unit (for example ``60 km``), while a
+    # student naturally confirms only the computed value (``答案是 60``). Treat
+    # that as an answer proposal when the reference has one unambiguous number;
+    # do not mistake intermediate numbers in ordinary working for the answer.
+    answer_numbers = re.findall(r"(?<![\w.])-?\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?", answer)
+    if len(answer_numbers) == 1:
+        value = re.escape(answer_numbers[0])
+        numeric_proposals = [
+            rf"(?:答案|结果|平均速度|距离|导数|极限)\s*(?:是|为|等于|=)\s*\$?{value}\$?(?:\s*[\u4e00-\u9fffA-Za-z/]+)?\s*(?:吗|呢|对吗)?[？?]?",
+            rf"(?:然后|所以|那么)\s*(?:答案|结果)?\s*(?:是|为|等于|=)\s*\$?{value}\$?(?:\s*[\u4e00-\u9fffA-Za-z/]+)?\s*(?:吗|呢|对吗)?[？?]?",
+            rf"(?:the\s+)?(?:answer|result|distance)\s+(?:is|equals)\s+\$?{value}\$?(?:\s*[A-Za-z/]+)?\s*[?]?",
+        ]
+        if any(re.search(pattern, text, re.IGNORECASE) for pattern in numeric_proposals):
+            return True
+
+    # Students naturally propose answers as questions ("是 48 吗？" / "Is
+    # the answer 2x?"). Recognise those wrappers without treating an arbitrary
+    # occurrence of a short number elsewhere in the working as a final answer.
+    raw = answer.strip().strip("$` ")
+    escaped = re.escape(raw)
+    proposal_patterns = [
+        rf"(?:答案|结果|平均速度|导数|极限)?\s*(?:是|为|等于)\s*\$?{escaped}\$?\s*(?:吗|呢|对吗)?[？?]?",
+        rf"(?:is|would)\s+(?:it|the\s+(?:answer|result))\s*(?:be|is)?\s*\$?{escaped}\$?\s*[?]?",
+        rf"(?:the\s+)?(?:answer|result)\s+is\s+\$?{escaped}\$?\s*[?]?",
+    ]
+    return any(re.search(pattern, text, re.IGNORECASE) for pattern in proposal_patterns)
 
 
 def deflection_message(category: str, language: str = "en") -> str:
@@ -99,7 +129,7 @@ def deflection_message(category: str, language: str = "en") -> str:
 
 
 def _normalize_math(text: str) -> str:
-    return re.sub(r"[\s$`*_\\{}()\[\],.;:]+", "", text).lower()
+    return re.sub(r"[\s$`*_\\{}()\[\],.;:，。；：？！?]+", "", text).lower()
 
 
 def check_output(text: str, final_answer: str,

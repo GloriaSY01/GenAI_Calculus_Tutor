@@ -48,7 +48,7 @@ function ShellControls({ role, setRole, theme, setTheme }) {
 
 export default function App() {
   const navigate = useNavigate()
-  const [role, setRole] = useState(() => localStorage.getItem('role') || 'student')
+  const [role, setRole] = useState(() => window.location.pathname.startsWith('/overview') ? 'teacher' : 'student')
   const [theme, setTheme] = useTheme()
 
   function switchRole(nextRole) {

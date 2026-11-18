@@ -10,9 +10,11 @@ Endpoints:
 from __future__ import annotations
 
 import re
+import hmac
+import os
 import time
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Literal, Optional
@@ -159,6 +161,23 @@ def get_learning_path():
 @app.get("/analytics/class", response_model=ClassAnalytics)
 def get_class_analytics(class_id: Optional[str] = None, scope: Literal["legacy", "learning"] = "legacy"):
     return analytics.compute(class_id, scope=scope)
+
+
+@app.get("/teacher/students")
+def get_teacher_students(
+    class_id: Optional[str] = None,
+    x_teacher_access_code: Optional[str] = Header(default=None),
+):
+    expected = os.getenv("TEACHER_ACCESS_CODE", "").strip()
+    # The local SQLite demo is available on the teacher-only local page without
+    # repeatedly asking for a code. Deployed/shared databases remain protected.
+    if learning.engine().dialect.name == "sqlite":
+        return learning.student_dashboard(class_id)
+    if not expected:
+        raise HTTPException(status_code=503, detail="Teacher access is not configured")
+    if not x_teacher_access_code or not hmac.compare_digest(x_teacher_access_code, expected):
+        raise HTTPException(status_code=401, detail="教师访问码不正确")
+    return learning.student_dashboard(class_id)
 
 
 @app.post("/analytics/ask", response_model=AnalyticsAnswer)

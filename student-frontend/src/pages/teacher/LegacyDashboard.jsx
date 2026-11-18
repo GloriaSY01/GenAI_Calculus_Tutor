@@ -43,6 +43,7 @@ const dashboardCopy = {
  empty: ['该班暂无已判分的练习提交。', 'No graded practice submissions for this class yet.'],
  moreTopics: ['查看其余 {count} 个知识点', 'View {count} more topics'],
  details: ['更多量化指标', 'More metrics'],
+ studentData: ['学生数据', 'Student data'],
  detailNote: ['括号内为提交次数，包含重试；— 表示无样本。按提交时的本题记录分组：未记录帮助、已展示有效 AI 回复、请求后展示情况未确认。答题后求助不改变先前记录；组间差异不代表 AI 效果。', 'Counts include retries; — means no samples. Help status is frozen at submission for this question exposure. Later help does not change earlier attempts. Group differences do not measure AI effects.'],
  independent: ['未记录本题 AI 帮助', 'No AI help recorded for this question'],
  assisted: ['已获得 AI 帮助', 'AI help displayed'],
@@ -142,6 +143,69 @@ function MetricsDetail({data}) {
   </section>
  </details>
 }
+
+function StudentData({classId}) {
+ const {lang}=useLang();const zh=lang==='zh'
+ const [code,setCode]=useState(()=>sessionStorage.getItem('teacher_access_code')||'')
+ const [activeCode,setActiveCode]=useState(()=>sessionStorage.getItem('teacher_access_code')||'__local_auto__')
+ const [state,setState]=useState({loading:false,data:null,error:''})
+ const load=()=>{if(!activeCode)return;setState(s=>({...s,loading:true,error:''}));api.teacherStudents(classId,activeCode).then(data=>setState({loading:false,data,error:''})).catch(error=>{if(error.status===401||error.status===503){sessionStorage.removeItem('teacher_access_code');setActiveCode('')}setState({loading:false,data:null,error:error.message})})}
+ useEffect(load,[classId,activeCode])
+ useEffect(()=>{if(!activeCode)return;const timer=setInterval(()=>api.teacherStudents(classId,activeCode).then(data=>setState({loading:false,data,error:''})).catch(()=>{}),15000);return()=>clearInterval(timer)},[classId,activeCode])
+ const enter=e=>{e.preventDefault();const value=code.trim();if(!value)return;sessionStorage.setItem('teacher_access_code',value);setActiveCode(value)}
+ const date=value=>value?new Intl.DateTimeFormat(zh?'zh-CN':'en-GB',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value*1000)):'—'
+ const accuracy=value=>value==null?'—':Math.round(value*100)+'%'
+ const duration=value=>{const seconds=Number(value||0);if(seconds<60)return zh?`${seconds} 秒`:`${seconds}s`;if(seconds<3600)return zh?`${Math.round(seconds/60)} 分钟`:`${Math.round(seconds/60)} min`;return zh?`${(seconds/3600).toFixed(1)} 小时`:`${(seconds/3600).toFixed(1)} hr`}
+ const typeLabel=value=>({single_choice:zh?'单选题':'Single choice',multiple_choice:zh?'多选题':'Multiple choice',fill_blank:zh?'填空题':'Fill in the blank',drag_order:zh?'步骤排序':'Step ordering',unknown:zh?'未记录':'Unknown'}[value]||displayLabel(value,lang))
+ const difficultyLabel=value=>({easy:zh?'简单':'Easy',medium:zh?'中等':'Medium',hard:zh?'困难':'Hard',unknown:zh?'未记录':'Unknown'}[value]||displayLabel(value,lang))
+ const reasoningLabel=value=>({none:zh?'未体现':'Not demonstrated',weak:zh?'较弱':'Weak',partial:zh?'部分':'Partial',adequate:zh?'充分':'Adequate',strong:zh?'较强':'Strong'}[value]||value)
+ const breakdown=(rows,labeler=key=>displayLabel(key,lang))=>!rows?.length?<span className="teacher-empty-value">—</span>:<div className="teacher-breakdown">{rows.map(row=><span key={row.key}><b>{labeler(row.key)}</b>{row.correct}/{row.answers} · {accuracy(row.accuracy)}</span>)}</div>
+ const conclusions=student=>{
+  const practiceCount=student.practice_answers||0, practiceRate=student.practice_accuracy
+  const weakest=student.weak_topics?.[0], weakestName=weakest?displayLabel(weakest.key,lang):''
+  const challengeCount=student.challenge_attempts||0, challengeRate=student.challenge_accuracy
+  const history=student.challenge_history||[], latest=history[0]?.score_rate, previous=history[1]?.score_rate
+  const daysSince=Math.max(0,Math.floor((Date.now()/1000-(student.last_activity_at||Date.now()/1000))/86400))
+  let participation=zh?`已累计登录 ${student.login_count} 次。`:`Logged in ${student.login_count} times.`
+  participation+=daysSince===0?(zh?'今天仍有学习活动，参与状态活跃。':'There is learning activity today; participation is active.'):(daysSince<=7?(zh?`最近一次学习在 ${daysSince} 天前，仍处于持续参与阶段。`:`Last studied ${daysSince} day(s) ago and remains engaged.`):(zh?`已 ${daysSince} 天没有新的学习活动，建议教师关注学习连续性。`:`No new learning activity for ${daysSince} days; consider checking learning continuity.`))
+  let practice=practiceCount===0?(zh?'尚无边学边练作答，暂时无法判断掌握情况。':'No practice answers yet, so mastery cannot be assessed.')
+   :practiceCount<5?(zh?`目前仅有 ${practiceCount} 次作答，样本较少；暂不宜形成稳定结论。`:`Only ${practiceCount} answers are available; the sample is too small for a stable conclusion.`)
+   :practiceRate<.6?(zh?`当前正确率为 ${accuracy(practiceRate)}，基础掌握仍不稳定${weakestName?`；优先巩固“${weakestName}”`:''}。`:`Accuracy is ${accuracy(practiceRate)}, indicating unstable mastery${weakestName?`; prioritise ${weakestName}`:''}.`)
+   :practiceRate<.8?(zh?`当前正确率为 ${accuracy(practiceRate)}，已具备基本理解，但仍需针对错题继续巩固。`:`Accuracy is ${accuracy(practiceRate)}; basic understanding is present, but errors still need targeted review.`)
+   :(zh?`当前正确率为 ${accuracy(practiceRate)}，边学边练表现较稳定，可逐步提高题目难度。`:`Accuracy is ${accuracy(practiceRate)}; practice performance is stable and difficulty can be increased gradually.`)
+  let challenge=challengeCount===0?(zh?'尚未进行章节挑战，暂无独立检验结论。':'No chapter challenge has been attempted yet.')
+   :(zh?`已完成 ${challengeCount} 次挑战，完成率 ${accuracy(student.challenge_completion_rate)}，总体正确率 ${accuracy(challengeRate)}。`:`Completed ${challengeCount} challenge(s), with ${accuracy(student.challenge_completion_rate)} completion and ${accuracy(challengeRate)} accuracy.`)
+  if(challengeCount>0) challenge+=challengeRate<.6?(zh?'能够完成试卷，但独立掌握度偏低，建议返回薄弱小节复习后再挑战。':'The student completes the challenge, but independent mastery is low; review weak sections before retrying.'):(zh?'独立检验表现达到较稳定水平，可继续观察后续挑战的一致性。':'Independent performance is relatively stable; monitor consistency across future attempts.')
+  if(latest!=null&&previous!=null) challenge+=latest>previous?(zh?' 最近一次得分较上次有所提升。':' The latest score improved from the previous attempt.'):(latest<previous?(zh?' 最近一次得分较上次下降，需要关注是否存在知识遗忘。':' The latest score declined; possible knowledge loss should be monitored.'):'')
+  let agent=(student.agent_questions||0)===0?(zh?'尚未使用学习 Agent，暂时无法判断其辅助效果。':'The learning Agent has not been used, so its effect cannot yet be assessed.')
+   :(student.helped_answers||0)===0?(zh?`已向 Agent 提问 ${student.agent_questions} 次，但尚无“求助后作答”样本，辅助效果暂不可判断。`:`Asked the Agent ${student.agent_questions} times, but there are no post-help answer samples yet.`)
+   :(student.helped_answers||0)<3?(zh?`Agent 求助后作答样本仅 ${student.helped_answers} 次，当前答对率 ${accuracy(student.helped_accuracy)}；样本较少，仅供参考。`:`Only ${student.helped_answers} post-help answer sample(s) are available, with ${accuracy(student.helped_accuracy)} accuracy; interpret cautiously.`)
+   :student.helped_accuracy>=practiceRate?(zh?`求助后正确率为 ${accuracy(student.helped_accuracy)}，高于或等于整体练习表现，Agent 可能发挥了正向辅助作用。`:`Post-help accuracy is ${accuracy(student.helped_accuracy)}, at or above overall practice performance; the Agent may be helping.`):(zh?`求助后正确率为 ${accuracy(student.helped_accuracy)}，尚未高于整体练习表现，需要检查提示是否真正解决了困难。`:`Post-help accuracy is ${accuracy(student.helped_accuracy)}, below overall practice performance; check whether hints are resolving difficulties.`)
+  const reasoning=student.reasoning_average, coverage=student.coverage?.chapter_rate
+  let learning=reasoning==null?(zh?'目前缺少有效对话推理样本。':'There are no valid reasoning samples yet.'):(reasoning<1?(zh?'当前对话中大多数回答尚未体现推理过程，需要引导学生说明公式选择和计算依据。':'Most dialogue responses do not yet show reasoning; prompt the student to explain formula choice and calculation basis.'):(reasoning<2.5?(zh?'已开始表达部分推理，但过程仍不完整，建议继续使用分步追问。':'Some reasoning is visible but incomplete; continue with step-by-step prompts.'):(zh?'能够较清晰地表达推理过程，可增加迁移与反思类问题。':'Reasoning is expressed clearly; add transfer and reflection questions.')))
+  learning+=coverage<.5?(zh?` 当前章节覆盖率为 ${accuracy(coverage)}，学习范围仍较集中。`:` Chapter coverage is ${accuracy(coverage)}, so learning remains concentrated.`):(zh?` 已覆盖 ${student.coverage?.chapters_covered||0} 个章节，下一步应兼顾覆盖广度与薄弱知识点复习。`:` ${student.coverage?.chapters_covered||0} chapters are covered; balance breadth with weak-topic review.`)
+  return {participation,practice,challenge,agent,learning}
+ }
+ const students=state.data?.students||[]
+ return <section id="teacher-students" className="legacy-panel teacher-student-data">
+  <div className="teacher-data-heading"><div><h2>{zh?'学生数据':'Student data'}</h2><p className="legacy-caption">{zh?'仅教师可查看。登录信息和学习统计来自本机 SQLite 数据库。':'Teacher only. Login details and learning statistics come from the local SQLite database.'}</p></div>{activeCode&&<button className="btn" disabled={state.loading} onClick={load}>{zh?'刷新数据':'Refresh'}</button>}</div>
+  {!activeCode?<form className="teacher-access-form" onSubmit={enter}><label>{zh?'教师访问码':'Teacher access code'}<input className="inp" type="password" value={code} onChange={e=>setCode(e.target.value)} autoComplete="current-password"/></label><button className="btn primary">{zh?'查看学生数据':'View student data'}</button>{state.error&&<p role="alert" className="legacy-warning">{state.error}</p>}</form>
+  :state.loading&&!state.data?<div className="teacher-data-skeleton" role="status">{zh?'正在读取学生数据…':'Loading student data…'}</div>
+  :state.error?<div role="alert" className="legacy-warning">{state.error} <button className="btn" onClick={load}>{zh?'重试':'Retry'}</button></div>
+  :!students.length?<Empty>{zh?'当前班级还没有学生登录记录。学生完成首次登录后会自动出现在这里。':'No student login records for this class yet. Students appear here after their first sign-in.'}</Empty>
+  :<><div className="teacher-data-summary"><Metric label={zh?'已登录学生':'Signed-in students'} value={students.length}/><Metric label={zh?'累计登录次数':'Total logins'} value={students.reduce((n,s)=>n+s.login_count,0)}/><Metric label={zh?'边学边练作答':'Practice answers'} value={students.reduce((n,s)=>n+(s.practice_answers||0),0)}/><Metric label={zh?'章节挑战次数':'Challenge attempts'} value={students.reduce((n,s)=>n+(s.challenge_attempts||0),0)}/><Metric label={zh?'Agent 提问':'Agent questions'} value={students.reduce((n,s)=>n+(s.agent_questions||0),0)}/></div>
+   <div className="teacher-student-list">{students.map(student=>{const insight=conclusions(student);return <details className="teacher-student-card" key={student.student_number+student.class_id}>
+    <summary><span className="teacher-student-identity"><strong>{student.student_name}</strong><small>{zh?'学号':'ID'} {student.student_number}</small></span><span><small>{zh?'边学边练正确率':'Practice accuracy'}</small><b>{accuracy(student.practice_accuracy)}</b></span><span><small>{zh?'章节挑战':'Challenges'}</small><b>{student.challenge_attempts||0}</b></span><span><small>{zh?'最近活动':'Last activity'}</small><b>{date(student.last_activity_at)}</b></span></summary>
+    <div className="teacher-metric-groups">
+     <section><h3>{zh?'学生参与':'Participation'}</h3><dl><div><dt>{zh?'累计登录':'Logins'}</dt><dd>{student.login_count}</dd></div><div><dt>{zh?'首次登录':'First login'}</dt><dd>{date(student.first_login_at)}</dd></div><div><dt>{zh?'最近登录':'Last login'}</dt><dd>{date(student.last_login_at)}</dd></div><div><dt>{zh?'最近学习':'Last study'}</dt><dd>{date(student.last_activity_at)}</dd></div></dl><div className="teacher-conclusion"><b>{zh?'结论':'Conclusion'}</b><p>{insight.participation}</p></div></section>
+     <section><h3>{zh?'边学边练':'Learn & practice'}</h3><dl><div><dt>{zh?'作答数':'Answers'}</dt><dd>{student.practice_answers||0}</dd></div><div><dt>{zh?'正确数':'Correct'}</dt><dd>{student.practice_correct||0}</dd></div><div><dt>{zh?'正确率':'Accuracy'}</dt><dd>{accuracy(student.practice_accuracy)}</dd></div></dl><h4>{zh?'按题型':'By question type'}</h4>{breakdown(student.practice_by_type,typeLabel)}<h4>{zh?'按难度':'By difficulty'}</h4>{breakdown(student.practice_by_difficulty,difficultyLabel)}<h4>{zh?'按知识点':'By topic'}</h4>{breakdown(student.practice_by_topic)}<div className="teacher-conclusion"><b>{zh?'结论':'Conclusion'}</b><p>{insight.practice}</p></div></section>
+     <section><h3>{zh?'章节挑战':'Chapter challenge'}</h3><dl><div><dt>{zh?'挑战次数':'Attempts'}</dt><dd>{student.challenge_attempts||0}</dd></div><div><dt>{zh?'完成率':'Completion'}</dt><dd>{accuracy(student.challenge_completion_rate)}</dd></div><div><dt>{zh?'作答正确率':'Accuracy'}</dt><dd>{accuracy(student.challenge_accuracy)}</dd></div></dl>{student.challenge_history?.length?<div className="legacy-table-scroll"><table className="teacher-history-table"><thead><tr><th>{zh?'时间':'Time'}</th><th>{zh?'完成':'Completed'}</th><th>{zh?'得分':'Score'}</th></tr></thead><tbody>{student.challenge_history.map(item=><tr key={item.submission_id}><td>{date(item.submitted_at)}</td><td>{item.answered}/{item.assigned}</td><td>{item.correct}/{item.assigned} · {accuracy(item.score_rate)}</td></tr>)}</tbody></table></div>:<span className="teacher-empty-value">{zh?'暂无挑战记录':'No challenge history'}</span>}<div className="teacher-conclusion"><b>{zh?'结论':'Conclusion'}</b><p>{insight.challenge}</p></div></section>
+     <section><h3>{zh?'Agent 使用':'Agent usage'}</h3><dl><div><dt>{zh?'提问次数':'Questions'}</dt><dd>{student.agent_questions||0}</dd></div><div><dt>{zh?'提示次数':'Hints'}</dt><dd>{student.agent_hints||0}</dd></div><div><dt>{zh?'求助率':'Help rate'}</dt><dd>{accuracy(student.agent_help_rate)}</dd></div><div><dt>{zh?'求助后答对':'Correct after help'}</dt><dd>{student.helped_correct||0}/{student.helped_answers||0} · {accuracy(student.helped_accuracy)}</dd></div></dl><div className="teacher-conclusion"><b>{zh?'结论':'Conclusion'}</b><p>{insight.agent}</p></div></section>
+     <section><h3>{zh?'学习过程':'Learning process'}</h3><dl><div><dt>{zh?'推理等级':'Reasoning level'}</dt><dd>{student.reasoning_average==null?'—':`${student.reasoning_average}/4`}</dd></div><div><dt>{zh?'章节覆盖':'Chapter coverage'}</dt><dd>{student.coverage?.chapters_covered||0}/{student.coverage?.chapters_total||8} · {accuracy(student.coverage?.chapter_rate)}</dd></div><div><dt>{zh?'小节覆盖':'Sections covered'}</dt><dd>{student.coverage?.sections_covered||0}</dd></div><div><dt>{zh?'连续学习时长':'Active study time'}</dt><dd>{duration(student.active_seconds)}</dd></div></dl><h4>{zh?'推理分布':'Reasoning distribution'}</h4>{Object.keys(student.reasoning_distribution||{}).length?<div className="teacher-breakdown">{Object.entries(student.reasoning_distribution).map(([key,count])=><span key={key}><b>{reasoningLabel(key)}</b>{count}{zh?' 次':' turns'}</span>)}</div>:<span className="teacher-empty-value">—</span>}<h4>{zh?'薄弱知识点':'Weak topics'}</h4>{breakdown(student.weak_topics)}<div className="teacher-conclusion"><b>{zh?'结论':'Conclusion'}</b><p>{insight.learning}</p></div></section>
+    </div>
+   </details>})}</div><p className="legacy-caption">{zh?'每 15 秒自动更新。学习时长按连续学习事件估算，单次事件间隔最多计 5 分钟；求助率表示获得 Agent 帮助的边学边练作答占比。结论由当前样本按固定规则自动生成，仅用于教学参考。':'Updates every 15 seconds. Active study time is estimated from learning events, capped at five minutes per event gap. Help rate is the share of practice answers that received Agent help. Conclusions are rule-based summaries of current samples and are for teaching reference only.'}</p></>}
+ </section>
+}
 function Assignments({topics,data,classId}) {
  const {t,label,lang}=useCopy();const list=useAsync(()=>api.teacherAssignments(classId),[classId])
  const [items,setItems]=useState(()=>[block(topics[0])]);const [title,setTitle]=useState('');const [note,setNote]=useState('');const [prefill,setPrefill]=useState(null);const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [success,setSuccess]=useState(false)
@@ -185,7 +249,7 @@ export default function LegacyDashboard({theme,setTheme,onStudent}) {
  const result=useAsync(()=>Promise.all([api.teacherData(classId),api.teacherTopics()]).then(([data,topics])=>({data,topics,classId})),[classId])
  useEffect(()=>{if(['zh','en'].includes(query.get('lang')))setLang(query.get('lang'));if(['light','dark'].includes(query.get('theme')))setTheme(query.get('theme'))},[])
  const s=result.data
- const links=[['teacher-overview','overview'],['teacher-topics','topics'],['teacher-metrics','details'],['teacher-act','assignments']]
+ const links=[['teacher-overview','overview'],['teacher-topics','topics'],['teacher-metrics','details'],['teacher-students','studentData'],['teacher-act','assignments']]
  return <div className={'teacher-legacy '+(theme==='dark'?'legacy-dark':'')}>
  <style>{snapshot.css.replace(/<\/?style>/g,'')}</style>
  {theme==='dark'&&<style>{darkCss.replace(/<\/?style>/g,'')}</style>}
@@ -198,6 +262,7 @@ export default function LegacyDashboard({theme,setTheme,onStudent}) {
   <div className="teacher-toolbar"><p className="legacy-caption">{lang==='zh'?'当前班级 · 实验 ':'Current class · Experiment '}{s.data.experiment_id} · {s.data.metric_version}</p><button className="btn" onClick={result.reload}>{copy('retry')}</button></div>
   <ClassOverview data={s.data} rows={topicRows(s.data)} topic={topic} onTopic={setTopic}/>
   <MetricsDetail data={s.data}/>
+  <StudentData classId={classId}/>
   <details id="teacher-act" className="legacy-panel teacher-disclosure">
    <summary>{copy('assignments')}</summary>
    {s.topics.length>0&&<Assignments topics={s.topics} data={s.data} classId={classId}/>}

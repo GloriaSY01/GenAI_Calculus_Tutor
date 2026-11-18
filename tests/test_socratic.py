@@ -122,6 +122,38 @@ def test_chinese_tutor_language_is_enforced(monkeypatch):
     assert turn.tutor_message.startswith("斜率")
 
 
+def test_correct_answer_after_prior_work_does_not_request_repeated_explanation(monkeypatch):
+    _mock_retrieval(monkeypatch)
+    monkeypatch.setattr(socratic.config, "TUTOR_REVIEW_ENABLED", False)
+    monkeypatch.setattr(
+        socratic.llm,
+        "chat",
+        lambda *args, **kwargs: (
+            "ASSESSMENT: adequate\nACTION: probe\nASKS_EXPLANATION: yes\n"
+            "SOLVED: yes\nMASTERY_GAIN: no\nEVIDENCE: 2x\n"
+            "MESSAGE: Can you explain your reasoning again?"
+        ),
+    )
+    history = [
+        {"role": "user", "content": "I used the power rule: 2*x^(2-1)."},
+        {"role": "assistant", "content": "Now simplify the exponent."},
+    ]
+
+    turn = socratic.process_turn(
+        PROBLEM, "explain", history, 1, 10, "Is the answer 2x?"
+    )
+
+    assert turn.is_solved is True
+    assert turn.action == "complete"
+    assert turn.asks_for_explanation is False
+    assert "do not need to repeat" in turn.tutor_message
+
+
+def test_chinese_answer_proposal_question_is_recognized():
+    assert socratic.guardrail.answer_in_text("是48吗？", "48")
+    assert socratic.guardrail.answer_in_text("答案是 $2x$ 吗？", "2x")
+
+
 def test_tutor_repairs_translated_function_notation(monkeypatch):
     _mock_retrieval(monkeypatch)
     monkeypatch.setattr(

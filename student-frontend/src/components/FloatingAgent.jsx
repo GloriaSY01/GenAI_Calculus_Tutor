@@ -117,11 +117,13 @@ export default function FloatingAgent({
         {sending && <div className="agent-message assistant"><div className="agent-bubble agent-thinking"><span /><span /><span /></div></div>}
       </div>
 
-      <div className="floating-agent-prompts" aria-label={title}>
-        <span className="floating-agent-prompt-label">{suggestionsLabel}</span>
-        {prompts.map((prompt) => <button key={prompt} type="button" className="chip" disabled={sending}
-          onClick={() => { setInput(prompt); inputRef.current?.focus() }}>{prompt}</button>)}
-      </div>
+      <details className="floating-agent-suggestions">
+        <summary>{suggestionsLabel}</summary>
+        <div className="floating-agent-prompts" aria-label={title}>
+          {prompts.map((prompt) => <button key={prompt} type="button" className="chip" disabled={sending}
+            onClick={() => { setInput(prompt); inputRef.current?.focus() }}>{prompt}</button>)}
+        </div>
+      </details>
 
       <form className="floating-agent-input" onSubmit={(event) => { event.preventDefault(); send() }}>
         <textarea ref={inputRef} className="inp" rows={2} value={input} placeholder={placeholder}

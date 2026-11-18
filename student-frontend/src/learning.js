@@ -5,8 +5,10 @@ const read = key => JSON.parse(localStorage.getItem(key) || 'null')
 const write = (key, value) => localStorage.setItem(key, JSON.stringify(value))
 const uuid = () => crypto.randomUUID()
 
-export function createLearningClient(student, classId) {
-  const identityKey = 'calculus-learning-identity:' + (student.trim() || 'guest')
+export function createLearningClient(studentNumber, classId, loginSessionId) {
+  const normalizedStudentNumber = studentNumber.trim().toUpperCase()
+  const identityKey = 'calculus-learning-identity:' + normalizedStudentNumber
+  const startKey = 'calculus-login-start:' + JSON.stringify([normalizedStudentNumber, classId, loginSessionId])
   let token = null
   let run = null
   let prefix = ''
@@ -56,7 +58,7 @@ export function createLearningClient(student, classId) {
     if (!run) throw new Error('请先连接学习记录服务 / Connect learning records first')
   }
   return {
-    async connect(consent = false) {
+    async connect(profile = {}) {
       if (!token) {
         token = read(identityKey)
         if (!token) { token = uuid() + uuid(); write(identityKey, token) }
@@ -73,12 +75,17 @@ export function createLearningClient(student, classId) {
         error.code = 'UNKNOWN_CLASS'
         throw error
       }
-      prefix = 'calculus-learning:' + JSON.stringify([student.trim() || 'guest', classId, config.experiment_id])
-      const consentKey = prefix + ':consent:' + config.consent_version
-      if (!consent && !read(consentKey)) return null
-      if (consent) write(consentKey, true)
-      const { record } = journal('start', { run_id: uuid(), class_id: classId, consent: true })
-      run = await request('/start', record.payload)
+      let startPayload = read(startKey)
+      if (!startPayload) {
+        startPayload = {
+          run_id: uuid(), class_id: classId, consent: true,
+          student_name: (profile.studentName || '').trim(),
+          student_number: (profile.studentNumber || normalizedStudentNumber).trim().toUpperCase(),
+        }
+        write(startKey, startPayload)
+      }
+      prefix = 'calculus-learning:' + JSON.stringify([normalizedStudentNumber, classId, config.experiment_id, startPayload.run_id])
+      run = await request('/start', startPayload)
       return run
     },
     async expose(item, mode = 'free', presented = true) {
@@ -99,7 +106,9 @@ export function createLearningClient(student, classId) {
       const result = await replay('attempt:' + exposure_id + ':' + (item.attemptNo || 0), '/attempts', {
         exposure_id, attempt_id: uuid(), answer: item.answer,
       })
-      return { ...result, recovered: JSON.stringify(result.submitted_answer) !== JSON.stringify(item.answer) }
+      // Keep the exposure identity beside the attempt. The Agent may only
+      // attach an answer when both belong to the question currently visible.
+      return { ...result, exposure_id, recovered: JSON.stringify(result.submitted_answer) !== JSON.stringify(item.answer) }
     },
     async challenge(round, hasAnswer) {
       ready()
@@ -118,9 +127,19 @@ export function createLearningClient(student, classId) {
       ready()
       const exposure_id = item ? await this.expose(item, mode) : null
       const key = prefix + ':pending-tutor:' + (exposure_id || run.run_id)
+      const matchingAttemptId = item?.grade?.exposure_id === exposure_id
+        ? submitted_attempt_id
+        : null
       let payload = read(key)
+      // Clear a stale request created before attempts carried their exposure
+      // identity. Reusing it would associate the previous answer with this
+      // question and the backend correctly rejects that cross-question link.
+      if (payload?.submitted_attempt_id && payload.submitted_attempt_id !== matchingAttemptId) {
+        localStorage.removeItem(key)
+        payload = null
+      }
       if (!payload) {
-        payload = { run_id: run.run_id, exposure_id, request_id: uuid(), text, topic, language, submitted_attempt_id }
+        payload = { run_id: run.run_id, exposure_id, request_id: uuid(), text, topic, language, submitted_attempt_id: matchingAttemptId }
         write(key, payload)
       } else if (payload.text !== text) {
         throw new Error('上次请求尚未确认，请先重发原问题 / Retry the previous question: ' + payload.text)
@@ -130,7 +149,7 @@ export function createLearningClient(student, classId) {
         // Keep until displayed: an unmounted chat must not lose an unacknowledged reply.
         return { ...result, pendingKey: key }
       } catch (error) {
-        if (error.code === 'TUTOR_FAILED') localStorage.removeItem(key)
+        if (error.code === 'TUTOR_FAILED' || (error.status >= 400 && error.status < 500)) localStorage.removeItem(key)
         throw error
       }
     },

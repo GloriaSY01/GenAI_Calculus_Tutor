@@ -158,6 +158,9 @@ export const api = {
   teacherDelete: id => req('/assignments/' + encodeURIComponent(id), { method: 'DELETE' }),
   teacherAssignments: classId => req('/assignments?class_id=' + encodeURIComponent(classId)),
   teacherAsk: body => req('/analytics/ask', { method: 'POST', body: JSON.stringify({ ...body, scope: 'learning' }) }),
+  teacherStudents: (classId, accessCode) => req('/teacher/students?class_id=' + encodeURIComponent(classId), {
+    headers: { 'Content-Type': 'application/json', 'X-Teacher-Access-Code': accessCode },
+  }),
   getClassAnalytics: (classId = '') =>
     withFallback(
       async () => normalizeAnalytics(await req('/analytics/class' + (classId ? '?class_id=' + encodeURIComponent(classId) : ''))),

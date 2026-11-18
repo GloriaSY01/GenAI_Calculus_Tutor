@@ -2,6 +2,44 @@
 .teacher-legacy .teacher-summary-metrics small { color:#64748b;font-size:12px;line-height:1.6 }
 .teacher-legacy .teacher-overview h2 { font-size:20px;margin:0 0 16px }
 .teacher-legacy .teacher-toolbar { display:flex;align-items:center;justify-content:space-between;gap:16px }
+.teacher-legacy .teacher-data-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:20px }
+.teacher-legacy .teacher-data-heading h2 { margin:0 0 6px;font-size:20px }
+.teacher-legacy .teacher-access-form { max-width:440px;display:flex;align-items:end;gap:12px;margin:24px 0 }
+.teacher-legacy .teacher-access-form label { flex:1;display:flex;flex-direction:column;gap:8px;font-size:13px }
+.teacher-legacy .teacher-data-summary { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:20px;padding:12px 0 20px }
+.teacher-legacy .teacher-student-table { width:100%;min-width:1420px;border-collapse:collapse;font-size:13px }
+.teacher-legacy .teacher-student-table th,.teacher-legacy .teacher-student-table td { padding:13px 12px;text-align:left;border-bottom:1px solid #e6e9f2;white-space:nowrap }
+.teacher-legacy .teacher-student-table th { color:#64748b;font-size:12px;font-weight:600;background:#f8fafc }
+.teacher-legacy .teacher-data-skeleton { padding:32px;background:#f8fafc;color:#64748b;border-radius:8px;margin-top:20px }
+.teacher-legacy .teacher-student-list { display:flex;flex-direction:column;gap:12px }
+.teacher-legacy .teacher-student-card { border:1px solid #e1e6f0;border-radius:12px;background:#fbfcfe;overflow:hidden }
+.teacher-legacy .teacher-student-card>summary { display:grid;grid-template-columns:minmax(150px,1.2fr) minmax(120px,.8fr) minmax(90px,.55fr) minmax(180px,1fr);gap:20px;align-items:center;padding:18px 20px;list-style:none }
+.teacher-legacy .teacher-student-card>summary::-webkit-details-marker { display:none }
+.teacher-legacy .teacher-student-card>summary::after { content:'＋';justify-self:end;font-size:22px;grid-column:5 }
+.teacher-legacy .teacher-student-card[open]>summary::after { content:'−' }
+.teacher-legacy .teacher-student-card>summary>span { display:flex;flex-direction:column;gap:4px;min-width:0 }
+.teacher-legacy .teacher-student-card>summary small { color:#7b849c;font-size:12px }
+.teacher-legacy .teacher-student-card>summary b { font-size:14px;overflow-wrap:anywhere }
+.teacher-legacy .teacher-student-identity strong { font-size:17px }
+.teacher-legacy .teacher-metric-groups { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:0 20px 20px;border-top:1px solid #e6e9f2;background:#fff }
+.teacher-legacy .teacher-metric-groups>section { padding:18px;border:1px solid #e6e9f2;border-radius:10px;margin-top:16px;min-width:0 }
+.teacher-legacy .teacher-metric-groups>section:last-child { grid-column:1 / -1 }
+.teacher-legacy .teacher-metric-groups h3 { margin:0 0 14px;font-size:16px }
+.teacher-legacy .teacher-metric-groups h4 { margin:16px 0 8px;font-size:13px;color:#64748b }
+.teacher-legacy .teacher-metric-groups dl { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 }
+.teacher-legacy .teacher-metric-groups dl>div { min-width:0 }
+.teacher-legacy .teacher-metric-groups dt { color:#7b849c;font-size:12px;line-height:1.4 }
+.teacher-legacy .teacher-metric-groups dd { margin:4px 0 0;font-size:14px;font-weight:600;overflow-wrap:anywhere }
+.teacher-legacy .teacher-breakdown { display:flex;flex-wrap:wrap;gap:8px }
+.teacher-legacy .teacher-breakdown>span { display:inline-flex;gap:6px;align-items:center;padding:7px 9px;border-radius:8px;background:#f1f5fb;color:#526079;font-size:12px }
+.teacher-legacy .teacher-breakdown b { color:#202a40 }
+.teacher-legacy .teacher-empty-value { color:#94a3b8;font-size:13px }
+.teacher-legacy .teacher-history-table { width:100%;border-collapse:collapse;font-size:12px;min-width:420px;margin-top:14px }
+.teacher-legacy .teacher-history-table th,.teacher-legacy .teacher-history-table td { padding:9px 8px;text-align:left;border-bottom:1px solid #e6e9f2 }
+.teacher-legacy .teacher-history-table th { color:#64748b;font-weight:600 }
+.teacher-legacy .teacher-conclusion { margin-top:18px;padding:13px 14px;border-left:4px solid #3159df;border-radius:8px;background:#eef3ff;color:#273758 }
+.teacher-legacy .teacher-conclusion b { display:block;margin-bottom:5px;color:#244bc5;font-size:13px }
+.teacher-legacy .teacher-conclusion p { margin:0;font-size:13px;line-height:1.7 }
 .teacher-legacy .teacher-topic-list { list-style:none;margin:0;padding:0 }
 .teacher-legacy .teacher-topic-list li { display:grid;grid-template-columns:minmax(180px,2fr) minmax(80px,1fr) 100px;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid #e6e9f2 }
 .teacher-legacy .teacher-topic-label { display:flex;flex-direction:column;gap:4px;min-width:0 }
@@ -21,6 +59,15 @@
 .teacher-legacy .teacher-toc>a { display:block;margin:14px 0 }
 .teacher-legacy.legacy-dark .teacher-summary-metrics small,.teacher-legacy.legacy-dark .teacher-topic-label small,.teacher-legacy.legacy-dark .teacher-topic-score small { color:#a7b4ca }
 .teacher-legacy.legacy-dark .teacher-topic-list li,.teacher-legacy.legacy-dark .teacher-metrics-table th,.teacher-legacy.legacy-dark .teacher-metrics-table td { border-color:#303a50 }
+.teacher-legacy.legacy-dark .teacher-student-table th,.teacher-legacy.legacy-dark .teacher-student-table td { border-color:#303a50 }
+.teacher-legacy.legacy-dark .teacher-student-table th,.teacher-legacy.legacy-dark .teacher-data-skeleton { background:#101524;color:#a7b4ca }
+.teacher-legacy.legacy-dark .teacher-student-card,.teacher-legacy.legacy-dark .teacher-metric-groups>section { background:#101524;border-color:#303a50 }
+.teacher-legacy.legacy-dark .teacher-metric-groups { background:#141a2b;border-color:#303a50 }
+.teacher-legacy.legacy-dark .teacher-breakdown>span { background:#1c2840;color:#b8c5d9 }
+.teacher-legacy.legacy-dark .teacher-breakdown b { color:#eef1f9 }
+.teacher-legacy.legacy-dark .teacher-history-table th,.teacher-legacy.legacy-dark .teacher-history-table td { border-color:#303a50 }
+.teacher-legacy.legacy-dark .teacher-conclusion { background:#16264a;color:#dce7ff;border-color:#7195ff }
+.teacher-legacy.legacy-dark .teacher-conclusion b { color:#9bbcff }
 .teacher-legacy.legacy-dark .sw-header { background:#141a2b;border-color:#303a50 }
 .teacher-legacy.legacy-dark .sw-brand,.teacher-legacy.legacy-dark .sw-preferences summary { color:#eef1f9 }
 .teacher-legacy.legacy-dark .sw-brand small { color:#a7b4ca }
@@ -90,6 +137,10 @@ body:has(.teacher-legacy.legacy-dark) { background:#0b1020 }
  .teacher-legacy .sw-account { flex-wrap:wrap }
  .teacher-legacy .sw-account>.inp { width:160px }
  .teacher-legacy .legacy-cols.four { grid-template-columns:repeat(2,minmax(0,1fr)) }
+ .teacher-legacy .teacher-data-summary { grid-template-columns:repeat(3,minmax(0,1fr)) }
+ .teacher-legacy .teacher-student-card>summary { grid-template-columns:minmax(130px,1fr) repeat(2,minmax(90px,.7fr)) }
+ .teacher-legacy .teacher-student-card>summary>span:last-of-type { grid-column:1 / span 2 }
+ .teacher-legacy .teacher-student-card>summary::after { grid-column:3;grid-row:2 }
 }
 @media(max-width:600px) {
  .teacher-legacy .legacy-cols.three,.teacher-legacy .legacy-cols.two { grid-template-columns:1fr }
@@ -97,4 +148,12 @@ body:has(.teacher-legacy.legacy-dark) { background:#0b1020 }
  .teacher-legacy .legacy-block-header { display:none }
  .teacher-legacy .legacy-metric>strong { font-size:24px }
  .teacher-legacy .legacy-panel { padding:14px }
+ .teacher-legacy .teacher-data-summary { grid-template-columns:1fr;gap:0 }
+ .teacher-legacy .teacher-access-form { align-items:stretch;flex-direction:column }
+ .teacher-legacy .teacher-student-card>summary { grid-template-columns:1fr auto;gap:12px }
+ .teacher-legacy .teacher-student-card>summary>span:not(.teacher-student-identity) { display:none }
+ .teacher-legacy .teacher-student-card>summary::after { grid-column:2;grid-row:1 }
+ .teacher-legacy .teacher-metric-groups { grid-template-columns:1fr;padding:0 12px 12px }
+ .teacher-legacy .teacher-metric-groups>section:last-child { grid-column:auto }
+ .teacher-legacy .teacher-metric-groups dl { grid-template-columns:1fr }
 }
