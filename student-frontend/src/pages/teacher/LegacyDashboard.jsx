@@ -9,23 +9,12 @@ import darkCss from './legacy82-dark.json'
 import './legacy82.css'
 
 const pct = value => `${Math.round((value || 0) * 100)}%`
-const templates = {
-  foundation: [['single_choice','easy',4],['fill_blank','easy',3],['single_choice','medium',2]],
-  mixed: [['single_choice','medium',3],['multiple_choice','medium',2],['fill_blank','medium',3],['drag_order','medium',2]],
-  challenge: [['multiple_choice','medium',2],['fill_blank','hard',3],['drag_order','hard',2]],
-}
-const block = (topic,qtype='single_choice',difficulty='easy',count=3) => ({id:crypto.randomUUID(),topic,qtype,difficulty,count})
-const total = items => items.reduce((sum,x) => sum+x.count,0)
-const minutes = items => Math.max(1,Math.round(items.reduce((sum,x)=>sum+({single_choice:1.5,multiple_choice:2,fill_blank:3,drag_order:3}[x.qtype])*({easy:.8,medium:1,hard:1.4}[x.difficulty])*x.count,0)))
-const levels=['none','weak','partial','adequate','strong']
 function useCopy() {
   const {lang}=useLang()
   const t=(key,values={}) => Object.entries(values).reduce((s,[k,v])=>s.replaceAll(`{${k}}`,String(v)),snapshot.strings[key]?.[lang] ?? snapshot.strings[key]?.en ?? key)
   const label=topic=>snapshot.strings['topic.'+topic]?.[lang] ?? displayLabel(topic,lang)
   return {t,label,lang}
 }
-function Header({icon,title,sub}) {return <div className="ph"><div className="ph-icon">{icon}</div><div><h3 className="ph-title">{title}</h3>{sub&&<div className="ph-desc">{sub}</div>}</div></div>}
-function Panel({children}) {return <section className="legacy-panel">{children}</section>}
 function Metric({label,value,help}) {return <div className="legacy-metric"><span>{label}</span><strong>{value}</strong>{help&&<small>{help}</small>}</div>}
 function Empty({children}) {return <div className="empty">{children}</div>}
 const dashboardCopy = {
@@ -49,11 +38,7 @@ const dashboardCopy = {
  assisted: ['已获得 AI 帮助', 'AI help displayed'],
  difficulty: ['按难度比较提交正确率', 'Submission accuracy by difficulty'],
  all: ['全部难度', 'All difficulties'],
- reasoning: ['导师对话推理分布', 'Reasoning in tutor conversations'],
- reasoningNote: ['按对话轮次统计，由模型评估，仅供参考。', 'Model ratings per conversation turn, for reference only.'],
  noPracticeSamples: ['暂无提交数据，以下保留全部统计维度；提交后自动汇总。', 'No submission data yet. All dimensions are shown below and will populate as submissions arrive.'],
- noReasoningSamples: ['暂无有效对话数据，各推理等级暂不计算占比。', 'No valid conversation data yet; reasoning percentages are not calculated.'],
- assignments: ['练习配置', 'Practice setup'],
  loading: ['正在加载班级数据…', 'Loading class data…'],
  retry: ['重新加载', 'Reload'],
 }
@@ -111,9 +96,6 @@ function MetricsDetail({data}) {
  const copy = useDashboardCopy()
  const {t,lang} = useCopy()
  const practice = data.practice || {}
- const distribution = data.reasoning_distribution || {}
- const reasoningCount = data.reasoning_sample_count ?? data.n_turns ?? 0
- const hasReasoning = reasoningCount > 0 && Object.values(distribution).some(value => value > 0)
  const recordedDifficulties = practice.by_difficulty_completion || []
  const difficulties = difficultyOrder
    .filter(difficulty => difficulty !== 'unknown' || recordedDifficulties.some(row => row.difficulty === difficulty))
@@ -135,12 +117,6 @@ function MetricsDetail({data}) {
     </table>
    </div>
    <p className="legacy-caption">{copy('detailNote')}</p>
-  <section>
-   <h3>{copy('reasoning')}</h3>
-   <p className="legacy-caption">{copy('reasoningNote')} {lang==='zh'?'有效对话轮次：':'Valid turns: '}{reasoningCount}</p>
-   {!hasReasoning && <p className="legacy-caption">{copy('noReasoningSamples')}</p>}
-   <dl className="teacher-reasoning-values">{levels.map(level => <div key={level}><dt>{(lang === 'zh' ? ['未体现', '较弱', '部分', '充分', '较强'] : ['Not demonstrated', 'Weak', 'Partial', 'Adequate', 'Strong'])[levels.indexOf(level)]}</dt><dd>{hasReasoning ? pct(distribution[level]) : '—'}</dd></div>)}</dl>
-  </section>
  </details>
 }
 
@@ -206,33 +182,6 @@ function StudentData({classId}) {
    </details>})}</div><p className="legacy-caption">{zh?'每 15 秒自动更新。学习时长按连续学习事件估算，单次事件间隔最多计 5 分钟；求助率表示获得 Agent 帮助的边学边练作答占比。结论由当前样本按固定规则自动生成，仅用于教学参考。':'Updates every 15 seconds. Active study time is estimated from learning events, capped at five minutes per event gap. Help rate is the share of practice answers that received Agent help. Conclusions are rule-based summaries of current samples and are for teaching reference only.'}</p></>}
  </section>
 }
-function Assignments({topics,data,classId}) {
- const {t,label,lang}=useCopy();const list=useAsync(()=>api.teacherAssignments(classId),[classId])
- const [items,setItems]=useState(()=>[block(topics[0])]);const [title,setTitle]=useState('');const [note,setNote]=useState('');const [prefill,setPrefill]=useState(null);const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [success,setSuccess]=useState(false)
- const setTemplate=(kind,topic=items[0]?.topic||topics[0])=>setItems(templates[kind].map(([q,d,c])=>block(topic,q,d,c)))
- const apply=row=>{const kind=row.correct_rate<.4?'foundation':row.correct_rate<=.7?'mixed':'challenge';setTemplate(kind,row.topic);setTitle(t('teacher.assign_title_suggest',{topic:label(row.topic)}));setPrefill(kind)}
- const reset=()=>{setPrefill(null);setItems([block(topics[0])]);setTitle('');setNote('')}
- const submit=async()=>{setError('');setSuccess(false);if(!title.trim()){setError(t('teacher.assign_need_title'));return}if(!items.length){setError(t('teacher.assign_need_items'));return}if(items.some(x=>!Number.isInteger(x.count)||x.count<1||x.count>10))return;setBusy(true);try{await api.teacherCreate({title:title.trim(),note:note.trim(),items:items.map(({topic,qtype,difficulty,count})=>({topic,qtype,difficulty,count})),class_id:classId});reset();list.reload();setSuccess(true)}catch(e){setError(e.message)}finally{setBusy(false)}}
- const remove=async id=>{try{await api.teacherDelete(id);list.reload()}catch(e){setError(e.message)}}
- const titleLabel=value=>lang==='en'?({'「导数」巩固练习':'Derivatives practice set','极限复习综合':'Limits review set'}[value]||value):value
- const countText=values=>t('teacher.assign_total',{n:total(values),m:minutes(values)})
- const update=(id,key,value)=>setItems(items.map(x=>x.id===id?{...x,[key]:value}:x))
- return <div className="legacy-cols assign"><Panel><div id="teacher-new-assignment"/><Header icon="✏️" title={t('teacher.assign_new')} sub={t('teacher.assign_caption')}/>
- {topicRows(data).some(row=>row.attempts>=5&&row.correct_rate<.7)&&<><p className="legacy-caption">{t('teacher.assign_quick')}</p><div className="legacy-cols three">{topicRows(data).filter(row=>row.attempts>=5&&row.correct_rate<.7).slice(0,3).map(row=><button className="btn" key={row.topic} disabled={!topics.includes(row.topic)} onClick={()=>apply(row)}>{label(row.topic)}</button>)}</div></>}
- {prefill&&<div className="legacy-prefill"><div className="legacy-info">{t('teacher.assign_prefill',{source:t('teacher.assign_quick_source')})}<p>{t('teacher.assign_prefill_tpl',{tpl:t('teacher.tpl_'+prefill)})}</p></div><button className="btn" onClick={reset}>{t('teacher.assign_clear_prefill')}</button></div>}
- <label className="legacy-field">{t('teacher.assign_title')}<input className="inp" value={title} placeholder={t('teacher.assign_title_ph')} onChange={e=>setTitle(e.target.value)}/></label>
- <p className="legacy-caption">{t('teacher.assign_templates')}</p><div className="legacy-cols three">{Object.keys(templates).map(k=><button className="btn" key={k} title={t('teacher.tpl_'+k+'_help')} onClick={()=>setTemplate(k)}>{t('teacher.tpl_'+k)}</button>)}</div>
- <p className="legacy-caption">{t('teacher.assign_items_heading')}</p><div className="legacy-block-header">{['topic','format','difficulty','count'].map(k=><span key={k}>{t('teacher.'+k)}</span>)}</div>
- {items.map(x=><div className="legacy-block" key={x.id}><select aria-label={t('teacher.topic')} className="inp" value={x.topic} onChange={e=>update(x.id,'topic',e.target.value)}>{topics.map(k=><option key={k} value={k}>{label(k)}</option>)}</select><select aria-label={t('teacher.format')} className="inp" value={x.qtype} onChange={e=>update(x.id,'qtype',e.target.value)}>{['single_choice','multiple_choice','fill_blank','drag_order'].map(k=><option key={k} value={k}>{t('qtype.'+k)}</option>)}</select><select aria-label={t('teacher.difficulty')} className="inp" value={x.difficulty} onChange={e=>update(x.id,'difficulty',e.target.value)}>{['easy','medium','hard'].map(k=><option key={k} value={k}>{t('difficulty.'+k)}</option>)}</select><input aria-label={t('teacher.count')} className="inp" type="number" min="1" max="10" value={x.count} onChange={e=>update(x.id,'count',Number(e.target.value))}/><button className="btn" onClick={()=>setItems(items.filter(b=>b.id!==x.id))}>✕</button></div>)}
- {items.length<8&&<button className="btn legacy-full" onClick={()=>setItems([...items,block(items.at(-1)?.topic||topics[0])])}>{t('teacher.assign_add_block')}</button>}
- {!!items.length&&<div className="stat-strip" style={{gridTemplateColumns:'1fr'}}><div className="stat-item"><span className="stat-label">{countText(items)}</span></div></div>}
- <label className="legacy-field">{t('teacher.note')}<textarea className="inp" rows={3} value={note} onChange={e=>setNote(e.target.value)}/></label>
- {error&&<div role="alert" className="legacy-warning">{error}</div>}{success&&<div role="status" className="legacy-info">✅ {t('teacher.assign_created')}</div>}
- <button className="btn primary legacy-full" disabled={busy} onClick={submit}>{t('teacher.assign_btn')}</button>
- </Panel><Panel><div id="teacher-current-assignments"/><Header icon="📋" title={t('teacher.current_assignments')} sub={t('teacher.assign_not_connected')}/>
- {list.error?<div role="alert">{list.error.message}</div>:list.loading?<p>…</p>:!list.data?.length?<Empty>{t('teacher.no_assignments')}</Empty>:<div style={list.data.length>3?{maxHeight:460,overflowY:'auto'}:undefined}>{list.data.map(x=><div className="legacy-assignment" key={x.id}><button className="btn legacy-delete" title={t('teacher.delete')} onClick={()=>remove(x.id)}>✕</button><b>{titleLabel(x.title)}</b><p className="legacy-caption">{countText(x.items)} · {t('teacher.assign_completion')}: -</p>{x.items.map((b,i)=><p className="legacy-caption" key={i}>· {label(b.topic)} · {b.count}× {t('qtype.'+b.qtype)} · {t('difficulty.'+b.difficulty)}</p>)}{x.note&&<p className="legacy-caption">📝 {x.note}</p>}</div>)}</div>}
- </Panel></div>
-}
 function Assistant({classId,topic}) {
  const {t,label,lang}=useCopy();const [open,setOpen]=useState(false);const [history,setHistory]=useState([]);const [question,setQuestion]=useState('');const [busy,setBusy]=useState(false)
  const ask=async text=>{if(busy)return;if(!text.trim())return;setBusy(true);const prior=history;setHistory([...prior,{role:'user',content:text}]);setQuestion('');try{const r=await api.teacherAsk({question:text,class_id:classId,selected_topic:topic,language:lang,history:prior.map(({role,content})=>({role,content}))});setHistory(h=>[...h,{role:'assistant',content:r.answer,offline:r.llm_available===false}])}catch(e){setHistory(h=>[...h,{role:'assistant',content:t('common.backend_error')+' '+e.message}])}finally{setBusy(false)}}
@@ -246,10 +195,10 @@ export default function LegacyDashboard({theme,setTheme,onStudent}) {
  const {t,label,lang}=useCopy();const copy=useDashboardCopy();const {setLang}=useLang();const query=new URLSearchParams(window.location.search)
  const [classId,setClassId]=useState(()=>['demo','calc1-a','calc1-b','calc1-c','calc1-d','calc1-e'].includes(query.get('class_id'))?query.get('class_id'):'calc1-a');const [topic,setTopic]=useState('')
  const classOptions=useAsync(()=>api.teacherClasses(),[])
- const result=useAsync(()=>Promise.all([api.teacherData(classId),api.teacherTopics()]).then(([data,topics])=>({data,topics,classId})),[classId])
+ const result=useAsync(()=>api.teacherData(classId).then(data=>({data,classId})),[classId])
  useEffect(()=>{if(['zh','en'].includes(query.get('lang')))setLang(query.get('lang'));if(['light','dark'].includes(query.get('theme')))setTheme(query.get('theme'))},[])
  const s=result.data
- const links=[['teacher-overview','overview'],['teacher-topics','topics'],['teacher-metrics','details'],['teacher-students','studentData'],['teacher-act','assignments']]
+ const links=[['teacher-overview','overview'],['teacher-topics','topics'],['teacher-metrics','details'],['teacher-students','studentData']]
  return <div className={'teacher-legacy '+(theme==='dark'?'legacy-dark':'')}>
  <style>{snapshot.css.replace(/<\/?style>/g,'')}</style>
  {theme==='dark'&&<style>{darkCss.replace(/<\/?style>/g,'')}</style>}
@@ -263,10 +212,6 @@ export default function LegacyDashboard({theme,setTheme,onStudent}) {
   <ClassOverview data={s.data} rows={topicRows(s.data)} topic={topic} onTopic={setTopic}/>
   <MetricsDetail data={s.data}/>
   <StudentData classId={classId}/>
-  <details id="teacher-act" className="legacy-panel teacher-disclosure">
-   <summary>{copy('assignments')}</summary>
-   {s.topics.length>0&&<Assignments topics={s.topics} data={s.data} classId={classId}/>}
-  </details>
  </div>}
  </main><Assistant key={classId} classId={classId} topic={topic}/></div>
 }
